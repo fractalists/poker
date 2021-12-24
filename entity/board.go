@@ -43,36 +43,64 @@ func (board *Board) StartGame(sb int, sbIndex int, desc string) {
 }
 
 func (board *Board) PreFlop() {
+	game := board.Game
 	for _, player := range board.PlayerList {
-
+		card1 := game.DrawCard()
+		card2 := game.DrawCard()
+		player.Hands = []Card{card1, card2}
 	}
+	card1 := game.DrawCard()
+	card2 := game.DrawCard()
+	card3 := game.DrawCard()
+	card4 := game.DrawCard()
+	card5 := game.DrawCard()
+	game.FlopCards = []Card{card1, card2, card3}
+	game.TurnCard = card4
+	game.RiverCard = card5
 
-	board.Game.Round = PREFLOP
+	game.Round = PREFLOP
 	board.Render()
 }
 
 func (board *Board) Flop() {
+	game := board.Game
+
+	game.RevealedCards = append(game.RevealedCards, game.FlopCards...)
+
 	board.Game.Round = FLOP
 	board.Render()
 }
 
 func (board *Board) Turn() {
+	game := board.Game
+
+	game.RevealedCards = append(game.RevealedCards, game.TurnCard)
+
 	board.Game.Round = TURN
 	board.Render()
 }
 
 func (board *Board) River() {
+	game := board.Game
+
+	game.RevealedCards = append(game.RevealedCards, game.RiverCard)
+
 	board.Game.Round = RIVER
 	board.Render()
 }
 
 func (board *Board) Settle() {
 	// todo
-	board.Game.Round = FINISH
-	board.Render()
-	// clear hands
+
+
+	for _, player := range board.PlayerList {
+		player.Hands = nil
+	}
 
 	// settle pot and bankroll
+
+	board.Game.Round = FINISH
+	board.Render()
 }
 
 func initializePlayerList(playerNum int, playerBankroll int) []Player {

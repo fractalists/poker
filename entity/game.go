@@ -1,12 +1,16 @@
 package entity
 
 type Game struct {
-	Round   Round
-	Deck    []Card `json:"-"`
-	Pot     int
-	SB      int
-	SBIndex int
-	Desc    string
+	Round         Round
+	Deck          []Card `json:"-"`
+	Pot           int
+	SB            int
+	SBIndex       int
+	Desc          string
+	FlopCards     []Card `json:"-"`
+	TurnCard      Card `json:"-"`
+	RiverCard     Card `json:"-"`
+	RevealedCards []Card
 }
 
 type Round string
@@ -33,4 +37,14 @@ func (game *Game) Initialize(sb int, sbIndex int, desc string) {
 	game.SB = sb
 	game.SBIndex = sbIndex
 	game.Desc = desc
+}
+
+func (game *Game) DrawCard() Card {
+	if len(game.Deck) == 0 {
+		panic("failed to draw card. deck is empty")
+	}
+
+	card := game.Deck[0]
+	game.Deck = game.Deck[1:]
+	return card
 }

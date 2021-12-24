@@ -8,20 +8,16 @@ func main() {
 	board.StartGame(1, 0, "round_1")
 
 	board.PreFlop()
-	board.Render()
-	board.Action()
+	//board.Action()
 
 	board.Flop()
-	board.Render()
-	board.Action()
+	//board.Action()
 
 	board.Turn()
-	board.Render()
-	board.Action()
+	//board.Action()
 
 	board.River()
-	board.Render()
-	board.Action()
+	//board.Action()
 
 	board.Settle()
 }
