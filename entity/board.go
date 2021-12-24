@@ -28,7 +28,7 @@ func (board *Board) StartGame(sb int, sbIndex int, desc string) {
 	if len(board.PlayerList) == 0 {
 		panic("board has not been initialized")
 	}
-	if board.Game != nil {
+	if board.Game != nil && board.Game.Round != FINISH {
 		panic("previous game is continuing")
 	}
 	if sb < 1 || sb > board.PlayerList[0].InitialBankroll/2 {
@@ -68,7 +68,8 @@ func (board *Board) River() {
 
 func (board *Board) Settle() {
 	// todo
-
+	board.Game.Round = FINISH
+	board.Render()
 	// clear hands
 
 	// settle pot and bankroll
