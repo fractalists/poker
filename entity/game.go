@@ -20,7 +20,7 @@ const PREFLOP Round = "PREFLOP"
 const FLOP Round = "FLOP"
 const TURN Round = "TURN"
 const RIVER Round = "RIVER"
-const FINISH Round = "FINISH"
+const SHOWDOWN Round = "SHOWDOWN"
 
 type Position string
 
