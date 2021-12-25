@@ -82,3 +82,7 @@ var rawDeck = []Card{
 	{Suit: CLUBS, Rank: KING},
 	{Suit: CLUBS, Rank: ACE},
 }
+
+func Sort(cards []Card) []Card {
+
+}
