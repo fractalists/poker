@@ -36,7 +36,7 @@ func testMain() {
 		{Suit: entity.HEARTS, Rank: entity.FOUR},
 		{Suit: entity.HEARTS, Rank: entity.FIVE},
 		{Suit: entity.HEARTS, Rank: entity.SEVEN},
-		{Suit: entity.HEARTS, Rank: entity.SIX},
+		{Suit: entity.HEARTS, Rank: entity.EIGHT},
 		{Suit: entity.SPADES, Rank: entity.SIX},
 		{Suit: entity.DIAMONDS, Rank: entity.SIX},
 		{Suit: entity.CLUBS, Rank: entity.SIX},

@@ -134,6 +134,7 @@ func hasFourOfAKind(cards entity.Cards) entity.Cards {
 					foundHighCard = true
 				}
 			}
+			return result
 		}
 	}
 
@@ -156,7 +157,6 @@ func hasFlush(cards entity.Cards) entity.Cards {
 					result = append(result, card)
 				}
 			}
-
 			return getHighCards(result)
 		}
 	}
@@ -207,6 +207,7 @@ func hasThreeOfAKind(cards entity.Cards) entity.Cards {
 					otherHighCardCount += 1
 				}
 			}
+			return result
 		}
 	}
 
