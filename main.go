@@ -11,11 +11,11 @@ func main() {
 	board.Initialize(6, 100)
 	board.StartGame(1, 0, "round_1")
 
-	testMode := true
-	if testMode {
+	if true {
 		testMain()
 		return
 	}
+	
 	board.PreFlop()
 	//board.Action()
 
@@ -30,6 +30,7 @@ func main() {
 
 	board.Showdown()
 }
+
 func testMain() {
 	cards := entity.Cards{
 		{Suit: entity.HEARTS, Rank: entity.FOUR},
