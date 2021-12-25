@@ -35,11 +35,11 @@ func testMain() {
 	cards := entity.Cards{
 		{Suit: entity.HEARTS, Rank: entity.FOUR},
 		{Suit: entity.HEARTS, Rank: entity.FIVE},
-		{Suit: entity.HEARTS, Rank: entity.SEVEN},
-		{Suit: entity.HEARTS, Rank: entity.EIGHT},
-		{Suit: entity.SPADES, Rank: entity.SIX},
-		{Suit: entity.DIAMONDS, Rank: entity.SIX},
-		{Suit: entity.CLUBS, Rank: entity.SIX},
+		{Suit: entity.HEARTS, Rank: entity.KING},
+		{Suit: entity.HEARTS, Rank: entity.ACE},
+		{Suit: entity.SPADES, Rank: entity.THREE},
+		{Suit: entity.DIAMONDS, Rank: entity.FOUR},
+		{Suit: entity.CLUBS, Rank: entity.JACK},
 	}
 
 	handType, fiveCards, score := util.Score(cards)

@@ -102,15 +102,17 @@ func getHandType(cards entity.Cards) (HandType, entity.Cards) {
 }
 
 func getCardPoint(cards entity.Cards) int {
-	sort.Sort(cards)
-
-	cardPoint := 0
-
+	deepCopy := entity.Cards{}
 	for _, card := range cards {
-		cardPoint *= 10
-		cardPoint += card.RankToInt()
+		deepCopy = append(deepCopy, card)
 	}
 
+	sort.Sort(deepCopy)
+	cardPoint := 0
+	for _, card := range deepCopy {
+		cardPoint *= 16
+		cardPoint += card.RankToInt()
+	}
 	return cardPoint
 }
 
@@ -125,13 +127,13 @@ func hasFourOfAKind(cards entity.Cards) entity.Cards {
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 4 {
 			result := entity.Cards{}
-			foundHighCard := false
+			needHighCardCount := 1
 			for _, card := range cards {
 				if card.RankToInt() == i {
+					result = append(entity.Cards{card}, result...)
+				} else if needHighCardCount > 0 {
 					result = append(result, card)
-				} else if foundHighCard == false {
-					result = append(result, card)
-					foundHighCard = true
+					needHighCardCount--
 				}
 			}
 			return result
@@ -198,13 +200,13 @@ func hasThreeOfAKind(cards entity.Cards) entity.Cards {
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 3 {
 			result := entity.Cards{}
-			otherHighCardCount := 0
+			needHighCardCount := 2
 			for _, card := range cards {
 				if card.RankToInt() == i {
+					result = append(entity.Cards{card}, result...)
+				} else if needHighCardCount > 0 {
 					result = append(result, card)
-				} else if otherHighCardCount != 2 {
-					result = append(result, card)
-					otherHighCardCount += 1
+					needHighCardCount--
 				}
 			}
 			return result
@@ -222,7 +224,28 @@ func hasTwoPair(cards entity.Cards) entity.Cards {
 
 func hasOnePair(cards entity.Cards) entity.Cards {
 	sort.Sort(cards)
-	// todo
+	rankMemory := make([]int, 15)
+
+	for _, card := range cards {
+		rankMemory[card.RankToInt()] += 1
+	}
+
+	for i := 14; i >= 2; i-- {
+		if rankMemory[i] == 2 {
+			result := entity.Cards{}
+			needHighCardCount := 3
+			for _, card := range cards {
+				if card.RankToInt() == i {
+					result = append(entity.Cards{card}, result...)
+				} else if needHighCardCount > 0 {
+					result = append(result, card)
+					needHighCardCount--
+				}
+			}
+			return result
+		}
+	}
+
 	return nil
 }
 
