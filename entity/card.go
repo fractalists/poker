@@ -13,26 +13,26 @@ type Cards []Card
 
 type Suit string
 
-const HEARTS Suit = "HEARTS"
-const DIAMONDS Suit = "DIAMONDS"
-const SPADES Suit = "SPADES"
-const CLUBS Suit = "CLUBS"
+const HEARTS Suit = "♥"
+const DIAMONDS Suit = "♦"
+const SPADES Suit = "♠"
+const CLUBS Suit = "♣"
 
 type Rank string
 
-const TWO Rank = "TWO"
-const THREE Rank = "THREE"
-const FOUR Rank = "FOUR"
-const FIVE Rank = "FIVE"
-const SIX Rank = "SIX"
-const SEVEN Rank = "SEVEN"
-const EIGHT Rank = "EIGHT"
-const NINE Rank = "NINE"
-const TEN Rank = "TEN"
-const JACK Rank = "JACK"
-const QUEEN Rank = "QUEEN"
-const KING Rank = "KING"
-const ACE Rank = "ACE"
+const TWO Rank = "2"
+const THREE Rank = "3"
+const FOUR Rank = "4"
+const FIVE Rank = "5"
+const SIX Rank = "6"
+const SEVEN Rank = "7"
+const EIGHT Rank = "8"
+const NINE Rank = "9"
+const TEN Rank = "10"
+const JACK Rank = "J"
+const QUEEN Rank = "Q"
+const KING Rank = "K"
+const ACE Rank = "A"
 
 var rawDeck = Cards{
 	{Suit: HEARTS, Rank: TWO},
@@ -89,8 +89,12 @@ var rawDeck = Cards{
 	{Suit: CLUBS, Rank: ACE},
 }
 
-func (s Card) RankToInt() int {
-	switch s.Rank {
+func (card Card) String() string {
+	return fmt.Sprintf("%s%s", card.Suit, card.Rank)
+}
+
+func (card Card) RankToInt() int {
+	switch card.Rank {
 	case TWO:
 		return 2
 	case THREE:
@@ -118,19 +122,41 @@ func (s Card) RankToInt() int {
 	case ACE:
 		return 14
 	default:
-		panic(fmt.Sprintf("unknown rank: %v", s.Rank))
+		panic(fmt.Sprintf("unknown rank: %v", card.Rank))
 	}
 }
 
-func (s Cards) Len() int {
-	return len(s)
+func (card Card) SuitToInt() int {
+	switch card.Suit {
+	case CLUBS:
+		return 1
+	case DIAMONDS:
+		return 2
+	case HEARTS:
+		return 3
+	case SPADES:
+		return 4
+	default:
+		panic(fmt.Sprintf("unknown rank: %v", card.Rank))
+	}
 }
 
-func (s Cards) Less(i, j int) bool {
+func (cards Cards) Len() int {
+	return len(cards)
+}
+
+func (cards Cards) Less(i, j int) bool {
 	// descending
-	return s[i].RankToInt() > s[j].RankToInt()
+	rankI := cards[i].RankToInt()
+	rankJ := cards[j].RankToInt()
+
+	if rankI != rankJ {
+		return cards[i].RankToInt() > cards[j].RankToInt()
+	}
+
+	return cards[i].SuitToInt() > cards[j].SuitToInt()
 }
 
-func (s Cards) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
+func (cards Cards) Swap(i, j int) {
+	cards[i], cards[j] = cards[j], cards[i]
 }

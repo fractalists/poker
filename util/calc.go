@@ -92,31 +92,67 @@ func cardPoint(cards entity.Cards) int {
 }
 
 func hasFourOfAKind(cards entity.Cards) entity.Cards {
-	
+	sort.Sort(cards)
+	rankMap := make([]int, 15)
+
+	for _, card := range cards {
+		rankMap[card.RankToInt()] += 1
+	}
+
+	for i := 14; i >= 0; i-- {
+		if rankMap[i] == 4 {
+			result := entity.Cards{}
+			foundHighCard := false
+			for _, card := range cards {
+				if foundHighCard == false && card.RankToInt() != i {
+					result = append(result, card)
+					foundHighCard = true
+				}
+
+				if card.RankToInt() == i {
+					result = append(result, card)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func hasFlush(cards entity.Cards) entity.Cards {
-
+	sort.Sort(cards)
+	// todo
+	return nil
 }
 
 func hasStraight(cards entity.Cards) entity.Cards {
-
+	sort.Sort(cards)
+	// todo
+	return nil
 }
 
 func hasFullHouse(cards entity.Cards) entity.Cards {
-
+	sort.Sort(cards)
+	// todo
+	return nil
 }
 
 func hasThreeOfAKind(cards entity.Cards) entity.Cards {
-
+	sort.Sort(cards)
+	// todo
+	return nil
 }
 
 func hasTwoPair(cards entity.Cards) entity.Cards {
-
+	sort.Sort(cards)
+	// todo
+	return nil
 }
 
 func hasOnePair(cards entity.Cards) entity.Cards {
-
+	sort.Sort(cards)
+	// todo
+	return nil
 }
 
 func getHighCards(cards entity.Cards) entity.Cards {
@@ -129,6 +165,5 @@ func getNHighestCards(cards entity.Cards, n int) entity.Cards {
 	}
 
 	sort.Sort(cards)
-
 	return cards[:n]
 }
