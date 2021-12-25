@@ -1,9 +1,15 @@
 package entity
 
+import (
+	"fmt"
+)
+
 type Card struct {
 	Suit Suit
 	Rank Rank
 }
+
+type Cards []Card
 
 type Suit string
 
@@ -28,7 +34,7 @@ const QUEEN Rank = "QUEEN"
 const KING Rank = "KING"
 const ACE Rank = "ACE"
 
-var rawDeck = []Card{
+var rawDeck = Cards{
 	{Suit: HEARTS, Rank: TWO},
 	{Suit: HEARTS, Rank: THREE},
 	{Suit: HEARTS, Rank: FOUR},
@@ -83,6 +89,48 @@ var rawDeck = []Card{
 	{Suit: CLUBS, Rank: ACE},
 }
 
-func Sort(cards []Card) []Card {
+func (s Card) RankToInt() int {
+	switch s.Rank {
+	case TWO:
+		return 2
+	case THREE:
+		return 3
+	case FOUR:
+		return 4
+	case FIVE:
+		return 5
+	case SIX:
+		return 6
+	case SEVEN:
+		return 7
+	case EIGHT:
+		return 8
+	case NINE:
+		return 9
+	case TEN:
+		return 10
+	case JACK:
+		return 11
+	case QUEEN:
+		return 12
+	case KING:
+		return 13
+	case ACE:
+		return 14
+	default:
+		panic(fmt.Sprintf("unknown rank: %v", s.Rank))
+	}
+}
 
+func (s Cards) Len() int {
+	return len(s)
+}
+
+func (s Cards) Less(i, j int) bool {
+	// descending
+	return s[i].RankToInt() > s[j].RankToInt()
+}
+
+func (s Cards) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }

@@ -8,8 +8,8 @@ import (
 )
 
 type Board struct {
-	PlayerList []Player
-	Game       *Game
+	Players []Player
+	Game    *Game
 }
 
 func (board *Board) Initialize(playerNum int, playerBankroll int) {
@@ -20,21 +20,21 @@ func (board *Board) Initialize(playerNum int, playerBankroll int) {
 		panic(fmt.Sprintf("invalid playerBankroll: %d", playerBankroll))
 	}
 
-	board.PlayerList = initializePlayerList(playerNum, playerBankroll)
+	board.Players = initializePlayers(playerNum, playerBankroll)
 	board.Game = nil
 }
 
 func (board *Board) StartGame(sb int, sbIndex int, desc string) {
-	if len(board.PlayerList) == 0 {
+	if len(board.Players) == 0 {
 		panic("board has not been initialized")
 	}
 	if board.Game != nil && board.Game.Round != SHOWDOWN {
 		panic("previous game is continuing")
 	}
-	if sb < 1 || sb > board.PlayerList[0].InitialBankroll/2 {
+	if sb < 1 || sb > board.Players[0].InitialBankroll/2 {
 		panic(fmt.Sprintf("sb too small: %d", sb))
 	}
-	if sbIndex < 0 || sbIndex >= len(board.PlayerList) {
+	if sbIndex < 0 || sbIndex >= len(board.Players) {
 		panic(fmt.Sprintf("invalid sbIndex: %d", sbIndex))
 	}
 
@@ -44,17 +44,17 @@ func (board *Board) StartGame(sb int, sbIndex int, desc string) {
 
 func (board *Board) PreFlop() {
 	game := board.Game
-	for _, player := range board.PlayerList {
+	for _, player := range board.Players {
 		card1 := game.DrawCard()
 		card2 := game.DrawCard()
-		player.Hands = []Card{card1, card2}
+		player.Hands = Cards{card1, card2}
 	}
 	card1 := game.DrawCard()
 	card2 := game.DrawCard()
 	card3 := game.DrawCard()
 	card4 := game.DrawCard()
 	card5 := game.DrawCard()
-	game.FlopCards = []Card{card1, card2, card3}
+	game.FlopCards = Cards{card1, card2, card3}
 	game.TurnCard = card4
 	game.RiverCard = card5
 
@@ -93,7 +93,7 @@ func (board *Board) Showdown() {
 	// todo
 
 
-	for _, player := range board.PlayerList {
+	for _, player := range board.Players {
 		player.Hands = nil
 	}
 
@@ -103,22 +103,22 @@ func (board *Board) Showdown() {
 	board.Render()
 }
 
-func initializePlayerList(playerNum int, playerBankroll int) []Player {
-	var playerList []Player
+func initializePlayers(playerNum int, playerBankroll int) []Player {
+	var players []Player
 	for i := 0; i < playerNum; i++ {
-		playerList = append(playerList, Player{
+		players = append(players, Player{
 			Name:            "Player_" + strconv.Itoa(i+1),
 			Index:           i,
-			Hands:           []Card{},
+			Hands:           Cards{},
 			Bankroll:        playerBankroll,
 			InitialBankroll: playerBankroll,
 		})
 	}
 
-	return playerList
+	return players
 }
 
-func initializeDeck() []Card {
+func initializeDeck() Cards {
 	deck := rawDeck
 	rand.Shuffle(len(deck), func(i, j int) {
 		deck[i], deck[j] = deck[j], deck[i]
@@ -135,7 +135,7 @@ func (board *Board) Render() {
 	}
 	fmt.Printf("[Game] %s\n", gameStr)
 	fmt.Printf("\n")
-	for _, player := range board.PlayerList {
+	for _, player := range board.Players {
 		playerStr, err := json.Marshal(player)
 		if err != nil {
 			panic(err)

@@ -2,19 +2,18 @@ package entity
 
 type Game struct {
 	Round         Round
-	Deck          []Card `json:"-"`
+	Deck          Cards `json:"-"`
 	Pot           int
 	SB            int
 	SBIndex       int
 	Desc          string
-	FlopCards     []Card `json:"-"`
+	FlopCards     Cards `json:"-"`
 	TurnCard      Card `json:"-"`
 	RiverCard     Card `json:"-"`
-	RevealedCards []Card
+	RevealedCards Cards
 }
 
 type Round string
-
 const INIT Round = "INIT"
 const PREFLOP Round = "PREFLOP"
 const FLOP Round = "FLOP"
@@ -23,7 +22,6 @@ const RIVER Round = "RIVER"
 const SHOWDOWN Round = "SHOWDOWN"
 
 type Position string
-
 const SB Position = "SB"
 const BB Position = "BB"
 const UTG Position = "UTG"

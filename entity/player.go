@@ -4,7 +4,7 @@ type Player struct {
 	Name            string
 	Index           int
 	Status          string // todo
-	Hands           []Card
+	Hands           Hands
 	Bankroll        int
 	InitialBankroll int
 }

@@ -1,6 +1,10 @@
 package util
 
-import "holdem/entity"
+import (
+	"fmt"
+	"holdem/entity"
+	"sort"
+)
 
 // score = ranking + cardPoint
 //
@@ -19,7 +23,7 @@ import "holdem/entity"
 // Two Pair:       2000000
 // One Pair:       1000000
 // High Card:            0
-func Score(cards []entity.Card) ([]entity.Card, int) {
+func Score(cards entity.Cards) (entity.Cards, int) {
 	if len(cards) < 5 {
 		panic("cards length in score method is not 7")
 	}
@@ -27,14 +31,22 @@ func Score(cards []entity.Card) ([]entity.Card, int) {
 	mostValuableCards, ranking := ranking(cards)
 	cardPoint := cardPoint(mostValuableCards)
 	score := ranking + cardPoint
-
 	return mostValuableCards, score
 }
 
-func ranking(cards []entity.Card) ([]entity.Card, int) {
-	
+func ranking(cards entity.Cards) (entity.Cards, int) {
+
 }
 
-func cardPoint(cards []entity.Card) int {
+func cardPoint(cards entity.Cards) int {
+	sort.Sort(cards)
 
+	cardPoint := 0
+
+	for _, card := range cards {
+		cardPoint *= 10
+		cardPoint += card.RankToInt()
+	}
+
+	return cardPoint
 }
