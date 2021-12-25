@@ -42,6 +42,6 @@ func testMain() {
 		{Suit: entity.CLUBS, Rank: entity.SIX},
 	}
 
-	fiveCards, score := util.Score(cards)
-	fmt.Printf("%d %v", score, fiveCards)
+	handType, fiveCards, score := util.Score(cards)
+	fmt.Printf("%s: %v %d", handType, fiveCards, score)
 }
