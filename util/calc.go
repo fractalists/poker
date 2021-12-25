@@ -1,18 +1,27 @@
 package util
 
 import (
-	"fmt"
 	"holdem/entity"
 	"sort"
 )
 
-// score = ranking + cardPoint
+const straightFlushPoint int = 8000000
+const fourOfAKindPoint int = 7000000
+const fullHousePoint int = 6000000
+const flushPoint int = 5000000
+const straightPoint int = 4000000
+const threeOfAKindPoint int = 3000000
+const twoPairPoint int = 2000000
+const onePairPoint int = 1000000
+const highCardPoint int = 0
+
+// score = rankingPoint + cardPoint
 //
 // ranking is something like flush, two pairs, etc.
 // cardPoint is converted from the hexadecimal value of the most five valuable cards.
-// For example, TEN is 10, King is 13, Ace is 14. Thus 4 Aces and 1 King is 0xEEEED (978669 in decimal), which is the highest value of card_point.
+// For example, TEN is 10, King is 13, Ace is 14. Thus 4 Aces and 1 King is 0xEEEED (978669 in decimal), which is the highest value of cardPoint.
 //
-// In order to make ranking more important than card_point, different ranking is designed as below:
+// In order to make rankingPoint more important than cardPoint, different rankingPoint is designed as below:
 //
 // Straight Flush: 8000000
 // Four of a Kind: 7000000
@@ -24,18 +33,49 @@ import (
 // One Pair:       1000000
 // High Card:            0
 func Score(cards entity.Cards) (entity.Cards, int) {
-	if len(cards) < 5 {
+	if len(cards) != 7 {
 		panic("cards length in score method is not 7")
 	}
 
-	mostValuableCards, ranking := ranking(cards)
+	mostValuableCards, rankingPoint := rankingPoint(cards)
 	cardPoint := cardPoint(mostValuableCards)
-	score := ranking + cardPoint
+	score := rankingPoint + cardPoint
 	return mostValuableCards, score
 }
 
-func ranking(cards entity.Cards) (entity.Cards, int) {
+func rankingPoint(cards entity.Cards) (entity.Cards, int) {
+	if fourOfAKindCards := hasFourOfAKind(cards); len(fourOfAKindCards) != 0 {
+		return fourOfAKindCards, fourOfAKindPoint
+	}
 
+	if flushCards := hasFlush(cards); len(flushCards) != 0 {
+		if straightFlushCards := hasStraight(flushCards); len(straightFlushCards) != 0 {
+			return straightFlushCards, straightFlushPoint
+		}
+		return flushCards, flushPoint
+	}
+
+	if fullHouseCards := hasFullHouse(cards); len(fullHouseCards) != 0 {
+		return fullHouseCards, fullHousePoint
+	}
+
+	if straightCards := hasStraight(cards); len(straightCards) != 0 {
+		return straightCards, straightPoint
+	}
+
+	if threeOfAKindCards := hasThreeOfAKind(cards); len(threeOfAKindCards) != 0 {
+		return threeOfAKindCards, threeOfAKindPoint
+	}
+
+	if twoPairCards := hasTwoPair(cards); len(twoPairCards) != 0 {
+		return twoPairCards, twoPairPoint
+	}
+
+	if onePairCards := hasOnePair(cards); len(onePairCards) != 0 {
+		return onePairCards, onePairPoint
+	}
+
+	return getHighCards(cards), highCardPoint
 }
 
 func cardPoint(cards entity.Cards) int {
@@ -49,4 +89,46 @@ func cardPoint(cards entity.Cards) int {
 	}
 
 	return cardPoint
+}
+
+func hasFourOfAKind(cards entity.Cards) entity.Cards {
+	
+}
+
+func hasFlush(cards entity.Cards) entity.Cards {
+
+}
+
+func hasStraight(cards entity.Cards) entity.Cards {
+
+}
+
+func hasFullHouse(cards entity.Cards) entity.Cards {
+
+}
+
+func hasThreeOfAKind(cards entity.Cards) entity.Cards {
+
+}
+
+func hasTwoPair(cards entity.Cards) entity.Cards {
+
+}
+
+func hasOnePair(cards entity.Cards) entity.Cards {
+
+}
+
+func getHighCards(cards entity.Cards) entity.Cards {
+	return getNHighestCards(cards, 5)
+}
+
+func getNHighestCards(cards entity.Cards, n int) entity.Cards {
+	if n < 1 || n > len(cards) {
+		panic("invalid n")
+	}
+
+	sort.Sort(cards)
+
+	return cards[:n]
 }
