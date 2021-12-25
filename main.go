@@ -15,7 +15,7 @@ func main() {
 		testMain()
 		return
 	}
-	
+
 	board.PreFlop()
 	//board.Action()
 

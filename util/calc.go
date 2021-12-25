@@ -40,6 +40,8 @@ func Score(cards entity.Cards) (entity.Cards, int) {
 	mostValuableCards, rankingPoint := rankingPoint(cards)
 	cardPoint := cardPoint(mostValuableCards)
 	score := rankingPoint + cardPoint
+
+	sort.Sort(mostValuableCards)
 	return mostValuableCards, score
 }
 
@@ -104,13 +106,11 @@ func hasFourOfAKind(cards entity.Cards) entity.Cards {
 			result := entity.Cards{}
 			foundHighCard := false
 			for _, card := range cards {
-				if foundHighCard == false && card.RankToInt() != i {
-					result = append(result, card)
-					foundHighCard = true
-				}
-
 				if card.RankToInt() == i {
 					result = append(result, card)
+				} else if foundHighCard == false {
+					result = append(result, card)
+					foundHighCard = true
 				}
 			}
 		}
@@ -139,7 +139,27 @@ func hasFullHouse(cards entity.Cards) entity.Cards {
 
 func hasThreeOfAKind(cards entity.Cards) entity.Cards {
 	sort.Sort(cards)
-	// todo
+	rankMap := make([]int, 15)
+
+	for _, card := range cards {
+		rankMap[card.RankToInt()] += 1
+	}
+
+	for i := 14; i >= 0; i-- {
+		if rankMap[i] == 3 {
+			result := entity.Cards{}
+			otherHighCardCount := 0
+			for _, card := range cards {
+				if card.RankToInt() == i {
+					result = append(result, card)
+				} else if otherHighCardCount != 2 {
+					result = append(result, card)
+					otherHighCardCount += 1
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
