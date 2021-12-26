@@ -177,18 +177,37 @@ func isRoyalFlush(cards Cards) bool {
 
 func hasStraight(cards Cards) Cards {
 	sort.Sort(cards)
-	rankMemory := make([]int, 15)
+	rankMemory := make([]*Card, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] += 1
+		rankMemory[card.RankToInt()] = &Card{Suit: card.Suit, Rank: card.Rank}
 
 		if card.Rank == ACE {
 			// ACE also works as 1
-			rankMemory[1] += 1
+			rankMemory[1] = &Card{Suit: card.Suit, Rank: card.Rank}
 		}
 	}
 
-	// consider 5 4 3 2 A
+	var start int
+	hasStart := false
+	for i := 14; i > 0; i-- {
+		if rankMemory[i] != nil {
+			if hasStart == false {
+				start = i
+				hasStart = true
+			} else if start-i == 4 {
+				var result []Card
+				for j := start; j >= i; j-- {
+					result = append(result, *rankMemory[j])
+				}
+				return result
+			}
+
+		} else if hasStart == true {
+			hasStart = false
+		}
+	}
+
 	return nil
 }
 
