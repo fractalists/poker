@@ -1,6 +1,7 @@
 package src
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -17,6 +18,8 @@ func TestScoreWithFourOfAKind(t *testing.T) {
 	}
 
 	handType, fiveCards, score := Score(cards)
+	fmt.Printf("%s: %v %d", handType, fiveCards, score)
+
 	assert.Equal(t, handType, FourOfAKind)
 	assert.Contains(t, fiveCards, Card{Suit: HEARTS, Rank: ACE})
 	assert.Contains(t, fiveCards, Card{Suit: SPADES, Rank: ACE})

@@ -5,6 +5,7 @@ import (
 )
 
 type HandType string
+
 const RoyalFlush HandType = "Royal flush"
 const StraightFlush HandType = "Straight flush"
 const FourOfAKind HandType = "Four of a kind"

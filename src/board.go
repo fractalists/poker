@@ -92,7 +92,6 @@ func (board *Board) River() {
 func (board *Board) Showdown() {
 	// todo
 
-
 	for _, player := range board.Players {
 		player.Hands = nil
 	}

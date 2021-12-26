@@ -14,6 +14,7 @@ type Game struct {
 }
 
 type Round string
+
 const INIT Round = "INIT"
 const PREFLOP Round = "PREFLOP"
 const FLOP Round = "FLOP"
@@ -22,6 +23,7 @@ const RIVER Round = "RIVER"
 const SHOWDOWN Round = "SHOWDOWN"
 
 type Position string
+
 const SB Position = "SB"
 const BB Position = "BB"
 const UTG Position = "UTG"
