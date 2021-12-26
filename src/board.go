@@ -138,11 +138,8 @@ func initializeDeck() Cards {
 }
 
 func (board *Board) Render() {
-	fmt.Printf("\n")
-	fmt.Printf("%v", board.Game)
-	fmt.Printf("\n")
+	fmt.Printf("\n%v\n", board.Game)
 	for _, player := range board.Players {
 		fmt.Printf("%v\n", player)
 	}
-	fmt.Printf("\n")
 }

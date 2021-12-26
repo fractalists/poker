@@ -7,10 +7,10 @@ type Game struct {
 	Deck          Cards
 	Pot           int
 	SmallBlinds   int
+	BoardCards    Cards
 	CurrentAmount int
 	SBIndex       int
 	Desc          string
-	BoardCards    Cards
 }
 
 type Round string
@@ -51,6 +51,10 @@ func (game *Game) DrawCard() Card {
 }
 
 func (game *Game) String() string {
-	return fmt.Sprintf("BoardCards: %v\nRound: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d\nDesc: %s\n", game.BoardCards, game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount, game.Desc)
+	return fmt.Sprintf("BoardCards: %v\n"+
+		"Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d\n"+
+		"Desc: %s\n",
+		game.BoardCards,
+		game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount,
+		game.Desc)
 }
-
