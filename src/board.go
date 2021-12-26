@@ -41,6 +41,7 @@ func (board *Board) StartGame(smallBlinds int, sbIndex int, desc string) {
 }
 
 func (board *Board) PreFlop() {
+	// todo
 	game := board.Game
 	for _, player := range board.Players {
 		card1 := game.DrawCard()
@@ -60,6 +61,7 @@ func (board *Board) PreFlop() {
 }
 
 func (board *Board) Flop() {
+	// todo
 	game := board.Game
 	game.BoardCards[0].Revealed = true
 	game.BoardCards[1].Revealed = true
@@ -70,6 +72,7 @@ func (board *Board) Flop() {
 }
 
 func (board *Board) Turn() {
+	// todo
 	game := board.Game
 
 	game.BoardCards[3].Revealed = true
@@ -79,6 +82,7 @@ func (board *Board) Turn() {
 }
 
 func (board *Board) River() {
+	// todo
 	game := board.Game
 
 	game.BoardCards[4].Revealed = true
@@ -88,6 +92,7 @@ func (board *Board) River() {
 }
 
 func (board *Board) Showdown() {
+	// todo
 	scoreMap := map[*Player]ScoreResult{}
 	for _, player := range board.Players {
 		player.Status = PlayerStatusShowdown
@@ -121,6 +126,7 @@ func (board *Board) Showdown() {
 }
 
 func (board *Board) EndGame() {
+	// todo
 	// clear
 	for _, player := range board.Players {
 		player.Hands = nil
