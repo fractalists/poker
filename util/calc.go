@@ -177,7 +177,16 @@ func isRoyalFlush(cards entity.Cards) bool {
 
 func hasStraight(cards entity.Cards) entity.Cards {
 	sort.Sort(cards)
-	// todo
+	rankMemory := make([]int, 15)
+
+	for _, card := range cards {
+		rankMemory[card.RankToInt()] += 1
+
+		if card.Rank == entity.ACE {
+			// ACE also works as 1
+			rankMemory[1] += 1
+		}
+	}
 
 	// consider 5 4 3 2 A
 	return nil
