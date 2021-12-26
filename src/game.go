@@ -51,9 +51,9 @@ func (game *Game) DrawCard() Card {
 }
 
 func (game *Game) String() string {
-	return fmt.Sprintf("BoardCards: %v\n"+
-		"Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d\n"+
-		"Desc: %s\n",
+	return fmt.Sprintf("# BoardCards: %v\n"+
+		"# Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d\n"+
+		"# Desc: %s\n",
 		game.BoardCards,
 		game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount,
 		game.Desc)

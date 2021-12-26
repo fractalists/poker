@@ -19,13 +19,13 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 
 		var desc string
 		if bankroll <= minRequiredAmount {
-			desc = "You can choose (enter number): \n" +
+			desc = "--> You can choose (enter number): \n" +
 				"[!] Bet\n" +
 				"[!] Call\n" +
 				"[3] Fold\n" +
 				"[4] AllIn\n"
 		} else {
-			desc = "You can choose (enter number): \n" +
+			desc = "--> You can choose (enter number): \n" +
 				"[1] Bet\n" +
 				"[2] Call\n" +
 				"[3] Fold\n" +
@@ -41,36 +41,36 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 			actionNumber = strings.ReplaceAll(actionNumber, "\n", "")
 			actionNumber = strings.ReplaceAll(actionNumber, "\r", "")
 			if err != nil {
-				fmt.Printf("input error: %v\n", err)
+				fmt.Printf("!! input error: %v !!\n", err)
 				wrongInputCount++
 				continue
 			}
 
 			if actionNumber == "1" {
 				if bankroll <= minRequiredAmount {
-					fmt.Printf("You don't have enough money to bet.\n")
+					fmt.Printf("!! You don't have enough money to bet !!\n")
 					wrongInputCount++
 					continue
 				}
 
-				fmt.Printf("How much do you want to bet? [%d, %d]\n", minRequiredAmount, bankroll)
+				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", minRequiredAmount, bankroll)
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
 				amountStr = strings.ReplaceAll(amountStr, "\r", "")
 				if err != nil {
-					fmt.Printf("input error: %v\n", err)
+					fmt.Printf("!! input error: %v !!\n", err)
 					wrongInputCount++
 					continue
 				}
 
 				amount, err := strconv.Atoi(amountStr)
 				if err != nil {
-					fmt.Printf("Atoi error: %v\n", err)
+					fmt.Printf("!! Atoi error: %v !!\n", err)
 					wrongInputCount++
 					continue
 				} else if amount <= minRequiredAmount || amount > bankroll {
-					fmt.Println("invalid input amount")
+					fmt.Println("!! invalid input amount !!")
 					wrongInputCount++
 					continue
 				}
@@ -82,7 +82,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 
 			} else if actionNumber == "2" {
 				if bankroll <= minRequiredAmount {
-					fmt.Printf("You don't have enough money to call.\n")
+					fmt.Printf("!! You don't have enough money to call !!\n")
 					wrongInputCount++
 					continue
 				}
@@ -105,7 +105,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 
 			} else {
 				wrongInputCount++
-				fmt.Printf("invalid action input\n")
+				fmt.Printf("!! invalid action input !!\n")
 				continue
 			}
 		}

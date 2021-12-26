@@ -163,7 +163,7 @@ func (board *Board) EndGame() {
 
 func (board *Board) Render() {
 	fmt.Printf("---------------------------------------------------------------\n"+
-		"%v\n", board.Game)
+		"%v", board.Game)
 	for _, player := range board.Players {
 		fmt.Printf("%v\n", player)
 	}
@@ -171,7 +171,7 @@ func (board *Board) Render() {
 
 func (board *Board) RenderToSomebody(playerIndex int) {
 	fmt.Printf("---------------------------------------------------------------\n"+
-		"%v\n", board.Game)
+		"%v", board.Game)
 	for i := 0; i < len(board.Players); i++ {
 		player := board.Players[i]
 		if i == playerIndex {
@@ -305,7 +305,7 @@ func (board *Board) checkAction(playerIndex int, action Action) error {
 
 func (board *Board) performAction(playerIndex int, action Action) {
 	currentPlayer := board.Players[playerIndex]
-	fmt.Printf("%s: %v\n", currentPlayer.Name, action)
+	fmt.Printf("--> [%s]'s action: %v\n", currentPlayer.Name, action)
 
 	switch action.ActionType {
 	case ActionTypeBet:
