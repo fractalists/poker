@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"holdem/entity"
-	"holdem/util"
+	"holdem/src"
 )
 
 func main() {
-	board := &entity.Board{}
+	board := &src.Board{}
 	board.Initialize(6, 100)
 	board.StartGame(1, 0, "round_1")
 
@@ -32,16 +31,16 @@ func main() {
 }
 
 func testMain() {
-	cards := entity.Cards{
-		{Suit: entity.HEARTS, Rank: entity.FOUR},
-		{Suit: entity.HEARTS, Rank: entity.FIVE},
-		{Suit: entity.HEARTS, Rank: entity.KING},
-		{Suit: entity.HEARTS, Rank: entity.ACE},
-		{Suit: entity.SPADES, Rank: entity.THREE},
-		{Suit: entity.DIAMONDS, Rank: entity.FOUR},
-		{Suit: entity.CLUBS, Rank: entity.JACK},
+	cards := src.Cards{
+		{Suit: src.HEARTS, Rank: src.FOUR},
+		{Suit: src.HEARTS, Rank: src.FIVE},
+		{Suit: src.HEARTS, Rank: src.KING},
+		{Suit: src.HEARTS, Rank: src.ACE},
+		{Suit: src.SPADES, Rank: src.THREE},
+		{Suit: src.DIAMONDS, Rank: src.FOUR},
+		{Suit: src.CLUBS, Rank: src.JACK},
 	}
 
-	handType, fiveCards, score := util.Score(cards)
+	handType, fiveCards, score := src.Score(cards)
 	fmt.Printf("%s: %v %d", handType, fiveCards, score)
 }

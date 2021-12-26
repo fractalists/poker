@@ -1,4 +1,4 @@
-package entity
+package src
 
 type Game struct {
 	Round         Round
@@ -8,8 +8,8 @@ type Game struct {
 	SBIndex       int
 	Desc          string
 	FlopCards     Cards `json:"-"`
-	TurnCard      Card `json:"-"`
-	RiverCard     Card `json:"-"`
+	TurnCard      Card  `json:"-"`
+	RiverCard     Card  `json:"-"`
 	RevealedCards Cards
 }
 

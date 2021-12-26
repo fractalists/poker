@@ -1,7 +1,6 @@
-package util
+package src
 
 import (
-	"holdem/entity"
 	"sort"
 )
 
@@ -18,16 +17,16 @@ const OnePair HandType = "One pair"
 const HighCard HandType = "High card"
 
 var rankingPointMap = map[HandType]int{
-	RoyalFlush: 9000000,
+	RoyalFlush:    9000000,
 	StraightFlush: 8000000,
-	FourOfAKind: 7000000,
-	FullHouse: 6000000,
-	Flush: 5000000,
-	Straight: 4000000,
-	ThreeOfAKind: 3000000,
-	TwoPair: 2000000,
-	OnePair: 1000000,
-	HighCard: 0,
+	FourOfAKind:   7000000,
+	FullHouse:     6000000,
+	Flush:         5000000,
+	Straight:      4000000,
+	ThreeOfAKind:  3000000,
+	TwoPair:       2000000,
+	OnePair:       1000000,
+	HighCard:      0,
 }
 
 // score = rankingPoint + cardPoint
@@ -47,7 +46,7 @@ var rankingPointMap = map[HandType]int{
 // Two Pair:       2000000
 // One Pair:       1000000
 // High Card:            0
-func Score(cards entity.Cards) (HandType, entity.Cards, int) {
+func Score(cards Cards) (HandType, Cards, int) {
 	if len(cards) != 7 {
 		panic("cards length in score method is not 7")
 	}
@@ -61,7 +60,7 @@ func Score(cards entity.Cards) (HandType, entity.Cards, int) {
 	return handType, mostValuableCards, score
 }
 
-func getHandType(cards entity.Cards) (HandType, entity.Cards) {
+func getHandType(cards Cards) (HandType, Cards) {
 	if fourOfAKindCards := hasFourOfAKind(cards); len(fourOfAKindCards) != 0 {
 		return FourOfAKind, fourOfAKindCards
 	}
@@ -101,8 +100,8 @@ func getHandType(cards entity.Cards) (HandType, entity.Cards) {
 	return HighCard, getHighCards(cards)
 }
 
-func getCardPoint(cards entity.Cards) int {
-	deepCopy := entity.Cards{}
+func getCardPoint(cards Cards) int {
+	deepCopy := Cards{}
 	for _, card := range cards {
 		deepCopy = append(deepCopy, card)
 	}
@@ -116,7 +115,7 @@ func getCardPoint(cards entity.Cards) int {
 	return cardPoint
 }
 
-func hasFourOfAKind(cards entity.Cards) entity.Cards {
+func hasFourOfAKind(cards Cards) Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -126,11 +125,11 @@ func hasFourOfAKind(cards entity.Cards) entity.Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 4 {
-			result := entity.Cards{}
+			result := Cards{}
 			needHighCardCount := 1
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(entity.Cards{card}, result...)
+					result = append(Cards{card}, result...)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -143,7 +142,7 @@ func hasFourOfAKind(cards entity.Cards) entity.Cards {
 	return nil
 }
 
-func hasFlush(cards entity.Cards) entity.Cards {
+func hasFlush(cards Cards) Cards {
 	sort.Sort(cards)
 	suitMemory := make([]int, 5)
 
@@ -153,7 +152,7 @@ func hasFlush(cards entity.Cards) entity.Cards {
 
 	for i := 4; i >= 1; i-- {
 		if suitMemory[i] >= 5 {
-			result := entity.Cards{}
+			result := Cards{}
 			for _, card := range cards {
 				if card.SuitToInt() == i {
 					result = append(result, card)
@@ -166,23 +165,23 @@ func hasFlush(cards entity.Cards) entity.Cards {
 	return nil
 }
 
-func isRoyalFlush(cards entity.Cards) bool {
+func isRoyalFlush(cards Cards) bool {
 	if len(cards) != 5 {
 		panic("isRoyalFlush cards length is not 5")
 	}
 
 	sort.Sort(cards)
-	return cards[4].Rank == entity.TEN
+	return cards[4].Rank == TEN
 }
 
-func hasStraight(cards entity.Cards) entity.Cards {
+func hasStraight(cards Cards) Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
 	for _, card := range cards {
 		rankMemory[card.RankToInt()] += 1
 
-		if card.Rank == entity.ACE {
+		if card.Rank == ACE {
 			// ACE also works as 1
 			rankMemory[1] += 1
 		}
@@ -192,13 +191,13 @@ func hasStraight(cards entity.Cards) entity.Cards {
 	return nil
 }
 
-func hasFullHouse(cards entity.Cards) entity.Cards {
+func hasFullHouse(cards Cards) Cards {
 	sort.Sort(cards)
 	// todo
 	return nil
 }
 
-func hasThreeOfAKind(cards entity.Cards) entity.Cards {
+func hasThreeOfAKind(cards Cards) Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -208,11 +207,11 @@ func hasThreeOfAKind(cards entity.Cards) entity.Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 3 {
-			result := entity.Cards{}
+			result := Cards{}
 			needHighCardCount := 2
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(entity.Cards{card}, result...)
+					result = append(Cards{card}, result...)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -225,13 +224,13 @@ func hasThreeOfAKind(cards entity.Cards) entity.Cards {
 	return nil
 }
 
-func hasTwoPair(cards entity.Cards) entity.Cards {
+func hasTwoPair(cards Cards) Cards {
 	sort.Sort(cards)
 	// todo
 	return nil
 }
 
-func hasOnePair(cards entity.Cards) entity.Cards {
+func hasOnePair(cards Cards) Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -241,11 +240,11 @@ func hasOnePair(cards entity.Cards) entity.Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 2 {
-			result := entity.Cards{}
+			result := Cards{}
 			needHighCardCount := 3
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(entity.Cards{card}, result...)
+					result = append(Cards{card}, result...)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -258,11 +257,11 @@ func hasOnePair(cards entity.Cards) entity.Cards {
 	return nil
 }
 
-func getHighCards(cards entity.Cards) entity.Cards {
+func getHighCards(cards Cards) Cards {
 	return getNHighestCards(cards, 5)
 }
 
-func getNHighestCards(cards entity.Cards, n int) entity.Cards {
+func getNHighestCards(cards Cards, n int) Cards {
 	if n < 1 || n > len(cards) {
 		panic("invalid n")
 	}

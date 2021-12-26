@@ -1,4 +1,4 @@
-package entity
+package src
 
 type Player struct {
 	Name            string

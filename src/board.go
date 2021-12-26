@@ -1,4 +1,4 @@
-package entity
+package src
 
 import (
 	"encoding/json"
