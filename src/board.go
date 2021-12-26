@@ -3,7 +3,6 @@ package src
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 )
 
 type Board struct {
@@ -113,19 +112,11 @@ func (board *Board) EndGame() {
 	board.Render()
 }
 
-func initializePlayers(playerNum int, playerBankroll int) []*Player {
-	var players []*Player
-	for i := 0; i < playerNum; i++ {
-		players = append(players, &Player{
-			Name:            "Player_" + strconv.Itoa(i+1),
-			Index:           i,
-			Hands:           Cards{},
-			Bankroll:        playerBankroll,
-			InitialBankroll: playerBankroll,
-		})
+func (board *Board) Render() {
+	fmt.Printf("\n%v\n", board.Game)
+	for _, player := range board.Players {
+		fmt.Printf("%v\n", player)
 	}
-
-	return players
 }
 
 func initializeDeck() Cards {
@@ -133,13 +124,5 @@ func initializeDeck() Cards {
 	rand.Shuffle(len(deck), func(i, j int) {
 		deck[i], deck[j] = deck[j], deck[i]
 	})
-
 	return deck
-}
-
-func (board *Board) Render() {
-	fmt.Printf("\n%v\n", board.Game)
-	for _, player := range board.Players {
-		fmt.Printf("%v\n", player)
-	}
 }

@@ -13,14 +13,12 @@ type Card struct {
 type Cards []Card
 
 type Suit string
-
 const HEARTS Suit = "♥"
 const DIAMONDS Suit = "♦"
 const SPADES Suit = "♠"
 const CLUBS Suit = "♣"
 
 type Rank string
-
 const TWO Rank = "2"
 const THREE Rank = "3"
 const FOUR Rank = "4"
@@ -94,7 +92,6 @@ func (card Card) String() string {
 	if card.Revealed {
 		return fmt.Sprintf("%s%s", card.Suit, card.Rank)
 	}
-
 	return "**"
 }
 
@@ -160,7 +157,6 @@ func (cards Cards) Less(i, j int) bool {
 	//}
 	//
 	//return cards[i].SuitToInt() > cards[j].SuitToInt()
-
 	return cards[i].RankToInt() > cards[j].RankToInt()
 }
 
