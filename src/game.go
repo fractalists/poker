@@ -4,7 +4,7 @@ type Game struct {
 	Round         Round
 	Deck          Cards `json:"-"`
 	Pot           int
-	SB            int
+	SmallBlinds   int
 	SBIndex       int
 	Desc          string
 	FlopCards     Cards `json:"-"`
@@ -30,11 +30,11 @@ const UTG Position = "UTG"
 const CUTOFF Position = "CUTOFF"
 const BUTTON Position = "BUTTON"
 
-func (game *Game) Initialize(sb int, sbIndex int, desc string) {
+func (game *Game) Initialize(smallBlinds int, sbIndex int, desc string) {
 	game.Round = INIT
 	game.Deck = initializeDeck()
 	game.Pot = 0
-	game.SB = sb
+	game.SmallBlinds = smallBlinds
 	game.SBIndex = sbIndex
 	game.Desc = desc
 }

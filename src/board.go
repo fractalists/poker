@@ -24,22 +24,22 @@ func (board *Board) Initialize(playerNum int, playerBankroll int) {
 	board.Game = nil
 }
 
-func (board *Board) StartGame(sb int, sbIndex int, desc string) {
+func (board *Board) StartGame(smallBlinds int, sbIndex int, desc string) {
 	if len(board.Players) == 0 {
 		panic("board has not been initialized")
 	}
 	if board.Game != nil && board.Game.Round != SHOWDOWN {
 		panic("previous game is continuing")
 	}
-	if sb < 1 || sb > board.Players[0].InitialBankroll/2 {
-		panic(fmt.Sprintf("sb too small: %d", sb))
+	if smallBlinds < 1 || smallBlinds > board.Players[0].InitialBankroll/2 {
+		panic(fmt.Sprintf("smallBlinds too small: %d", smallBlinds))
 	}
 	if sbIndex < 0 || sbIndex >= len(board.Players) {
 		panic(fmt.Sprintf("invalid sbIndex: %d", sbIndex))
 	}
 
 	board.Game = &Game{}
-	board.Game.Initialize(sb, sbIndex, desc)
+	board.Game.Initialize(smallBlinds, sbIndex, desc)
 }
 
 func (board *Board) PreFlop() {
