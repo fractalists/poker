@@ -22,4 +22,6 @@ func main() {
 	//board.Action()
 
 	board.Showdown()
+
+	board.EndGame()
 }

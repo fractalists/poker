@@ -8,7 +8,7 @@ import (
 )
 
 type Board struct {
-	Players []Player
+	Players []*Player
 	Game    *Game
 }
 
@@ -93,7 +93,7 @@ func (board *Board) Showdown() {
 	// todo
 
 	for _, player := range board.Players {
-		player.Hands = nil
+		player.Status = PlayerStatusShowdown
 	}
 
 	// settle pot and bankroll
@@ -102,10 +102,20 @@ func (board *Board) Showdown() {
 	board.Render()
 }
 
-func initializePlayers(playerNum int, playerBankroll int) []Player {
-	var players []Player
+func (board *Board) EndGame() {
+	// clear
+	for _, player := range board.Players {
+		player.Hands = nil
+	}
+
+	board.Game = nil
+	board.Render()
+}
+
+func initializePlayers(playerNum int, playerBankroll int) []*Player {
+	var players []*Player
 	for i := 0; i < playerNum; i++ {
-		players = append(players, Player{
+		players = append(players, &Player{
 			Name:            "Player_" + strconv.Itoa(i+1),
 			Index:           i,
 			Hands:           Cards{},
@@ -135,11 +145,7 @@ func (board *Board) Render() {
 	fmt.Printf("[Game] %s\n", gameStr)
 	fmt.Printf("\n")
 	for _, player := range board.Players {
-		playerStr, err := json.Marshal(player)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("[Player] %s\n", playerStr)
+		fmt.Printf("%v\n", player)
 	}
 	fmt.Printf("\n")
 }

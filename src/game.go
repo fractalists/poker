@@ -5,6 +5,7 @@ type Game struct {
 	Deck          Cards `json:"-"`
 	Pot           int
 	SmallBlinds   int
+	CurrentAmount int
 	SBIndex       int
 	Desc          string
 	FlopCards     Cards `json:"-"`
@@ -35,6 +36,7 @@ func (game *Game) Initialize(smallBlinds int, sbIndex int, desc string) {
 	game.Deck = initializeDeck()
 	game.Pot = 0
 	game.SmallBlinds = smallBlinds
+	game.CurrentAmount = 0
 	game.SBIndex = sbIndex
 	game.Desc = desc
 }
