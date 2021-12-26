@@ -61,6 +61,6 @@ func initializePlayers(playerNum int, playerBankroll int) []*Player {
 		})
 	}
 
-	players[len(players) - 1].React = createHumanReactFunc(len(players) - 1)
+	players[len(players)-1].React = createHumanReactFunc(len(players) - 1)
 	return players
 }

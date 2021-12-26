@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"holdem/src"
+	"os"
 )
 
 func main() {
@@ -15,4 +18,8 @@ func main() {
 	board.River()
 	board.Showdown()
 	board.EndGame()
+
+	fmt.Printf("Game Over. Press any key to exit.\n")
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
 }

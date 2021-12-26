@@ -39,6 +39,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 			reader := bufio.NewReader(os.Stdin)
 			actionNumber, err := reader.ReadString('\n')
 			actionNumber = strings.ReplaceAll(actionNumber, "\n", "")
+			actionNumber = strings.ReplaceAll(actionNumber, "\r", "")
 			if err != nil {
 				fmt.Printf("input error: %v\n", err)
 				wrongInputCount++
@@ -56,6 +57,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
+				amountStr = strings.ReplaceAll(amountStr, "\r", "")
 				if err != nil {
 					fmt.Printf("input error: %v\n", err)
 					wrongInputCount++

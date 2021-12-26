@@ -62,23 +62,22 @@ func (board *Board) PreFlop() {
 
 			if gotSmallBlind == false {
 				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: board.Game.SmallBlinds})
+				board.RenderToSomebody(actualIndex)
 				gotSmallBlind = true
-				board.Render()
 				continue
 			}
 			if gotSmallBlind && gotBigBlind == false {
 				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
+				board.RenderToSomebody(actualIndex)
 				gotBigBlind = true
-				board.Render()
 				continue
 			}
 
+			board.RenderToSomebody(actualIndex)
 			board.callReact(actualIndex)
-			board.Render()
 		}
 
 		if board.checkIfRoundIsFinish() {
-			board.Render()
 			return
 		}
 	}
@@ -167,6 +166,30 @@ func (board *Board) Render() {
 		"%v\n", board.Game)
 	for _, player := range board.Players {
 		fmt.Printf("%v\n", player)
+	}
+}
+
+func (board *Board) RenderToSomebody(playerIndex int) {
+	fmt.Printf("---------------------------------------------------------------\n"+
+		"%v\n", board.Game)
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if i == playerIndex {
+			visiblePlayer := &Player{
+				Name:            player.Name,
+				Index:           player.Index,
+				Status:          player.Status,
+				InitialBankroll: player.InitialBankroll,
+				Bankroll:        player.Bankroll,
+				InPotAmount:     player.InPotAmount,
+			}
+			for _, card := range player.Hands {
+				visiblePlayer.Hands = append(visiblePlayer.Hands, Card{Suit: card.Suit, Rank: card.Rank, Revealed: true})
+			}
+			fmt.Printf("%v\n", visiblePlayer)
+		} else {
+			fmt.Printf("%v\n", player)
+		}
 	}
 }
 
