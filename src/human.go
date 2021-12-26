@@ -63,7 +63,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					fmt.Printf("Atoi error: %v\n", err)
 					wrongInputCount++
 					continue
-				} else if amount < minRequiredAmount || amount > bankroll {
+				} else if amount <= minRequiredAmount || amount > bankroll {
 					fmt.Println("invalid input amount")
 					wrongInputCount++
 					continue

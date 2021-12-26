@@ -11,13 +11,6 @@ type Board struct {
 }
 
 func (board *Board) Initialize(playerNum int, playerBankroll int) {
-	if playerNum < 2 || playerNum > 23 {
-		panic(fmt.Sprintf("invalid playerNum: %d", playerNum))
-	}
-	if playerBankroll < 2 {
-		panic(fmt.Sprintf("invalid playerBankroll: %d", playerBankroll))
-	}
-
 	board.Players = initializePlayers(playerNum, playerBankroll)
 	board.Game = nil
 }
@@ -58,6 +51,7 @@ func (board *Board) PreFlop() {
 	game.Round = PREFLOP
 	board.Render()
 
+	for
 }
 
 func (board *Board) Flop() {
@@ -222,7 +216,53 @@ func (board *Board) callReact(playerIndex int) {
 	if playerIndex < 0 || playerIndex >= len(board.Players) {
 		panic("callReact invalid input")
 	}
-	deepCopyBoard := board.deepCopyBoardWithoutLeak(playerIndex)
 
-	action := board.Players[playerIndex].React(deepCopyBoard)
+	currentPlayer := board.Players[playerIndex]
+
+	wrongInputCount := 0
+	wrongInputLimit := 3
+	var action Action
+	for wrongInputCount < wrongInputLimit {
+		deepCopyBoard := board.deepCopyBoardWithoutLeak(playerIndex)
+		action = currentPlayer.React(deepCopyBoard)
+		if err := board.checkAction(playerIndex, action); err != nil {
+			wrongInputCount++
+			continue
+		}
+		break
+	}
+
+	switch action.ActionType {
+	case ActionTypeBet:
+		currentPlayer.Bankroll -= action.Amount
+		currentPlayer.InPotAmount += action.Amount
+		board.Game.Pot += action.Amount
+		board.Game.CurrentAmount = currentPlayer.InPotAmount
+	case ActionTypeCall:
+		currentPlayer.Bankroll -= action.Amount
+		currentPlayer.InPotAmount += action.Amount
+		board.Game.Pot += action.Amount
+	case ActionTypeFold:
+		currentPlayer.Status = PlayerStatusOut
+	case ActionTypeAllIn:
+		currentPlayer.Status = PlayerStatusAllIn
+		currentPlayer.Bankroll -= action.Amount
+		currentPlayer.InPotAmount += action.Amount
+		board.Game.Pot += action.Amount
+		if currentPlayer.InPotAmount > board.Game.CurrentAmount {
+			board.Game.CurrentAmount = currentPlayer.InPotAmount
+		}
+	default:
+		panic(fmt.Sprintf("unknown actionType: %s", action.ActionType))
+	}
+}
+
+func (board *Board) checkAction(playerIndex int, action Action) error {
+	// todo
+	return nil
+}
+
+func (board *Board) checkIfRoundIsFinish() bool {
+	// todo
+	return true
 }

@@ -40,6 +40,13 @@ func (player *Player) String() string {
 }
 
 func initializePlayers(playerNum int, playerBankroll int) []*Player {
+	if playerNum < 2 || playerNum > 23 {
+		panic(fmt.Sprintf("invalid playerNum: %d", playerNum))
+	}
+	if playerBankroll < 2 {
+		panic(fmt.Sprintf("invalid playerBankroll: %d", playerBankroll))
+	}
+
 	var players []*Player
 	for i := 0; i < playerNum; i++ {
 		players = append(players, &Player{
@@ -53,5 +60,7 @@ func initializePlayers(playerNum int, playerBankroll int) []*Player {
 			InPotAmount:     0,
 		})
 	}
+
+	players[0].React = createHumanReactFunc(0)
 	return players
 }
