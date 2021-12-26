@@ -7,6 +7,7 @@ import (
 type Card struct {
 	Suit Suit
 	Rank Rank
+	Revealed bool
 }
 
 type Cards []Card
@@ -90,7 +91,11 @@ var rawDeck = Cards{
 }
 
 func (card Card) String() string {
-	return fmt.Sprintf("%s%s", card.Suit, card.Rank)
+	if card.Revealed {
+		return fmt.Sprintf("%s%s", card.Suit, card.Rank)
+	}
+
+	return "**"
 }
 
 func (card Card) RankToInt() int {

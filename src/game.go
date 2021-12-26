@@ -1,17 +1,16 @@
 package src
 
+import "fmt"
+
 type Game struct {
 	Round         Round
-	Deck          Cards `json:"-"`
+	Deck          Cards
 	Pot           int
 	SmallBlinds   int
 	CurrentAmount int
 	SBIndex       int
 	Desc          string
-	FlopCards     Cards `json:"-"`
-	TurnCard      Card  `json:"-"`
-	RiverCard     Card  `json:"-"`
-	RevealedCards Cards
+	BoardCards    Cards
 }
 
 type Round string
@@ -36,7 +35,7 @@ func (game *Game) Initialize(smallBlinds int, sbIndex int, desc string) {
 	game.Deck = initializeDeck()
 	game.Pot = 0
 	game.SmallBlinds = smallBlinds
-	game.CurrentAmount = 0
+	game.CurrentAmount = 2 * smallBlinds
 	game.SBIndex = sbIndex
 	game.Desc = desc
 }
@@ -50,3 +49,8 @@ func (game *Game) DrawCard() Card {
 	game.Deck = game.Deck[1:]
 	return card
 }
+
+func (game *Game) String() string {
+	return fmt.Sprintf("BoardCards: %v\nRound: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d\nDesc: %s\n", game.BoardCards, game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount, game.Desc)
+}
+

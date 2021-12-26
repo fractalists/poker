@@ -15,12 +15,5 @@ type Player struct {
 }
 
 func (player Player) String() string {
-	var hands string
-	if player.Status == PlayerStatusShowdown {
-		hands = fmt.Sprintf("%v", player.Hands)
-	} else {
-		hands = fmt.Sprintf("[hidden]")
-	}
-
-	return fmt.Sprintf("Player: %s, hands: %s, bankroll: %d", player.Name, hands, player.Bankroll)
+	return fmt.Sprintf("[%s] hands: %v, bankroll: %d", player.Name, player.Hands, player.Bankroll)
 }

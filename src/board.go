@@ -1,7 +1,6 @@
 package src
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -54,9 +53,7 @@ func (board *Board) PreFlop() {
 	card3 := game.DrawCard()
 	card4 := game.DrawCard()
 	card5 := game.DrawCard()
-	game.FlopCards = Cards{card1, card2, card3}
-	game.TurnCard = card4
-	game.RiverCard = card5
+	game.BoardCards = Cards{card1, card2, card3, card4, card5}
 
 	game.Round = PREFLOP
 	board.Render()
@@ -64,8 +61,9 @@ func (board *Board) PreFlop() {
 
 func (board *Board) Flop() {
 	game := board.Game
-
-	game.RevealedCards = append(game.RevealedCards, game.FlopCards...)
+	game.BoardCards[0].Revealed = true
+	game.BoardCards[1].Revealed = true
+	game.BoardCards[2].Revealed = true
 
 	board.Game.Round = FLOP
 	board.Render()
@@ -74,7 +72,7 @@ func (board *Board) Flop() {
 func (board *Board) Turn() {
 	game := board.Game
 
-	game.RevealedCards = append(game.RevealedCards, game.TurnCard)
+	game.BoardCards[3].Revealed = true
 
 	board.Game.Round = TURN
 	board.Render()
@@ -83,7 +81,7 @@ func (board *Board) Turn() {
 func (board *Board) River() {
 	game := board.Game
 
-	game.RevealedCards = append(game.RevealedCards, game.RiverCard)
+	game.BoardCards[4].Revealed = true
 
 	board.Game.Round = RIVER
 	board.Render()
@@ -93,6 +91,9 @@ func (board *Board) Showdown() {
 	// todo
 
 	for _, player := range board.Players {
+		for i := 0; i < len(player.Hands); i++ {
+			player.Hands[i].Revealed = true
+		}
 		player.Status = PlayerStatusShowdown
 	}
 
@@ -138,11 +139,7 @@ func initializeDeck() Cards {
 
 func (board *Board) Render() {
 	fmt.Printf("\n")
-	gameStr, err := json.Marshal(board.Game)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[Game] %s\n", gameStr)
+	fmt.Printf("%v", board.Game)
 	fmt.Printf("\n")
 	for _, player := range board.Players {
 		fmt.Printf("%v\n", player)
