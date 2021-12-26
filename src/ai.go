@@ -16,8 +16,8 @@ func createRandomAI(selfIndex int) func(*Board) Action {
 
 		switch random {
 		case 0:
-			atLeastAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
-			if board.Players[selfIndex].Bankroll <= atLeastAmount+1 {
+			minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
+			if board.Players[selfIndex].Bankroll <= minRequiredAmount+1 {
 				return Action{
 					ActionType: ActionTypeAllIn,
 					Amount:     board.Players[selfIndex].Bankroll,
@@ -25,7 +25,7 @@ func createRandomAI(selfIndex int) func(*Board) Action {
 			}
 			return Action{
 				ActionType: ActionTypeBet,
-				Amount:     atLeastAmount + 1 + rand.Intn(board.Players[selfIndex].Bankroll-atLeastAmount-1),
+				Amount:     minRequiredAmount + 1 + rand.Intn(board.Players[selfIndex].Bankroll-minRequiredAmount-1),
 			}
 		case 1:
 			if board.Players[selfIndex].Bankroll < board.Game.CurrentAmount-board.Players[selfIndex].InPotAmount {

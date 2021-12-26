@@ -26,7 +26,7 @@ type ActionType string
 const ActionTypeBet ActionType = "BET"
 const ActionTypeCall ActionType = "CALL"
 const ActionTypeFold ActionType = "FOLD"
-const ActionTypeAllIn ActionType = "ALL-IN"
+const ActionTypeAllIn ActionType = "ALLIN"
 
 type PlayerStatus string
 
