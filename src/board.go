@@ -2,7 +2,6 @@ package src
 
 import (
 	"fmt"
-	"math/rand"
 )
 
 type Board struct {
@@ -51,7 +50,38 @@ func (board *Board) PreFlop() {
 	game.Round = PREFLOP
 	board.Render()
 
-	for
+	gotSmallBlind := false
+	gotBigBlind := false
+	for {
+		for i := 0; i < len(board.Players); i++ {
+			actualIndex := (i + board.Game.SBIndex) % len(board.Players)
+			player := board.Players[actualIndex]
+			if player.Status == PlayerStatusOut || player.Status == PlayerStatusAllIn {
+				continue
+			}
+
+			if gotSmallBlind == false {
+				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: board.Game.SmallBlinds})
+				gotSmallBlind = true
+				board.Render()
+				continue
+			}
+			if gotSmallBlind && gotBigBlind == false {
+				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
+				gotBigBlind = true
+				board.Render()
+				continue
+			}
+
+			board.callReact(actualIndex)
+			board.Render()
+		}
+
+		if board.checkIfRoundIsFinish() {
+			board.Render()
+			return
+		}
+	}
 }
 
 func (board *Board) Flop() {
@@ -140,14 +170,6 @@ func (board *Board) Render() {
 	}
 }
 
-func initializeDeck() Cards {
-	deck := rawDeck
-	rand.Shuffle(len(deck), func(i, j int) {
-		deck[i], deck[j] = deck[j], deck[i]
-	})
-	return deck
-}
-
 func (board *Board) deepCopyBoardWithoutLeak(playerIndex int) *Board {
 	var deepCopyPlayers []*Player
 	if board.Players != nil {
@@ -217,20 +239,30 @@ func (board *Board) callReact(playerIndex int) {
 		panic("callReact invalid input")
 	}
 
-	currentPlayer := board.Players[playerIndex]
-
 	wrongInputCount := 0
 	wrongInputLimit := 3
 	var action Action
 	for wrongInputCount < wrongInputLimit {
 		deepCopyBoard := board.deepCopyBoardWithoutLeak(playerIndex)
-		action = currentPlayer.React(deepCopyBoard)
+		action = board.Players[playerIndex].React(deepCopyBoard)
 		if err := board.checkAction(playerIndex, action); err != nil {
 			wrongInputCount++
 			continue
 		}
 		break
 	}
+
+	board.performAction(playerIndex, action)
+}
+
+func (board *Board) checkAction(playerIndex int, action Action) error {
+	// todo
+	return nil
+}
+
+func (board *Board) performAction(playerIndex int, action Action) {
+	currentPlayer := board.Players[playerIndex]
+	fmt.Printf("%s: %v\n", currentPlayer.Name, action)
 
 	switch action.ActionType {
 	case ActionTypeBet:
@@ -255,11 +287,6 @@ func (board *Board) callReact(playerIndex int) {
 	default:
 		panic(fmt.Sprintf("unknown actionType: %s", action.ActionType))
 	}
-}
-
-func (board *Board) checkAction(playerIndex int, action Action) error {
-	// todo
-	return nil
 }
 
 func (board *Board) checkIfRoundIsFinish() bool {

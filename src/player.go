@@ -36,7 +36,7 @@ const PlayerStatusOut PlayerStatus = "OUT"
 const PlayerStatusShowdown PlayerStatus = "SHOWDOWN"
 
 func (player *Player) String() string {
-	return fmt.Sprintf("[%s] hands: %v, bankroll: %d", player.Name, player.Hands, player.Bankroll)
+	return fmt.Sprintf("[%s] hands: %v, inPot: %d, bankroll: %d", player.Name, player.Hands, player.InPotAmount, player.Bankroll)
 }
 
 func initializePlayers(playerNum int, playerBankroll int) []*Player {
@@ -61,6 +61,6 @@ func initializePlayers(playerNum int, playerBankroll int) []*Player {
 		})
 	}
 
-	players[0].React = createHumanReactFunc(0)
+	players[len(players) - 1].React = createHumanReactFunc(len(players) - 1)
 	return players
 }

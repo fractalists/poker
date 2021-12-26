@@ -45,6 +45,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 
 			if actionNumber == "1" {
 				if bankroll <= minRequiredAmount {
+					fmt.Printf("You don't have enough money to bet.\n")
 					wrongInputCount++
 					continue
 				}
@@ -76,6 +77,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 
 			} else if actionNumber == "2" {
 				if bankroll <= minRequiredAmount {
+					fmt.Printf("You don't have enough money to call.\n")
 					wrongInputCount++
 					continue
 				}
@@ -98,6 +100,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 
 			} else {
 				wrongInputCount++
+				fmt.Printf("invalid action input\n")
 				continue
 			}
 		}
