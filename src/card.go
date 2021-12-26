@@ -5,20 +5,22 @@ import (
 )
 
 type Card struct {
-	Suit Suit
-	Rank Rank
+	Suit     Suit
+	Rank     Rank
 	Revealed bool
 }
 
 type Cards []Card
 
 type Suit string
+
 const HEARTS Suit = "♥"
 const DIAMONDS Suit = "♦"
 const SPADES Suit = "♠"
 const CLUBS Suit = "♣"
 
 type Rank string
+
 const TWO Rank = "2"
 const THREE Rank = "3"
 const FOUR Rank = "4"

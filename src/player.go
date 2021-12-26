@@ -15,6 +15,7 @@ type Player struct {
 }
 
 type PlayerStatus string
+
 const PlayerStatusShowdown PlayerStatus = "SHOWDOWN"
 
 func (player *Player) String() string {

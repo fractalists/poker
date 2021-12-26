@@ -2,8 +2,9 @@ package src
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAll(t *testing.T) {
@@ -215,7 +216,7 @@ func TestScoreWithTwoPair(t *testing.T) {
 	assert.Equal(t, 2755797, score)
 }
 
-func   TestScoreWithOnePair(t *testing.T) {
+func TestScoreWithOnePair(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: TEN}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: TWO}
