@@ -6,6 +6,13 @@ import (
 	"testing"
 )
 
+func TestAll(t *testing.T) {
+	t.Run("TestAll", TestScoreWithFourOfAKind)
+	t.Run("TestAll", TestScoreWithStraight)
+	t.Run("TestAll", TestScoreWithRoyalFlush)
+	t.Run("TestAll", TestScoreWithStraightFlush)
+}
+
 func TestScoreWithFourOfAKind(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: JACK}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
@@ -17,7 +24,7 @@ func TestScoreWithFourOfAKind(t *testing.T) {
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	handType, fiveCards, score := Score(cards)
-	fmt.Printf("%s: %v %d", handType, fiveCards, score)
+	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, handType, FourOfAKind)
 	assert.Contains(t, fiveCards, card3)
@@ -39,7 +46,7 @@ func TestScoreWithStraight(t *testing.T) {
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	handType, fiveCards, score := Score(cards)
-	fmt.Printf("%s: %v %d", handType, fiveCards, score)
+	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, Straight, handType)
 	assert.Contains(t, fiveCards, card1)
@@ -60,7 +67,7 @@ func TestScoreWithRoyalFlush(t *testing.T) {
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	handType, fiveCards, score := Score(cards)
-	fmt.Printf("%s: %v %d", handType, fiveCards, score)
+	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, RoyalFlush, handType)
 	assert.Contains(t, fiveCards, card1)
@@ -82,7 +89,7 @@ func TestScoreWithStraightFlush(t *testing.T) {
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	handType, fiveCards, score := Score(cards)
-	fmt.Printf("%s: %v %d", handType, fiveCards, score)
+	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, StraightFlush, handType)
 	assert.Contains(t, fiveCards, card1)
