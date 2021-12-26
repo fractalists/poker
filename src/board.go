@@ -113,7 +113,8 @@ func (board *Board) EndGame() {
 }
 
 func (board *Board) Render() {
-	fmt.Printf("\n%v\n", board.Game)
+	fmt.Printf("---------------------------------------------------------------\n"+
+		"%v\n", board.Game)
 	for _, player := range board.Players {
 		fmt.Printf("%v\n", player)
 	}
