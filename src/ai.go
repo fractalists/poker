@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-func createRandomAI(selfIndex int) func(Board) Action {
-	return func(board Board) Action {
-		if selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
+func createRandomAI(selfIndex int) func(*Board) Action {
+	return func(board *Board) Action {
+		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
 			panic("randomAI invalid inputs")
 		}
 
