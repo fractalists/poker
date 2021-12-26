@@ -56,7 +56,7 @@ func (board *Board) PreFlop() {
 		for i := 0; i < len(board.Players); i++ {
 			actualIndex := (i + board.Game.SBIndex) % len(board.Players)
 			player := board.Players[actualIndex]
-			if player.Status == PlayerStatusOut || player.Status == PlayerStatusAllIn {
+			if player.Status != PlayerStatusPlaying {
 				continue
 			}
 
@@ -262,11 +262,11 @@ func (board *Board) checkAction(playerIndex int, action Action) error {
 
 	switch action.ActionType {
 	case ActionTypeBet:
-		if action.Amount <= minRequiredAmount || action.Amount > bankroll {
+		if action.Amount <= minRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("bet with an invalid amount: %d", action.Amount)
 		}
 	case ActionTypeCall:
-		if action.Amount != minRequiredAmount || action.Amount > bankroll {
+		if action.Amount != minRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("call with an invalid amount: %d", action.Amount)
 		}
 	case ActionTypeFold:
@@ -310,6 +310,10 @@ func (board *Board) performAction(playerIndex int, action Action) {
 }
 
 func (board *Board) checkIfRoundIsFinish() bool {
-	// todo
+	for _, player := range board.Players {
+		if player.Status == PlayerStatusPlaying && player.InPotAmount != board.Game.CurrentAmount {
+			return false
+		}
+	}
 	return true
 }

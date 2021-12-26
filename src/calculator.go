@@ -186,11 +186,11 @@ func hasStraight(cards Cards) Cards {
 	rankMemory := make([]*Card, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] = &Card{Suit: card.Suit, Rank: card.Rank}
+		rankMemory[card.RankToInt()] = &Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
 
 		if card.Rank == ACE {
 			// ACE also works as 1
-			rankMemory[1] = &Card{Suit: card.Suit, Rank: card.Rank}
+			rankMemory[1] = &Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
 		}
 	}
 
