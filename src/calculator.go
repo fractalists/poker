@@ -291,7 +291,7 @@ func hasTwoPair(cards Cards) Cards {
 			pairRanks = append(pairRanks, i)
 		}
 	}
-	if len(pairRanks) < 2 {
+	if pairRanks == nil || len(pairRanks) < 2 {
 		return nil
 	}
 
