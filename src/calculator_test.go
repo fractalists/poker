@@ -31,7 +31,8 @@ func TestScoreWithRoyalFlush(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: ACE}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, RoyalFlush, handType)
@@ -53,7 +54,8 @@ func TestScoreWithStraightFlush(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: KING}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, StraightFlush, handType)
@@ -75,7 +77,8 @@ func TestScoreWithFourOfAKind(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: ACE}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, FourOfAKind, handType)
@@ -97,7 +100,8 @@ func TestScoreWithFullHouse(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: KING}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, FullHouse, handType)
@@ -119,7 +123,8 @@ func TestScoreWithFlush(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: KING}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, Flush, handType)
@@ -141,7 +146,8 @@ func TestScoreWithStraight(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: ACE}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, Straight, handType)
@@ -162,7 +168,8 @@ func TestScoreWithStraight2(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: ACE}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, Straight, handType)
@@ -183,7 +190,8 @@ func TestScoreWithThreeOfAKind(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: ACE}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 	assert.Equal(t, ThreeOfAKind, handType)
 	assert.Contains(t, fiveCards, card2)
@@ -204,7 +212,8 @@ func TestScoreWithTwoPair(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: EIGHT}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, TwoPair, handType)
@@ -226,7 +235,8 @@ func TestScoreWithOnePair(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: EIGHT}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, OnePair, handType)
@@ -248,7 +258,8 @@ func TestScoreWithHighCard(t *testing.T) {
 	card7 := Card{Suit: CLUBS, Rank: EIGHT}
 	cards := Cards{card1, card2, card3, card4, card5, card6, card7}
 
-	handType, fiveCards, score := Score(cards)
+	scoreResult := Score(cards)
+	handType, fiveCards, score := scoreResult.HandType, scoreResult.FinalCards, scoreResult.Score
 	fmt.Printf("%s: %v %d\n", handType, fiveCards, score)
 
 	assert.Equal(t, HighCard, handType)

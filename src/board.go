@@ -56,6 +56,7 @@ func (board *Board) PreFlop() {
 
 	game.Round = PREFLOP
 	board.Render()
+
 }
 
 func (board *Board) Flop() {
@@ -87,19 +88,36 @@ func (board *Board) River() {
 }
 
 func (board *Board) Showdown() {
-	// todo
-
+	scoreMap := map[*Player]ScoreResult{}
 	for _, player := range board.Players {
+		player.Status = PlayerStatusShowdown
+
 		for i := 0; i < len(player.Hands); i++ {
 			player.Hands[i].Revealed = true
 		}
-		player.Status = PlayerStatusShowdown
+
+		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
+		scoreMap[player] = scoreResult
+	}
+
+	var winner *Player
+	winScore := 0
+	for player, scoreResult := range scoreMap {
+		if scoreResult.Score > winScore {
+			winScore = scoreResult.Score
+			winner = player
+		}
+	}
+	if winner == nil {
+		panic("nobody win!?")
 	}
 
 	// settle pot and bankroll
 
 	board.Game.Round = SHOWDOWN
 	board.Render()
+
+	fmt.Printf("Winner is %s\nScore: %v \n", winner.Name, scoreMap[winner])
 }
 
 func (board *Board) EndGame() {

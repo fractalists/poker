@@ -30,6 +30,12 @@ var rankingPointMap = map[HandType]int{
 	HighCard:      0,
 }
 
+type ScoreResult struct {
+	HandType   HandType
+	FinalCards Cards
+	Score      int
+}
+
 // score = rankingPoint + cardPoint
 //
 // ranking is something like flush, two pairs, etc.
@@ -47,7 +53,7 @@ var rankingPointMap = map[HandType]int{
 // Two Pair:       2000000
 // One Pair:       1000000
 // High Card:            0
-func Score(cards Cards) (HandType, Cards, int) {
+func Score(cards Cards) ScoreResult {
 	if len(cards) != 7 {
 		panic("cards length in score method is not 7")
 	}
@@ -58,7 +64,7 @@ func Score(cards Cards) (HandType, Cards, int) {
 	cardPoint := getCardPoint(mostValuableCards)
 	score := rankingPoint + cardPoint
 
-	return handType, mostValuableCards, score
+	return ScoreResult{HandType: handType, FinalCards: mostValuableCards, Score: score}
 }
 
 func getHandType(cards Cards) (HandType, Cards) {
