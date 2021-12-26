@@ -75,7 +75,7 @@ func getHandType(cards entity.Cards) (HandType, entity.Cards) {
 			return StraightFlush, straightFlushCards
 		}
 
-		return Flush, flushCards
+		return Flush, getHighCards(flushCards)
 	}
 
 	if fullHouseCards := hasFullHouse(cards); len(fullHouseCards) != 0 {
@@ -159,7 +159,7 @@ func hasFlush(cards entity.Cards) entity.Cards {
 					result = append(result, card)
 				}
 			}
-			return getHighCards(result)
+			return result
 		}
 	}
 
