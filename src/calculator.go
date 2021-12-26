@@ -213,7 +213,40 @@ func hasStraight(cards Cards) Cards {
 
 func hasFullHouse(cards Cards) Cards {
 	sort.Sort(cards)
-	// todo
+	rankMemory := make([]int, 15)
+
+	for _, card := range cards {
+		rankMemory[card.RankToInt()] += 1
+	}
+
+	for i := 14; i >= 2; i-- {
+		if rankMemory[i] == 3 {
+			result := Cards{}
+			for _, card := range cards {
+				if card.RankToInt() == i {
+					result = append(result, card)
+				}
+			}
+
+			for j := 14; j >= 2; j-- {
+				if rankMemory[j] == 2 {
+					for _, card := range cards {
+						if card.RankToInt() == j {
+							result = append(result, card)
+						}
+					}
+					break
+				}
+			}
+
+			if len(result) == 5 {
+				return result
+			} else {
+				return nil
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -246,8 +279,37 @@ func hasThreeOfAKind(cards Cards) Cards {
 
 func hasTwoPair(cards Cards) Cards {
 	sort.Sort(cards)
-	// todo
-	return nil
+	rankMemory := make([]int, 15)
+
+	for _, card := range cards {
+		rankMemory[card.RankToInt()] += 1
+	}
+
+	var pairRanks []int
+	for i := 14; i >= 2; i-- {
+		if rankMemory[i] == 2 {
+			pairRanks = append(pairRanks, i)
+		}
+	}
+	if len(pairRanks) < 2 {
+		return nil
+	}
+
+	result := Cards{}
+	for _, card := range cards {
+		if card.RankToInt() == pairRanks[0] || card.RankToInt() == pairRanks[1] {
+			result = append(result, card)
+		}
+	}
+
+	for _, card := range cards {
+		if card.RankToInt() != pairRanks[0] && card.RankToInt() != pairRanks[1] {
+			result = append(result, card)
+			break
+		}
+	}
+
+	return result
 }
 
 func hasOnePair(cards Cards) Cards {
