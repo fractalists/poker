@@ -256,7 +256,27 @@ func (board *Board) callReact(playerIndex int) {
 }
 
 func (board *Board) checkAction(playerIndex int, action Action) error {
-	// todo
+	currentPlayer := board.Players[playerIndex]
+	minRequiredAmount := board.Game.CurrentAmount - currentPlayer.InPotAmount
+	bankroll := currentPlayer.Bankroll
+
+	switch action.ActionType {
+	case ActionTypeBet:
+		if action.Amount <= minRequiredAmount || action.Amount > bankroll {
+			return fmt.Errorf("bet with an invalid amount: %d", action.Amount)
+		}
+	case ActionTypeCall:
+		if action.Amount != minRequiredAmount || action.Amount > bankroll {
+			return fmt.Errorf("call with an invalid amount: %d", action.Amount)
+		}
+	case ActionTypeFold:
+	case ActionTypeAllIn:
+		if action.Amount == 0 || action.Amount != bankroll {
+			return fmt.Errorf("allIn with an invalid amount: %d", action.Amount)
+		}
+	default:
+		return fmt.Errorf("unknown actionType: %s", action.ActionType)
+	}
 	return nil
 }
 
