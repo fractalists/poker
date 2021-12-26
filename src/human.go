@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func createHumanReactFunc(selfIndex int) func(*Board) Action {
@@ -37,6 +38,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 			fmt.Print(desc)
 			reader := bufio.NewReader(os.Stdin)
 			actionNumber, err := reader.ReadString('\n')
+			actionNumber = strings.ReplaceAll(actionNumber, "\n", "")
 			if err != nil {
 				fmt.Printf("input error: %v\n", err)
 				wrongInputCount++
@@ -53,6 +55,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 				fmt.Printf("How much do you want to bet? [%d, %d]\n", minRequiredAmount, bankroll)
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
+				amountStr = strings.ReplaceAll(amountStr, "\n", "")
 				if err != nil {
 					fmt.Printf("input error: %v\n", err)
 					wrongInputCount++

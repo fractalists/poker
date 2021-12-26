@@ -3,6 +3,7 @@ package src
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 type Card struct {
@@ -36,7 +37,7 @@ const QUEEN Rank = "Q"
 const KING Rank = "K"
 const ACE Rank = "A"
 
-var rawDeck = Cards{
+var deck = Cards{
 	{Suit: HEARTS, Rank: TWO},
 	{Suit: HEARTS, Rank: THREE},
 	{Suit: HEARTS, Rank: FOUR},
@@ -168,7 +169,7 @@ func (cards Cards) Swap(i, j int) {
 }
 
 func initializeDeck() Cards {
-	deck := rawDeck
+	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(deck), func(i, j int) {
 		deck[i], deck[j] = deck[j], deck[i]
 	})
