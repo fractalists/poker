@@ -130,6 +130,8 @@ func (board *Board) EndGame() {
 	// clear
 	for _, player := range board.Players {
 		player.Hands = nil
+		player.Status = PlayerStatusPlaying
+		player.InPotAmount = 0
 	}
 
 	board.Game = nil
