@@ -14,6 +14,6 @@ type Player struct {
 	InitialBankroll int
 }
 
-func (player Player) String() string {
+func (player *Player) String() string {
 	return fmt.Sprintf("[%s] hands: %v, bankroll: %d", player.Name, player.Hands, player.Bankroll)
 }
