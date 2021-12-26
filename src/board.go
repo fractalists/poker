@@ -158,7 +158,6 @@ func (board *Board) EndGame() {
 	}
 
 	board.Game = nil
-	board.Render()
 }
 
 func (board *Board) Render() {

@@ -20,8 +20,8 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 		var desc string
 		if bankroll <= minRequiredAmount {
 			desc = "--> You can choose (enter number): \n" +
-				"[!] Bet\n" +
-				"[!] Call\n" +
+				"[!] Bet  # not available #\n" +
+				"[!] Call  # not available #3\n" +
 				"[3] Fold\n" +
 				"[4] AllIn\n"
 		} else {
@@ -53,7 +53,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					continue
 				}
 
-				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", minRequiredAmount, bankroll)
+				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", minRequiredAmount + 1, bankroll - 1)
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
@@ -69,7 +69,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					fmt.Printf("!! Atoi error: %v !!\n", err)
 					wrongInputCount++
 					continue
-				} else if amount <= minRequiredAmount || amount > bankroll {
+				} else if amount <= minRequiredAmount || amount >= bankroll {
 					fmt.Println("!! invalid input amount !!")
 					wrongInputCount++
 					continue
