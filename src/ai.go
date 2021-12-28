@@ -41,6 +41,8 @@ func createRandomAI(selfIndex int) func(*Board) Action {
 				Amount:     minRequiredAmount,
 			}
 		case 2:
+			// todo
+			// won't fold in some situation
 			return Action{
 				ActionType: ActionTypeFold,
 				Amount:     0,

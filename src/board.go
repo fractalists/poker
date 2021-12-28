@@ -133,7 +133,6 @@ func (board *Board) react() {
 }
 
 func (board *Board) Showdown() {
-	// todo
 	for i := 0; i < len(board.Game.BoardCards); i++ {
 		board.Game.BoardCards[i].Revealed = true
 	}
@@ -172,8 +171,6 @@ func (board *Board) Showdown() {
 }
 
 func (board *Board) EndGame() {
-	// todo
-	// clear
 	for _, player := range board.Players {
 		player.Hands = nil
 		player.Status = PlayerStatusPlaying
