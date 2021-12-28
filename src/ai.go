@@ -14,29 +14,31 @@ func createRandomAI(selfIndex int) func(*Board) Action {
 		rand.Seed(time.Now().UnixNano())
 		random := rand.Intn(4)
 
+		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		bankroll := board.Players[selfIndex].Bankroll
+
 		switch random {
 		case 0:
-			minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
-			if board.Players[selfIndex].Bankroll <= minRequiredAmount+1 {
+			if bankroll <= minRequiredAmount+1 {
 				return Action{
 					ActionType: ActionTypeAllIn,
-					Amount:     board.Players[selfIndex].Bankroll,
+					Amount:     bankroll,
 				}
 			}
 			return Action{
 				ActionType: ActionTypeBet,
-				Amount:     minRequiredAmount + 1 + rand.Intn(board.Players[selfIndex].Bankroll-minRequiredAmount-1),
+				Amount:     minRequiredAmount + 1 + rand.Intn(bankroll-minRequiredAmount-1),
 			}
 		case 1:
-			if board.Players[selfIndex].Bankroll < board.Game.CurrentAmount-board.Players[selfIndex].InPotAmount {
+			if bankroll < minRequiredAmount {
 				return Action{
 					ActionType: ActionTypeAllIn,
-					Amount:     board.Players[selfIndex].Bankroll,
+					Amount:     bankroll,
 				}
 			}
 			return Action{
 				ActionType: ActionTypeCall,
-				Amount:     board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount,
+				Amount:     minRequiredAmount,
 			}
 		case 2:
 			return Action{
@@ -46,7 +48,7 @@ func createRandomAI(selfIndex int) func(*Board) Action {
 		case 3:
 			return Action{
 				ActionType: ActionTypeAllIn,
-				Amount:     board.Players[selfIndex].Bankroll,
+				Amount:     bankroll,
 			}
 		default:
 			panic("unknown random")
