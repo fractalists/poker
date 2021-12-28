@@ -21,7 +21,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 		if bankroll <= minRequiredAmount {
 			desc = "--> You can choose (enter number): \n" +
 				"[!] Bet  # not available #\n" +
-				"[!] Call  # not available #3\n" +
+				"[!] Call  # not available #\n" +
 				"[3] Fold\n" +
 				"[4] AllIn\n"
 		} else {

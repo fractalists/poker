@@ -30,7 +30,7 @@ const UTG Position = "UTG"
 const CUTOFF Position = "CUTOFF"
 const BUTTON Position = "BUTTON"
 
-func (game *Game) Initialize(smallBlinds int, sbIndex int, desc string) {
+func (game *Game) Init(smallBlinds int, sbIndex int, desc string) {
 	game.Round = INIT
 	game.Deck = initializeDeck()
 	game.Pot = 0

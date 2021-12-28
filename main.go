@@ -9,7 +9,7 @@ import (
 
 func main() {
 	board := &src.Board{}
-	board.Initialize(6, 100)
+	board.Init(6, 100)
 
 	board.InitGame(1, 0, "round_1")
 	board.PlayGame()

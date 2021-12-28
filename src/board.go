@@ -9,7 +9,7 @@ type Board struct {
 	Game    *Game
 }
 
-func (board *Board) Initialize(playerNum int, playerBankroll int) {
+func (board *Board) Init(playerNum int, playerBankroll int) {
 	board.Players = initializePlayers(playerNum, playerBankroll)
 	board.Game = nil
 }
@@ -29,7 +29,7 @@ func (board *Board) InitGame(smallBlinds int, sbIndex int, desc string) {
 	}
 
 	board.Game = &Game{}
-	board.Game.Initialize(smallBlinds, sbIndex, desc)
+	board.Game.Init(smallBlinds, sbIndex, desc)
 }
 
 func (board *Board) PlayGame() {
