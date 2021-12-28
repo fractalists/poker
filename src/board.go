@@ -33,7 +33,6 @@ func (board *Board) StartGame(smallBlinds int, sbIndex int, desc string) {
 }
 
 func (board *Board) PreFlop() {
-	// todo
 	game := board.Game
 	for _, player := range board.Players {
 		card1 := game.DrawCard()
@@ -46,72 +45,35 @@ func (board *Board) PreFlop() {
 	card4 := game.DrawCard()
 	card5 := game.DrawCard()
 	game.BoardCards = Cards{card1, card2, card3, card4, card5}
-
 	game.Round = PREFLOP
-	board.Render()
 
-	gotSmallBlind := false
-	gotBigBlind := false
-	for {
-		for i := 0; i < len(board.Players); i++ {
-			actualIndex := (i + board.Game.SBIndex) % len(board.Players)
-			player := board.Players[actualIndex]
-			if player.Status != PlayerStatusPlaying {
-				continue
-			}
-
-			if gotSmallBlind == false {
-				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: board.Game.SmallBlinds})
-				board.RenderToSomebody(actualIndex)
-				gotSmallBlind = true
-				continue
-			}
-			if gotSmallBlind && gotBigBlind == false {
-				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
-				board.RenderToSomebody(actualIndex)
-				gotBigBlind = true
-				continue
-			}
-
-			board.RenderToSomebody(actualIndex)
-			board.callReact(actualIndex)
-		}
-
-		if board.checkIfRoundIsFinish() {
-			return
-		}
-	}
+	board.react()
 }
 
 func (board *Board) Flop() {
-	// todo
 	game := board.Game
 	game.BoardCards[0].Revealed = true
 	game.BoardCards[1].Revealed = true
 	game.BoardCards[2].Revealed = true
+	game.Round = FLOP
 
-	board.Game.Round = FLOP
-	board.Render()
+	board.react()
 }
 
 func (board *Board) Turn() {
-	// todo
 	game := board.Game
-
 	game.BoardCards[3].Revealed = true
+	game.Round = TURN
 
-	board.Game.Round = TURN
-	board.Render()
+	board.react()
 }
 
 func (board *Board) River() {
-	// todo
 	game := board.Game
-
 	game.BoardCards[4].Revealed = true
+	game.Round = RIVER
 
-	board.Game.Round = RIVER
-	board.Render()
+	board.react()
 }
 
 func (board *Board) Showdown() {
@@ -146,6 +108,47 @@ func (board *Board) Showdown() {
 	board.Render()
 
 	fmt.Printf("Winner is %s\nScore: %v \n", winner.Name, scoreMap[winner])
+}
+
+func (board *Board) react() {
+	board.Render()
+
+	gotSmallBlind := true
+	gotBigBlind := true
+	if board.Game.Round == PREFLOP {
+		gotSmallBlind = false
+		gotBigBlind = false
+	}
+
+	for {
+		for i := 0; i < len(board.Players); i++ {
+			actualIndex := (i + board.Game.SBIndex) % len(board.Players)
+			player := board.Players[actualIndex]
+			if player.Status != PlayerStatusPlaying {
+				continue
+			}
+
+			if gotSmallBlind == false {
+				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: board.Game.SmallBlinds})
+				board.RenderToSomebody(actualIndex)
+				gotSmallBlind = true
+				continue
+			}
+			if gotSmallBlind && gotBigBlind == false {
+				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
+				board.RenderToSomebody(actualIndex)
+				gotBigBlind = true
+				continue
+			}
+
+			board.RenderToSomebody(actualIndex)
+			board.callReact(actualIndex)
+		}
+
+		if board.checkIfRoundIsFinish() {
+			return
+		}
+	}
 }
 
 func (board *Board) EndGame() {
