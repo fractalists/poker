@@ -14,7 +14,7 @@ func (board *Board) Initialize(playerNum int, playerBankroll int) {
 	board.Game = nil
 }
 
-func (board *Board) StartGame(smallBlinds int, sbIndex int, desc string) {
+func (board *Board) InitGame(smallBlinds int, sbIndex int, desc string) {
 	if len(board.Players) == 0 {
 		panic("board has not been initialized")
 	}
@@ -32,8 +32,11 @@ func (board *Board) StartGame(smallBlinds int, sbIndex int, desc string) {
 	board.Game.Initialize(smallBlinds, sbIndex, desc)
 }
 
-func (board *Board) PreFlop() {
+func (board *Board) PlayGame() {
 	game := board.Game
+
+	// PreFlop
+	game.Round = PREFLOP
 	for _, player := range board.Players {
 		card1 := game.DrawCard()
 		card2 := game.DrawCard()
@@ -45,69 +48,27 @@ func (board *Board) PreFlop() {
 	card4 := game.DrawCard()
 	card5 := game.DrawCard()
 	game.BoardCards = Cards{card1, card2, card3, card4, card5}
-	game.Round = PREFLOP
-
 	board.react()
-}
 
-func (board *Board) Flop() {
-	game := board.Game
+	// Flop
+	game.Round = FLOP
 	game.BoardCards[0].Revealed = true
 	game.BoardCards[1].Revealed = true
 	game.BoardCards[2].Revealed = true
-	game.Round = FLOP
-
 	board.react()
-}
 
-func (board *Board) Turn() {
-	game := board.Game
-	game.BoardCards[3].Revealed = true
+	// Turn
 	game.Round = TURN
-
+	game.BoardCards[3].Revealed = true
 	board.react()
-}
 
-func (board *Board) River() {
-	game := board.Game
-	game.BoardCards[4].Revealed = true
+	// River
 	game.Round = RIVER
-
+	game.BoardCards[4].Revealed = true
 	board.react()
-}
 
-func (board *Board) Showdown() {
-	// todo
-	scoreMap := map[*Player]ScoreResult{}
-	for _, player := range board.Players {
-		player.Status = PlayerStatusShowdown
-
-		for i := 0; i < len(player.Hands); i++ {
-			player.Hands[i].Revealed = true
-		}
-
-		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
-		scoreMap[player] = scoreResult
-	}
-
-	var winner *Player
-	winScore := 0
-	for player, scoreResult := range scoreMap {
-		if scoreResult.Score > winScore {
-			winScore = scoreResult.Score
-			winner = player
-		}
-	}
-	if winner == nil {
-		panic("nobody win!?")
-	}
-
-	// settle pot and bankroll
-
-	board.Game.Round = SHOWDOWN
-	board.Render()
-
-	fmt.Printf("Winner is %s\nScore: %v \n", winner.Name, scoreMap[winner])
+	game.Round = SHOWDOWN
+	board.Showdown()
 }
 
 func (board *Board) react() {
@@ -146,9 +107,52 @@ func (board *Board) react() {
 		}
 
 		if board.checkIfRoundIsFinish() {
-			return
+			break
 		}
 	}
+
+	// check if game is ongoing
+	if board.checkIfGameIsOngoing() {
+		return
+	}
+
+	// no more react is needed, proceed to showdown
+	board.Game.Round = SHOWDOWN
+	board.Showdown()
+}
+
+func (board *Board) Showdown() {
+	// todo
+	scoreMap := map[*Player]ScoreResult{}
+	for _, player := range board.Players {
+		player.Status = PlayerStatusShowdown
+
+		for i := 0; i < len(player.Hands); i++ {
+			player.Hands[i].Revealed = true
+		}
+
+		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
+		scoreMap[player] = scoreResult
+	}
+
+	var winner *Player
+	winScore := 0
+	for player, scoreResult := range scoreMap {
+		if scoreResult.Score > winScore {
+			winScore = scoreResult.Score
+			winner = player
+		}
+	}
+	if winner == nil {
+		panic("nobody win!?")
+	}
+
+	// settle pot and bankroll
+
+	board.Game.Round = SHOWDOWN
+	board.Render()
+
+	fmt.Printf("Winner is %s\nScore: %v \n", winner.Name, scoreMap[winner])
 }
 
 func (board *Board) EndGame() {
@@ -341,4 +345,8 @@ func (board *Board) checkIfRoundIsFinish() bool {
 		}
 	}
 	return true
+}
+
+func (board *Board) checkIfGameIsOngoing() bool {
+
 }
