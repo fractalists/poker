@@ -13,7 +13,6 @@ func main() {
 
 	board.InitGame(1, 0, "round_1")
 	board.PlayGame()
-	board.Showdown()
 	board.EndGame()
 
 	fmt.Printf("Game Over. Press any key to exit.\n")

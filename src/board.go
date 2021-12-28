@@ -49,6 +49,10 @@ func (board *Board) PlayGame() {
 	card5 := game.DrawCard()
 	game.BoardCards = Cards{card1, card2, card3, card4, card5}
 	board.react()
+	if game.Round == SHOWDOWN {
+		board.Showdown()
+		return
+	}
 
 	// Flop
 	game.Round = FLOP
@@ -56,11 +60,19 @@ func (board *Board) PlayGame() {
 	game.BoardCards[1].Revealed = true
 	game.BoardCards[2].Revealed = true
 	board.react()
+	if game.Round == SHOWDOWN {
+		board.Showdown()
+		return
+	}
 
 	// Turn
 	game.Round = TURN
 	game.BoardCards[3].Revealed = true
 	board.react()
+	if game.Round == SHOWDOWN {
+		board.Showdown()
+		return
+	}
 
 	// River
 	game.Round = RIVER
@@ -111,26 +123,33 @@ func (board *Board) react() {
 		}
 	}
 
-	// check if game is ongoing
-	if board.checkIfGameIsOngoing() {
+	// round is finish, then check if game needs ongoing
+	if board.checkIfGameNeedsOngoing() {
 		return
 	}
 
 	// no more react is needed, proceed to showdown
 	board.Game.Round = SHOWDOWN
-	board.Showdown()
 }
 
 func (board *Board) Showdown() {
 	// todo
-	scoreMap := map[*Player]ScoreResult{}
-	for _, player := range board.Players {
-		player.Status = PlayerStatusShowdown
+	for i := 0; i < len(board.Game.BoardCards); i++ {
+		board.Game.BoardCards[i].Revealed = true
+	}
+	board.Render()
 
-		for i := 0; i < len(player.Hands); i++ {
-			player.Hands[i].Revealed = true
+	scoreMap := map[*Player]ScoreResult{}
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Status != PlayerStatusPlaying && player.Status != PlayerStatusAllIn {
+			continue
 		}
 
+		player.Status = PlayerStatusShowdown
+		for j := 0; j < len(player.Hands); j++ {
+			player.Hands[j].Revealed = true
+		}
 		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
 		scoreMap[player] = scoreResult
 	}
@@ -148,9 +167,6 @@ func (board *Board) Showdown() {
 	}
 
 	// settle pot and bankroll
-
-	board.Game.Round = SHOWDOWN
-	board.Render()
 
 	fmt.Printf("Winner is %s\nScore: %v \n", winner.Name, scoreMap[winner])
 }
@@ -347,6 +363,13 @@ func (board *Board) checkIfRoundIsFinish() bool {
 	return true
 }
 
-func (board *Board) checkIfGameIsOngoing() bool {
+func (board *Board) checkIfGameNeedsOngoing() bool {
+	playingPlayerCount := 0
+	for _, player := range board.Players {
+		if player.Status == PlayerStatusPlaying && player.Bankroll > 0 {
+			playingPlayerCount++
+		}
+	}
 
+	return playingPlayerCount >= 2
 }
