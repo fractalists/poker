@@ -227,8 +227,82 @@ func addToFinalPlayerTiers(finalPlayerTiers *FinalPlayerTiers, player *Player, s
 	}
 }
 
-func (board *Board) settle(tiers FinalPlayerTiers) {
+func (board *Board) settle(finalPlayerTiers FinalPlayerTiers) {
+	if len(finalPlayerTiers) == 0 {
+		return
+	}
 
+	maxInPotAmountOfFirstTier := 0
+	for _, finalPlayer := range finalPlayerTiers[0] {
+		if finalPlayer.Player.InPotAmount > maxInPotAmountOfFirstTier {
+			maxInPotAmountOfFirstTier = finalPlayer.Player.InPotAmount
+		}
+	}
+
+	for i := 0; i < len(finalPlayerTiers[0]); i++ {
+		finalPlayer := finalPlayerTiers[0][i]
+		finalPlayerInPotAmount := finalPlayer.Player.InPotAmount
+		if finalPlayerInPotAmount == 0 {
+			continue
+		}
+
+		var validFinalPlayers []*Player
+		for j := 0; j < len(finalPlayerTiers[0]); j++ {
+			if finalPlayerTiers[0][j].Player.InPotAmount > 0 {
+				validFinalPlayers = append(validFinalPlayers, finalPlayerTiers[0][j].Player)
+			}
+		}
+
+		sidePot := 0
+		for _, player := range board.Players {
+			amountChange := min(player.InPotAmount, finalPlayerInPotAmount)
+			sidePot += amountChange
+			player.InPotAmount -= amountChange
+		}
+
+		board.Game.Pot -= sidePot
+		nPartSidePot := divideAmountIntoNPart(sidePot, len(validFinalPlayers))
+		for j := 0; j < len(validFinalPlayers); j++ {
+			validFinalPlayers[j].Bankroll += nPartSidePot[j]
+		}
+	}
+
+	if maxInPotAmountOfFirstTier < board.Game.CurrentAmount {
+		// first tier players are not able to win all pot, so remove first tier and settle another round
+		newFinalPlayerTiers := finalPlayerTiers[1:]
+		board.Game.CurrentAmount -= maxInPotAmountOfFirstTier
+		board.settle(newFinalPlayerTiers)
+	}
+}
+
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+
+	return b
+}
+
+func divideAmountIntoNPart(amount, n int) []int {
+	if amount < 0 || n <= 0 {
+		panic(fmt.Sprintf("invalid amount or n. amount: %d, n: %d", amount, n))
+	}
+
+	result := make([]int, n)
+	each := amount / n
+	residue := amount - ((amount / n) * n)
+
+	for i := 0; i < residue; i++ {
+		result[i] = 1
+	}
+
+	if each > 0 {
+		for i := 0; i < n; i++ {
+			result[i] += each
+		}
+	}
+
+	return result
 }
 
 func (board *Board) EndGame() {
