@@ -159,14 +159,16 @@ func (board *Board) Showdown() {
 	// calc finalPlayerTiers
 	finalPlayerTiers := board.calcFinalPlayerTiers()
 
-	deepCopyBoard := board.deepCopyBoardWithoutLeak(0)
-	// calc and settle the pot in deepCopyBoard first
-	settle(deepCopyBoard, finalPlayerTiers)
-	// sync to the real board
-	board.Game.Pot = 0
+	board.settle(finalPlayerTiers)
+
+	// check
+	if board.Game.Pot != 0 {
+		panic("there is something left")
+	}
 	for i := 0; i < len(board.Players); i++ {
-		board.Players[i].InPotAmount = 0
-		board.Players[i].Bankroll = deepCopyBoard.Players[i].Bankroll
+		if board.Players[i].InPotAmount != 0 {
+			panic(fmt.Sprintf("InPotAmount != 0, player index: %d", i))
+		}
 	}
 
 	if len(finalPlayerTiers[0]) == 1 {
@@ -222,7 +224,7 @@ func addToFinalPlayerTiers(finalPlayerTiers *FinalPlayerTiers, player *Player, s
 	}
 }
 
-func settle(board *Board, tiers FinalPlayerTiers) {
+func (board *Board) settle(tiers FinalPlayerTiers) {
 
 }
 
