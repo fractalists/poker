@@ -180,7 +180,7 @@ func (board *Board) Showdown() {
 	} else {
 		fmt.Printf("Winners are:\n")
 		for _, finalPlayer := range finalPlayerTiers[0] {
-			fmt.Printf("Name: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+			fmt.Printf("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
 		}
 	}
 }
