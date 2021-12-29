@@ -33,7 +33,6 @@ type PlayerStatus string
 const PlayerStatusPlaying PlayerStatus = "PLAYING"
 const PlayerStatusAllIn PlayerStatus = "ALLIN"
 const PlayerStatusOut PlayerStatus = "OUT"
-const PlayerStatusShowdown PlayerStatus = "SHOWDOWN"
 
 func (player *Player) String() string {
 	return fmt.Sprintf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)

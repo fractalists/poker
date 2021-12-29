@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	"sort"
 )
 
 type Board struct {
@@ -133,6 +134,78 @@ func (board *Board) react() {
 }
 
 func (board *Board) Showdown() {
+	// check
+	pot := 0
+	for _, player := range board.Players {
+		pot += player.InPotAmount
+	}
+	if pot != board.Game.Pot {
+		panic("there must be something wrong")
+	}
+
+	// reveal cards
+	for i := 0; i < len(board.Game.BoardCards); i++ {
+		board.Game.BoardCards[i].Revealed = true
+	}
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Status == PlayerStatusPlaying || player.Status == PlayerStatusAllIn {
+			for j := 0; j < len(player.Hands); j++ {
+				player.Hands[j].Revealed = true
+			}
+		}
+	}
+
+	// calc finalPlayer tiers
+	finalPlayerTiers := board.calcFinalPlayerTiers()
+	fmt.Printf("%v\n", finalPlayerTiers)
+}
+
+
+
+func (board *Board) calcFinalPlayerTiers() FinalPlayerTiers {
+	finalPlayerTiers := FinalPlayerTiers{}
+
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Status != PlayerStatusPlaying && player.Status != PlayerStatusAllIn {
+			continue
+		}
+
+		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
+
+		addToFinalPlayerTiers(&finalPlayerTiers, player, scoreResult)
+	}
+
+	sort.Sort(finalPlayerTiers)
+	return finalPlayerTiers
+}
+
+func addToFinalPlayerTiers(finalPlayerTiers *FinalPlayerTiers, player *Player, scoreResult ScoreResult) {
+	finalPlayer := FinalPlayer{
+		Player:      player,
+		ScoreResult: scoreResult,
+	}
+	score := scoreResult.Score
+
+	found := false
+	for i := 0; i < len(*finalPlayerTiers); i++ {
+		if len((*finalPlayerTiers)[i]) > 0 {
+			if (*finalPlayerTiers)[i][0].ScoreResult.Score == score {
+				(*finalPlayerTiers)[i] = append((*finalPlayerTiers)[i], finalPlayer)
+				sort.Sort((*finalPlayerTiers)[i])
+				found = true
+				break
+			}
+		}
+	}
+
+	if found == false {
+		*finalPlayerTiers = append(*finalPlayerTiers, FinalPlayerTier{finalPlayer})
+	}
+}
+
+func (board *Board) ShowdownBackup() {
 	for i := 0; i < len(board.Game.BoardCards); i++ {
 		board.Game.BoardCards[i].Revealed = true
 	}
@@ -145,7 +218,6 @@ func (board *Board) Showdown() {
 			continue
 		}
 
-		player.Status = PlayerStatusShowdown
 		for j := 0; j < len(player.Hands); j++ {
 			player.Hands[j].Revealed = true
 		}

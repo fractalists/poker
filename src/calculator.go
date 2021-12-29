@@ -36,14 +36,6 @@ type ScoreResult struct {
 	Score      int
 }
 
-// a winner tier is a list of winner with the same score
-type FinalPlayerTiers [][]FinalPlayer
-
-type FinalPlayer struct {
-	Player *Player
-	ScoreResult ScoreResult
-}
-
 // score = rankingPoint + cardPoint
 //
 // ranking is something like flush, two pairs, etc.
@@ -366,22 +358,36 @@ func getNHighestCards(cards Cards, n int) Cards {
 	return cards[:n]
 }
 
+type FinalPlayer struct {
+	Player *Player
+	ScoreResult ScoreResult
+}
+
+type FinalPlayerTier []FinalPlayer
+
+// a winner tier is a list of winner with the same score
+type FinalPlayerTiers []FinalPlayerTier
+
+func (finalPlayerTier FinalPlayerTier) Len() int {
+	return len(finalPlayerTier)
+}
+
+func (finalPlayerTier FinalPlayerTier) Less(i, j int) bool {
+	// by in pot amount, ascending
+	return finalPlayerTier[i].Player.InPotAmount < finalPlayerTier[j].Player.InPotAmount
+}
+
+func (finalPlayerTier FinalPlayerTier) Swap(i, j int) {
+	finalPlayerTier[i], finalPlayerTier[j] = finalPlayerTier[j], finalPlayerTier[i]
+}
+
 func (finalPlayerTiers FinalPlayerTiers) Len() int {
 	return len(finalPlayerTiers)
 }
 
 func (finalPlayerTiers FinalPlayerTiers) Less(i, j int) bool {
 	// descending
-	scoreI := 0
-	scoreJ := 0
-	if len(finalPlayerTiers[i]) > 0 {
-		scoreI = finalPlayerTiers[i][0].ScoreResult.Score
-	}
-	if len(finalPlayerTiers[j]) > 0 {
-		scoreI = finalPlayerTiers[j][0].ScoreResult.Score
-	}
-
-	return scoreI > scoreJ
+	return finalPlayerTiers[i][0].ScoreResult.Score > finalPlayerTiers[j][0].ScoreResult.Score
 }
 
 func (finalPlayerTiers FinalPlayerTiers) Swap(i, j int) {
