@@ -104,18 +104,18 @@ func (board *Board) react() {
 
 			if gotSmallBlind == false {
 				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: board.Game.SmallBlinds})
-				board.RenderToSomebody(actualIndex)
+				//board.RenderToSomebody(actualIndex)
 				gotSmallBlind = true
 				continue
 			}
 			if gotSmallBlind && gotBigBlind == false {
 				board.performAction(actualIndex, Action{ActionType: ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
-				board.RenderToSomebody(actualIndex)
+				//board.RenderToSomebody(actualIndex)
 				gotBigBlind = true
 				continue
 			}
 
-			board.RenderToSomebody(actualIndex)
+			//board.RenderToSomebody(actualIndex)
 			board.callReact(actualIndex)
 		}
 

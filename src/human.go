@@ -14,6 +14,8 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 			panic("humanReact invalid inputs")
 		}
 
+		board.RenderToSomebody(selfIndex)
+
 		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
 		bankroll := board.Players[selfIndex].Bankroll
 
@@ -109,7 +111,6 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 				continue
 			}
 		}
-
 		return Action{ActionType: ActionTypeFold, Amount: 0}
 	}
 }
