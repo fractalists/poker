@@ -71,7 +71,7 @@ func testSettle(t *testing.T) {
 		InPotAmount:     100,
 	}
 
-	board := &Board{
+	board := &model.Board{
 		Players: []*model.Player{player1, player2, player3, player4, player5, player6},
 		Game: &model.Game{
 			Round:         "round_1",
@@ -90,7 +90,7 @@ func testSettle(t *testing.T) {
 		FinalPlayerTier{FinalPlayer{Player: player6, ScoreResult: ScoreResult{Score: 1}}},
 	}
 
-	board.settle(finalPlayerTiers)
+	settle(board, finalPlayerTiers)
 
 	assert.Equal(t, 20, player1.Bankroll)
 	assert.Equal(t, 20, player2.Bankroll)

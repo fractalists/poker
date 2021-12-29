@@ -25,7 +25,7 @@ const RIVER Round = "RIVER"
 const SHOWDOWN Round = "SHOWDOWN"
 
 type Position string
-
+// todo
 const SB Position = "SB"
 const BB Position = "BB"
 const UTG Position = "UTG"

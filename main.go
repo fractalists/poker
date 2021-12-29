@@ -8,12 +8,11 @@ import (
 )
 
 func main() {
-	board := &entity.Board{}
-	board.Init(6, 100)
+	board := entity.InitBoard(6, 100)
 
-	board.InitGame(1, 0, "round_1")
-	board.PlayGame()
-	board.EndGame()
+	entity.InitGame(board, 1, 0, "round_1")
+	entity.PlayGame(board)
+	entity.EndGame(board)
 
 	fmt.Printf("Game Over. Press any key to exit.\n")
 	reader := bufio.NewReader(os.Stdin)

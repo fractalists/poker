@@ -3,22 +3,21 @@ package entity
 import (
 	"fmt"
 	"holdem/model"
-	"holdem/react"
+	"holdem/interact"
+	"holdem/util"
 	"sort"
 	"strconv"
 )
 
-type Board struct {
-	Players []*model.Player
-	Game    *model.Game
+func InitBoard(playerNum int, playerBankroll int) *model.Board {
+	board := &model.Board{
+		Players: initializePlayers(playerNum, playerBankroll),
+		Game:    nil,
+	}
+	return board
 }
 
-func (board *Board) Init(playerNum int, playerBankroll int) {
-	board.Players = initializePlayers(playerNum, playerBankroll)
-	board.Game = nil
-}
-
-func (board *Board) InitGame(smallBlinds int, sbIndex int, desc string) {
+func InitGame(board *model.Board, smallBlinds int, sbIndex int, desc string) {
 	if len(board.Players) == 0 {
 		panic("board has not been initialized")
 	}
@@ -36,7 +35,7 @@ func (board *Board) InitGame(smallBlinds int, sbIndex int, desc string) {
 	board.Game.Init(smallBlinds, sbIndex, desc)
 }
 
-func (board *Board) PlayGame() {
+func PlayGame(board *model.Board) {
 	game := board.Game
 
 	// PreFlop
@@ -52,9 +51,9 @@ func (board *Board) PlayGame() {
 	card4 := game.DrawCard()
 	card5 := game.DrawCard()
 	game.BoardCards = model.Cards{card1, card2, card3, card4, card5}
-	board.react()
+	interactWithPlayers(board)
 	if game.Round == model.SHOWDOWN {
-		board.Showdown()
+		showdown(board)
 		return
 	}
 
@@ -63,32 +62,32 @@ func (board *Board) PlayGame() {
 	game.BoardCards[0].Revealed = true
 	game.BoardCards[1].Revealed = true
 	game.BoardCards[2].Revealed = true
-	board.react()
+	interactWithPlayers(board)
 	if game.Round == model.SHOWDOWN {
-		board.Showdown()
+		showdown(board)
 		return
 	}
 
 	// Turn
 	game.Round = model.TURN
 	game.BoardCards[3].Revealed = true
-	board.react()
+	interactWithPlayers(board)
 	if game.Round == model.SHOWDOWN {
-		board.Showdown()
+		showdown(board)
 		return
 	}
 
 	// River
 	game.Round = model.RIVER
 	game.BoardCards[4].Revealed = true
-	board.react()
+	interactWithPlayers(board)
 
 	game.Round = model.SHOWDOWN
-	board.Showdown()
+	showdown(board)
 }
 
-func (board *Board) react() {
-	board.Render()
+func interactWithPlayers(board *model.Board) {
+	model.Render(board)
 
 	gotSmallBlind := true
 	gotBigBlind := true
@@ -106,37 +105,34 @@ func (board *Board) react() {
 			}
 
 			if gotSmallBlind == false {
-				board.performAction(actualIndex, model.Action{ActionType: model.ActionTypeBet, Amount: board.Game.SmallBlinds})
-				//board.RenderToSomebody(actualIndex)
+				performAction(board, actualIndex, model.Action{ActionType: model.ActionTypeBet, Amount: board.Game.SmallBlinds})
 				gotSmallBlind = true
 				continue
 			}
 			if gotSmallBlind && gotBigBlind == false {
-				board.performAction(actualIndex, model.Action{ActionType: model.ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
-				//board.RenderToSomebody(actualIndex)
+				performAction(board, actualIndex, model.Action{ActionType: model.ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
 				gotBigBlind = true
 				continue
 			}
 
-			//board.RenderToSomebody(actualIndex)
-			board.callReact(actualIndex)
+			callReact(board, actualIndex)
 		}
 
-		if board.checkIfRoundIsFinish() {
+		if checkIfRoundIsFinish(board) {
 			break
 		}
 	}
 
 	// round is finish, then check if game needs ongoing
-	if board.checkIfGameNeedsOngoing() {
+	if checkIfGameNeedsOngoing(board) {
 		return
 	}
 
-	// no more react is needed, proceed to showdown
+	// no more interact is needed, proceed to showdown
 	board.Game.Round = model.SHOWDOWN
 }
 
-func (board *Board) Showdown() {
+func showdown(board *model.Board) {
 	// check
 	pot := 0
 	for _, player := range board.Players {
@@ -159,12 +155,12 @@ func (board *Board) Showdown() {
 		}
 	}
 
-	board.Render()
+	model.Render(board)
 
 	// calc finalPlayerTiers
-	finalPlayerTiers := board.calcFinalPlayerTiers()
+	finalPlayerTiers := calcFinalPlayerTiers(board)
 
-	board.settle(finalPlayerTiers)
+	settle(board, finalPlayerTiers)
 
 	// check
 	if board.Game.Pot != 0 {
@@ -176,7 +172,7 @@ func (board *Board) Showdown() {
 		}
 	}
 
-	board.Render()
+	model.Render(board)
 	// show winner
 	if len(finalPlayerTiers[0]) == 1 {
 		finalPlayer := finalPlayerTiers[0][0]
@@ -189,7 +185,7 @@ func (board *Board) Showdown() {
 	}
 }
 
-func (board *Board) calcFinalPlayerTiers() FinalPlayerTiers {
+func calcFinalPlayerTiers(board *model.Board) FinalPlayerTiers {
 	finalPlayerTiers := FinalPlayerTiers{}
 
 	for i := 0; i < len(board.Players); i++ {
@@ -231,7 +227,7 @@ func addToFinalPlayerTiers(finalPlayerTiers *FinalPlayerTiers, player *model.Pla
 	}
 }
 
-func (board *Board) settle(finalPlayerTiers FinalPlayerTiers) {
+func settle(board *model.Board, finalPlayerTiers FinalPlayerTiers) {
 	if len(finalPlayerTiers) == 0 {
 		return
 	}
@@ -259,7 +255,7 @@ func (board *Board) settle(finalPlayerTiers FinalPlayerTiers) {
 
 		sidePot := 0
 		for _, player := range board.Players {
-			amountChange := min(player.InPotAmount, finalPlayerInPotAmount)
+			amountChange := util.Min(player.InPotAmount, finalPlayerInPotAmount)
 			sidePot += amountChange
 			player.InPotAmount -= amountChange
 		}
@@ -275,16 +271,8 @@ func (board *Board) settle(finalPlayerTiers FinalPlayerTiers) {
 		// first tier players are not able to win all pot, so remove first tier and settle another round
 		newFinalPlayerTiers := finalPlayerTiers[1:]
 		board.Game.CurrentAmount -= maxInPotAmountOfFirstTier
-		board.settle(newFinalPlayerTiers)
+		settle(board, newFinalPlayerTiers)
 	}
-}
-
-func min(a, b int) int {
-	if a <= b {
-		return a
-	}
-
-	return b
 }
 
 func divideAmountIntoNPart(amount, n int) []int {
@@ -309,7 +297,7 @@ func divideAmountIntoNPart(amount, n int) []int {
 	return result
 }
 
-func (board *Board) EndGame() {
+func EndGame(board *model.Board) {
 	for _, player := range board.Players {
 		player.Hands = nil
 		player.Status = model.PlayerStatusPlaying
@@ -319,103 +307,7 @@ func (board *Board) EndGame() {
 	board.Game = nil
 }
 
-func (board *Board) Render() {
-	fmt.Printf("---------------------------------------------------------------\n"+
-		"%v", board.Game)
-	for _, player := range board.Players {
-		fmt.Printf("%v\n", player)
-	}
-}
-
-func (board *Board) RenderToSomebody(playerIndex int) {
-	fmt.Printf("---------------------------------------------------------------\n"+
-		"%v", board.Game)
-	for i := 0; i < len(board.Players); i++ {
-		player := board.Players[i]
-		if i == playerIndex {
-			visiblePlayer := &model.Player{
-				Name:            player.Name,
-				Index:           player.Index,
-				Status:          player.Status,
-				InitialBankroll: player.InitialBankroll,
-				Bankroll:        player.Bankroll,
-				InPotAmount:     player.InPotAmount,
-			}
-			for _, card := range player.Hands {
-				visiblePlayer.Hands = append(visiblePlayer.Hands, model.Card{Suit: card.Suit, Rank: card.Rank, Revealed: true})
-			}
-			fmt.Printf("%v\n", visiblePlayer)
-		} else {
-			fmt.Printf("%v\n", player)
-		}
-	}
-}
-
-func (board *Board) deepCopyBoardWithoutLeak(playerIndex int) *model.Board {
-	var deepCopyPlayers []*model.Player
-	if board.Players != nil {
-		for i := 0; i < len(board.Players); i++ {
-			player := board.Players[i]
-
-			deepCopyPlayer := &model.Player{
-				Name:            player.Name,
-				Index:           player.Index,
-				Status:          player.Status,
-				React:           nil,
-				Hands:           nil,
-				InitialBankroll: player.InitialBankroll,
-				Bankroll:        player.Bankroll,
-				InPotAmount:     player.InPotAmount,
-			}
-
-			if i == playerIndex {
-				for _, card := range player.Hands {
-					deepCopyPlayer.Hands = append(deepCopyPlayer.Hands, model.Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed})
-				}
-			}
-
-			deepCopyPlayers = append(deepCopyPlayers, deepCopyPlayer)
-		}
-	}
-
-	var deepCopyGame *model.Game
-	if board.Game != nil {
-		deepCopyGame = &model.Game{
-			Round:         board.Game.Round,
-			Deck:          nil,
-			Pot:           board.Game.Pot,
-			SmallBlinds:   board.Game.SmallBlinds,
-			BoardCards:    nil,
-			CurrentAmount: board.Game.CurrentAmount,
-			SBIndex:       board.Game.SmallBlinds,
-			Desc:          board.Game.Desc,
-		}
-
-		for _, card := range board.Game.BoardCards {
-			if card.Revealed {
-				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, model.Card{
-					Suit:     card.Suit,
-					Rank:     card.Rank,
-					Revealed: card.Revealed,
-				})
-			} else {
-				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, model.Card{
-					Suit:     "*",
-					Rank:     "*",
-					Revealed: card.Revealed,
-				})
-			}
-		}
-	}
-
-	deepCopyBoard := &model.Board{
-		Players: deepCopyPlayers,
-		Game:    deepCopyGame,
-	}
-	return deepCopyBoard
-}
-
-func (board *Board) callReact(playerIndex int) {
+func callReact(board *model.Board, playerIndex int) {
 	if playerIndex < 0 || playerIndex >= len(board.Players) {
 		panic("callReact invalid input")
 	}
@@ -424,19 +316,19 @@ func (board *Board) callReact(playerIndex int) {
 	wrongInputLimit := 3
 	var action model.Action
 	for wrongInputCount < wrongInputLimit {
-		deepCopyBoard := board.deepCopyBoardWithoutLeak(playerIndex)
+		deepCopyBoard := model.DeepCopyBoardWithoutLeak(board, playerIndex)
 		action = board.Players[playerIndex].React(deepCopyBoard)
-		if err := board.checkAction(playerIndex, action); err != nil {
+		if err := checkAction(board, playerIndex, action); err != nil {
 			wrongInputCount++
 			continue
 		}
 		break
 	}
 
-	board.performAction(playerIndex, action)
+	performAction(board, playerIndex, action)
 }
 
-func (board *Board) checkAction(playerIndex int, action model.Action) error {
+func checkAction(board *model.Board, playerIndex int, action model.Action) error {
 	currentPlayer := board.Players[playerIndex]
 	minRequiredAmount := board.Game.CurrentAmount - currentPlayer.InPotAmount
 	bankroll := currentPlayer.Bankroll
@@ -461,7 +353,7 @@ func (board *Board) checkAction(playerIndex int, action model.Action) error {
 	return nil
 }
 
-func (board *Board) performAction(playerIndex int, action model.Action) {
+func performAction(board *model.Board, playerIndex int, action model.Action) {
 	currentPlayer := board.Players[playerIndex]
 	fmt.Printf("--> [%s]'s action: %v\n", currentPlayer.Name, action)
 
@@ -490,7 +382,7 @@ func (board *Board) performAction(playerIndex int, action model.Action) {
 	}
 }
 
-func (board *Board) checkIfRoundIsFinish() bool {
+func checkIfRoundIsFinish(board *model.Board, ) bool {
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying && player.InPotAmount != board.Game.CurrentAmount {
 			return false
@@ -499,7 +391,7 @@ func (board *Board) checkIfRoundIsFinish() bool {
 	return true
 }
 
-func (board *Board) checkIfGameNeedsOngoing() bool {
+func checkIfGameNeedsOngoing(board *model.Board, ) bool {
 	playingPlayerCount := 0
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying && player.Bankroll > 0 {
@@ -524,7 +416,7 @@ func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			React:           react.CreateRandomAI(i),
+			React:           interact.CreateRandomAI(i),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,
@@ -532,6 +424,6 @@ func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
 		})
 	}
 
-	players[len(players)-1].React = react.CreateHumanReactFunc(len(players) - 1)
+	players[len(players)-1].React = interact.CreateHumanReactFunc(len(players) - 1)
 	return players
 }

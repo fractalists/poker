@@ -1,4 +1,4 @@
-package react
+package interact
 
 import (
 	"holdem/model"
