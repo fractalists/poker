@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-func CreateRandomAI(selfIndex int) func(*model.Board) model.Action {
+func CreateDumbRandomAI(selfIndex int) func(*model.Board) model.Action {
 	return func(board *model.Board) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
-			panic("randomAI invalid inputs")
+			panic("dumbRandomAI invalid inputs")
 		}
 
 		rand.Seed(time.Now().UnixNano())
