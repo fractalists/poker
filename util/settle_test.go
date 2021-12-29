@@ -1,9 +1,10 @@
 package util
 
 import (
-	"github.com/stretchr/testify/assert"
 	"holdem/model"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBoardAll(t *testing.T) {

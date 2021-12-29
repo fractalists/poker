@@ -16,6 +16,32 @@ func InitBoard(playerNum int, playerBankroll int) *model.Board {
 	return board
 }
 
+func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
+	if playerNum < 2 || playerNum > 23 {
+		panic(fmt.Sprintf("invalid playerNum: %d", playerNum))
+	}
+	if playerBankroll < 2 {
+		panic(fmt.Sprintf("invalid playerBankroll: %d", playerBankroll))
+	}
+
+	var players []*model.Player
+	for i := 0; i < playerNum; i++ {
+		players = append(players, &model.Player{
+			Name:            "Player" + strconv.Itoa(i+1),
+			Index:           i,
+			Status:          model.PlayerStatusPlaying,
+			Interact:        interact.CreateRandomAI(i),
+			Hands:           model.Cards{},
+			InitialBankroll: playerBankroll,
+			Bankroll:        playerBankroll,
+			InPotAmount:     0,
+		})
+	}
+
+	players[len(players)-1].Interact = interact.CreateHumanInteractFunc(len(players) - 1)
+	return players
+}
+
 func InitGame(board *model.Board, smallBlinds int, sbIndex int, desc string) {
 	if len(board.Players) == 0 {
 		panic("board has not been initialized")
@@ -83,6 +109,16 @@ func PlayGame(board *model.Board) {
 
 	game.Round = model.SHOWDOWN
 	showdown(board)
+}
+
+func EndGame(board *model.Board) {
+	for _, player := range board.Players {
+		player.Hands = nil
+		player.Status = model.PlayerStatusPlaying
+		player.InPotAmount = 0
+	}
+
+	board.Game = nil
 }
 
 func interactWithPlayers(board *model.Board) {
@@ -184,16 +220,6 @@ func showdown(board *model.Board) {
 	}
 }
 
-func EndGame(board *model.Board) {
-	for _, player := range board.Players {
-		player.Hands = nil
-		player.Status = model.PlayerStatusPlaying
-		player.InPotAmount = 0
-	}
-
-	board.Game = nil
-}
-
 func callInteract(board *model.Board, playerIndex int) {
 	if playerIndex < 0 || playerIndex >= len(board.Players) {
 		panic("callInteract invalid input")
@@ -269,7 +295,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 	}
 }
 
-func checkIfRoundIsFinish(board *model.Board, ) bool {
+func checkIfRoundIsFinish(board *model.Board) bool {
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying && player.InPotAmount != board.Game.CurrentAmount {
 			return false
@@ -278,7 +304,7 @@ func checkIfRoundIsFinish(board *model.Board, ) bool {
 	return true
 }
 
-func checkIfGameNeedsOngoing(board *model.Board, ) bool {
+func checkIfGameNeedsOngoing(board *model.Board) bool {
 	playingPlayerCount := 0
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying && player.Bankroll > 0 {
@@ -287,30 +313,4 @@ func checkIfGameNeedsOngoing(board *model.Board, ) bool {
 	}
 
 	return playingPlayerCount >= 2
-}
-
-func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
-	if playerNum < 2 || playerNum > 23 {
-		panic(fmt.Sprintf("invalid playerNum: %d", playerNum))
-	}
-	if playerBankroll < 2 {
-		panic(fmt.Sprintf("invalid playerBankroll: %d", playerBankroll))
-	}
-
-	var players []*model.Player
-	for i := 0; i < playerNum; i++ {
-		players = append(players, &model.Player{
-			Name:            "Player" + strconv.Itoa(i+1),
-			Index:           i,
-			Status:          model.PlayerStatusPlaying,
-			Interact:           interact.CreateRandomAI(i),
-			Hands:           model.Cards{},
-			InitialBankroll: playerBankroll,
-			Bankroll:        playerBankroll,
-			InPotAmount:     0,
-		})
-	}
-
-	players[len(players)-1].Interact = interact.CreateHumanInteractFunc(len(players) - 1)
-	return players
 }

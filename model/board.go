@@ -25,7 +25,7 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 				Name:            player.Name,
 				Index:           player.Index,
 				Status:          player.Status,
-				Interact:           nil,
+				Interact:        nil,
 				Hands:           nil,
 				InitialBankroll: player.InitialBankroll,
 				Bankroll:        player.Bankroll,
@@ -78,4 +78,3 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 	}
 	return deepCopyBoard
 }
-

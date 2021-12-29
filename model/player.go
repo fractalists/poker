@@ -8,7 +8,7 @@ type Player struct {
 	Name            string
 	Index           int
 	Status          PlayerStatus
-	Interact           func(*Board) Action
+	Interact        func(*Board) Action
 	Hands           Cards
 	InitialBankroll int
 	Bankroll        int
@@ -36,4 +36,3 @@ const ActionTypeAllIn ActionType = "ALLIN"
 func (player *Player) String() string {
 	return fmt.Sprintf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
 }
-

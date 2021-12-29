@@ -117,4 +117,3 @@ func divideAmountIntoNPart(amount, n int) []int {
 
 	return result
 }
-
