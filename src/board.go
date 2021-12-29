@@ -173,6 +173,7 @@ func (board *Board) Showdown() {
 		}
 	}
 
+	board.Render()
 	// show winner
 	if len(finalPlayerTiers[0]) == 1 {
 		finalPlayer := finalPlayerTiers[0][0]

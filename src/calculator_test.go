@@ -7,21 +7,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAll(t *testing.T) {
-	t.Run("RoyalFlush", TestScoreWithRoyalFlush)
-	t.Run("StraightFlush", TestScoreWithStraightFlush)
-	t.Run("FourOfAKind", TestScoreWithFourOfAKind)
-	t.Run("FullHouse", TestScoreWithFullHouse)
-	t.Run("Flush", TestScoreWithFlush)
-	t.Run("Straight", TestScoreWithStraight)
-	t.Run("Straight2", TestScoreWithStraight2)
-	t.Run("ThreeOfAKind", TestScoreWithThreeOfAKind)
-	t.Run("TwoPair", TestScoreWithTwoPair)
-	t.Run("OnePair", TestScoreWithOnePair)
-	t.Run("HighCard", TestScoreWithHighCard)
+func TestScoreAll(t *testing.T) {
+	t.Run("RoyalFlush", testScoreWithRoyalFlush)
+	t.Run("StraightFlush", testScoreWithStraightFlush)
+	t.Run("FourOfAKind", testScoreWithFourOfAKind)
+	t.Run("FullHouse", testScoreWithFullHouse)
+	t.Run("Flush", testScoreWithFlush)
+	t.Run("Straight", testScoreWithStraight)
+	t.Run("Straight2", testScoreWithStraight2)
+	t.Run("ThreeOfAKind", testScoreWithThreeOfAKind)
+	t.Run("TwoPair", testScoreWithTwoPair)
+	t.Run("OnePair", testScoreWithOnePair)
+	t.Run("HighCard", testScoreWithHighCard)
 }
 
-func TestScoreWithRoyalFlush(t *testing.T) {
+func testScoreWithRoyalFlush(t *testing.T) {
 	card1 := Card{Suit: HEARTS, Rank: TEN}
 	card2 := Card{Suit: HEARTS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: QUEEN}
@@ -44,7 +44,7 @@ func TestScoreWithRoyalFlush(t *testing.T) {
 	assert.Equal(t, 9974010, score)
 }
 
-func TestScoreWithStraightFlush(t *testing.T) {
+func testScoreWithStraightFlush(t *testing.T) {
 	card1 := Card{Suit: HEARTS, Rank: NINE}
 	card2 := Card{Suit: HEARTS, Rank: TEN}
 	card3 := Card{Suit: HEARTS, Rank: JACK}
@@ -67,7 +67,7 @@ func TestScoreWithStraightFlush(t *testing.T) {
 	assert.Equal(t, 8904105, score)
 }
 
-func TestScoreWithFourOfAKind(t *testing.T) {
+func testScoreWithFourOfAKind(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: JACK}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: KING}
@@ -90,7 +90,7 @@ func TestScoreWithFourOfAKind(t *testing.T) {
 	assert.Equal(t, 7978669, score)
 }
 
-func TestScoreWithFullHouse(t *testing.T) {
+func testScoreWithFullHouse(t *testing.T) {
 	card1 := Card{Suit: HEARTS, Rank: NINE}
 	card2 := Card{Suit: HEARTS, Rank: TEN}
 	card3 := Card{Suit: CLUBS, Rank: QUEEN}
@@ -113,7 +113,7 @@ func TestScoreWithFullHouse(t *testing.T) {
 	assert.Equal(t, 6908748, score)
 }
 
-func TestScoreWithFlush(t *testing.T) {
+func testScoreWithFlush(t *testing.T) {
 	card1 := Card{Suit: HEARTS, Rank: NINE}
 	card2 := Card{Suit: HEARTS, Rank: TEN}
 	card3 := Card{Suit: HEARTS, Rank: JACK}
@@ -136,7 +136,7 @@ func TestScoreWithFlush(t *testing.T) {
 	assert.Equal(t, 5834194, score)
 }
 
-func TestScoreWithStraight(t *testing.T) {
+func testScoreWithStraight(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: TEN}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: QUEEN}
@@ -158,7 +158,7 @@ func TestScoreWithStraight(t *testing.T) {
 	assert.Equal(t, 4974010, score)
 }
 
-func TestScoreWithStraight2(t *testing.T) {
+func testScoreWithStraight2(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: FIVE}
 	card2 := Card{Suit: CLUBS, Rank: FOUR}
 	card3 := Card{Suit: HEARTS, Rank: THREE}
@@ -180,7 +180,7 @@ func TestScoreWithStraight2(t *testing.T) {
 	assert.Equal(t, 4939058, score)
 }
 
-func TestScoreWithThreeOfAKind(t *testing.T) {
+func testScoreWithThreeOfAKind(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: TEN}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: KING}
@@ -202,7 +202,7 @@ func TestScoreWithThreeOfAKind(t *testing.T) {
 	assert.Equal(t, 3978651, score)
 }
 
-func TestScoreWithTwoPair(t *testing.T) {
+func testScoreWithTwoPair(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: TEN}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: TWO}
@@ -225,7 +225,7 @@ func TestScoreWithTwoPair(t *testing.T) {
 	assert.Equal(t, 2755797, score)
 }
 
-func TestScoreWithOnePair(t *testing.T) {
+func testScoreWithOnePair(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: TEN}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: TWO}
@@ -248,7 +248,7 @@ func TestScoreWithOnePair(t *testing.T) {
 	assert.Equal(t, 1965205, score)
 }
 
-func TestScoreWithHighCard(t *testing.T) {
+func testScoreWithHighCard(t *testing.T) {
 	card1 := Card{Suit: DIAMONDS, Rank: TEN}
 	card2 := Card{Suit: CLUBS, Rank: JACK}
 	card3 := Card{Suit: HEARTS, Rank: TWO}
