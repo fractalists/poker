@@ -1,20 +1,21 @@
-package src
+package react
 
 import (
 	"bufio"
 	"fmt"
+	"holdem/model"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func createHumanReactFunc(selfIndex int) func(*Board) Action {
-	return func(board *Board) Action {
+func CreateHumanReactFunc(selfIndex int) func(*model.Board) model.Action {
+	return func(board *model.Board) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
 			panic("humanReact invalid inputs")
 		}
 
-		board.RenderToSomebody(selfIndex)
+		render(board)
 
 		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
 		bankroll := board.Players[selfIndex].Bankroll
@@ -77,8 +78,8 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					continue
 				}
 
-				return Action{
-					ActionType: ActionTypeBet,
+				return model.Action{
+					ActionType: model.ActionTypeBet,
 					Amount:     amount,
 				}
 
@@ -88,20 +89,20 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					wrongInputCount++
 					continue
 				}
-				return Action{
-					ActionType: ActionTypeCall,
+				return model.Action{
+					ActionType: model.ActionTypeCall,
 					Amount:     minRequiredAmount,
 				}
 
 			} else if actionNumber == "3" {
-				return Action{
-					ActionType: ActionTypeFold,
+				return model.Action{
+					ActionType: model.ActionTypeFold,
 					Amount:     0,
 				}
 
 			} else if actionNumber == "4" {
-				return Action{
-					ActionType: ActionTypeAllIn,
+				return model.Action{
+					ActionType: model.ActionTypeAllIn,
 					Amount:     bankroll,
 				}
 
@@ -111,6 +112,14 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 				continue
 			}
 		}
-		return Action{ActionType: ActionTypeFold, Amount: 0}
+		return model.Action{ActionType: model.ActionTypeFold, Amount: 0}
+	}
+}
+
+func render(board *model.Board) {
+	fmt.Printf("---------------------------------------------------------------\n"+
+		"%v", board.Game)
+	for _, player := range board.Players {
+		fmt.Printf("%v\n", player)
 	}
 }

@@ -1,6 +1,7 @@
-package src
+package entity
 
 import (
+	"holdem/model"
 	"sort"
 )
 
@@ -32,7 +33,7 @@ var rankingPointMap = map[HandType]int{
 
 type ScoreResult struct {
 	HandType   HandType
-	FinalCards Cards
+	FinalCards model.Cards
 	Score      int
 }
 
@@ -53,7 +54,7 @@ type ScoreResult struct {
 // Two Pair:       2000000
 // One Pair:       1000000
 // High Card:            0
-func Score(cards Cards) ScoreResult {
+func Score(cards model.Cards) ScoreResult {
 	if len(cards) != 7 {
 		panic("cards length in score method is not 7")
 	}
@@ -67,7 +68,7 @@ func Score(cards Cards) ScoreResult {
 	return ScoreResult{HandType: handType, FinalCards: mostValuableCards, Score: score}
 }
 
-func getHandType(cards Cards) (HandType, Cards) {
+func getHandType(cards model.Cards) (HandType, model.Cards) {
 	if fourOfAKindCards := hasFourOfAKind(cards); len(fourOfAKindCards) != 0 {
 		return FourOfAKind, fourOfAKindCards
 	}
@@ -107,8 +108,8 @@ func getHandType(cards Cards) (HandType, Cards) {
 	return HighCard, getHighCards(cards)
 }
 
-func getCardPoint(cards Cards) int {
-	deepCopy := Cards{}
+func getCardPoint(cards model.Cards) int {
+	deepCopy := model.Cards{}
 	for _, card := range cards {
 		deepCopy = append(deepCopy, card)
 	}
@@ -122,7 +123,7 @@ func getCardPoint(cards Cards) int {
 	return cardPoint
 }
 
-func hasFourOfAKind(cards Cards) Cards {
+func hasFourOfAKind(cards model.Cards) model.Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -132,11 +133,11 @@ func hasFourOfAKind(cards Cards) Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 4 {
-			result := Cards{}
+			result := model.Cards{}
 			needHighCardCount := 1
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(Cards{card}, result...)
+					result = append(model.Cards{card}, result...)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -149,7 +150,7 @@ func hasFourOfAKind(cards Cards) Cards {
 	return nil
 }
 
-func hasFlush(cards Cards) Cards {
+func hasFlush(cards model.Cards) model.Cards {
 	sort.Sort(cards)
 	suitMemory := make([]int, 5)
 
@@ -159,7 +160,7 @@ func hasFlush(cards Cards) Cards {
 
 	for i := 4; i >= 1; i-- {
 		if suitMemory[i] >= 5 {
-			result := Cards{}
+			result := model.Cards{}
 			for _, card := range cards {
 				if card.SuitToInt() == i {
 					result = append(result, card)
@@ -172,25 +173,25 @@ func hasFlush(cards Cards) Cards {
 	return nil
 }
 
-func isRoyalFlush(cards Cards) bool {
+func isRoyalFlush(cards model.Cards) bool {
 	if len(cards) != 5 {
 		panic("isRoyalFlush cards length is not 5")
 	}
 
 	sort.Sort(cards)
-	return cards[4].Rank == TEN
+	return cards[4].Rank == model.TEN
 }
 
-func hasStraight(cards Cards) Cards {
+func hasStraight(cards model.Cards) model.Cards {
 	sort.Sort(cards)
-	rankMemory := make([]*Card, 15)
+	rankMemory := make([]*model.Card, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] = &Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
+		rankMemory[card.RankToInt()] = &model.Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
 
-		if card.Rank == ACE {
+		if card.Rank == model.ACE {
 			// ACE also works as 1
-			rankMemory[1] = &Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
+			rankMemory[1] = &model.Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
 		}
 	}
 
@@ -202,7 +203,7 @@ func hasStraight(cards Cards) Cards {
 				start = i
 				hasStart = true
 			} else if start-i == 4 {
-				var result []Card
+				var result []model.Card
 				for j := start; j >= i; j-- {
 					result = append(result, *rankMemory[j])
 				}
@@ -217,7 +218,7 @@ func hasStraight(cards Cards) Cards {
 	return nil
 }
 
-func hasFullHouse(cards Cards) Cards {
+func hasFullHouse(cards model.Cards) model.Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -227,7 +228,7 @@ func hasFullHouse(cards Cards) Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 3 {
-			result := Cards{}
+			result := model.Cards{}
 			for _, card := range cards {
 				if card.RankToInt() == i {
 					result = append(result, card)
@@ -256,7 +257,7 @@ func hasFullHouse(cards Cards) Cards {
 	return nil
 }
 
-func hasThreeOfAKind(cards Cards) Cards {
+func hasThreeOfAKind(cards model.Cards) model.Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -266,11 +267,11 @@ func hasThreeOfAKind(cards Cards) Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 3 {
-			result := Cards{}
+			result := model.Cards{}
 			needHighCardCount := 2
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(Cards{card}, result...)
+					result = append(model.Cards{card}, result...)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -283,7 +284,7 @@ func hasThreeOfAKind(cards Cards) Cards {
 	return nil
 }
 
-func hasTwoPair(cards Cards) Cards {
+func hasTwoPair(cards model.Cards) model.Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -301,7 +302,7 @@ func hasTwoPair(cards Cards) Cards {
 		return nil
 	}
 
-	result := Cards{}
+	result := model.Cards{}
 	for _, card := range cards {
 		if card.RankToInt() == pairRanks[0] || card.RankToInt() == pairRanks[1] {
 			result = append(result, card)
@@ -318,7 +319,7 @@ func hasTwoPair(cards Cards) Cards {
 	return result
 }
 
-func hasOnePair(cards Cards) Cards {
+func hasOnePair(cards model.Cards) model.Cards {
 	sort.Sort(cards)
 	rankMemory := make([]int, 15)
 
@@ -328,11 +329,11 @@ func hasOnePair(cards Cards) Cards {
 
 	for i := 14; i >= 2; i-- {
 		if rankMemory[i] == 2 {
-			result := Cards{}
+			result := model.Cards{}
 			needHighCardCount := 3
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(Cards{card}, result...)
+					result = append(model.Cards{card}, result...)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -345,11 +346,11 @@ func hasOnePair(cards Cards) Cards {
 	return nil
 }
 
-func getHighCards(cards Cards) Cards {
+func getHighCards(cards model.Cards) model.Cards {
 	return getNHighestCards(cards, 5)
 }
 
-func getNHighestCards(cards Cards, n int) Cards {
+func getNHighestCards(cards model.Cards, n int) model.Cards {
 	if n < 1 || n > len(cards) {
 		panic("invalid n")
 	}
@@ -359,7 +360,7 @@ func getNHighestCards(cards Cards, n int) Cards {
 }
 
 type FinalPlayer struct {
-	Player      *Player
+	Player      *model.Player
 	ScoreResult ScoreResult
 }
 

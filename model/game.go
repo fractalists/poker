@@ -1,6 +1,8 @@
-package src
+package model
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Game struct {
 	Round         Round
@@ -32,7 +34,7 @@ const BUTTON Position = "BUTTON"
 
 func (game *Game) Init(smallBlinds int, sbIndex int, desc string) {
 	game.Round = INIT
-	game.Deck = initializeDeck()
+	game.Deck = InitializeDeck()
 	game.Pot = 0
 	game.SmallBlinds = smallBlinds
 	game.CurrentAmount = 2 * smallBlinds

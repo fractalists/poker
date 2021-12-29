@@ -1,12 +1,13 @@
-package src
+package react
 
 import (
+	"holdem/model"
 	"math/rand"
 	"time"
 )
 
-func createRandomAI(selfIndex int) func(*Board) Action {
-	return func(board *Board) Action {
+func CreateRandomAI(selfIndex int) func(*model.Board) model.Action {
+	return func(board *model.Board) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
 			panic("randomAI invalid inputs")
 		}
@@ -20,36 +21,36 @@ func createRandomAI(selfIndex int) func(*Board) Action {
 		switch random {
 		case 0:
 			if bankroll <= minRequiredAmount+1 {
-				return Action{
-					ActionType: ActionTypeAllIn,
+				return model.Action{
+					ActionType: model.ActionTypeAllIn,
 					Amount:     bankroll,
 				}
 			}
-			return Action{
-				ActionType: ActionTypeBet,
+			return model.Action{
+				ActionType: model.ActionTypeBet,
 				Amount:     minRequiredAmount + 1 + rand.Intn(bankroll-minRequiredAmount-1),
 			}
 		case 1:
 			if bankroll < minRequiredAmount {
-				return Action{
-					ActionType: ActionTypeAllIn,
+				return model.Action{
+					ActionType: model.ActionTypeAllIn,
 					Amount:     bankroll,
 				}
 			}
-			return Action{
-				ActionType: ActionTypeCall,
+			return model.Action{
+				ActionType: model.ActionTypeCall,
 				Amount:     minRequiredAmount,
 			}
 		case 2:
 			// todo
 			// won't fold in some situation
-			return Action{
-				ActionType: ActionTypeFold,
+			return model.Action{
+				ActionType: model.ActionTypeFold,
 				Amount:     0,
 			}
 		case 3:
-			return Action{
-				ActionType: ActionTypeAllIn,
+			return model.Action{
+				ActionType: model.ActionTypeAllIn,
 				Amount:     bankroll,
 			}
 		default:

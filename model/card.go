@@ -1,4 +1,4 @@
-package src
+package model
 
 import (
 	"fmt"
@@ -168,7 +168,7 @@ func (cards Cards) Swap(i, j int) {
 	cards[i], cards[j] = cards[j], cards[i]
 }
 
-func initializeDeck() Cards {
+func InitializeDeck() Cards {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(deck), func(i, j int) {
 		deck[i], deck[j] = deck[j], deck[i]

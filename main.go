@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"holdem/src"
+	"holdem/entity"
 	"os"
 )
 
 func main() {
-	board := &src.Board{}
+	board := &entity.Board{}
 	board.Init(6, 100)
 
 	board.InitGame(1, 0, "round_1")

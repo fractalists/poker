@@ -1,7 +1,8 @@
-package src
+package entity
 
 import (
 	"github.com/stretchr/testify/assert"
+	"holdem/model"
 	"testing"
 )
 
@@ -11,28 +12,28 @@ func TestBoardAll(t *testing.T) {
 
 func testSettle(t *testing.T) {
 	// first tier
-	player1 := &Player{
+	player1 := &model.Player{
 		Name:            "player1",
 		Index:           0,
-		Status:          PlayerStatusPlaying,
+		Status:          model.PlayerStatusPlaying,
 		Hands:           nil,
 		InitialBankroll: 10,
 		Bankroll:        0,
 		InPotAmount:     10,
 	}
-	player2 := &Player{
+	player2 := &model.Player{
 		Name:            "player2",
 		Index:           1,
-		Status:          PlayerStatusPlaying,
+		Status:          model.PlayerStatusPlaying,
 		Hands:           nil,
 		InitialBankroll: 10,
 		Bankroll:        0,
 		InPotAmount:     10,
 	}
-	player3 := &Player{
+	player3 := &model.Player{
 		Name:            "player3",
 		Index:           2,
-		Status:          PlayerStatusPlaying,
+		Status:          model.PlayerStatusPlaying,
 		Hands:           nil,
 		InitialBankroll: 20,
 		Bankroll:        0,
@@ -40,19 +41,19 @@ func testSettle(t *testing.T) {
 	}
 
 	// second tier
-	player4 := &Player{
+	player4 := &model.Player{
 		Name:            "player4",
 		Index:           3,
-		Status:          PlayerStatusPlaying,
+		Status:          model.PlayerStatusPlaying,
 		Hands:           nil,
 		InitialBankroll: 20,
 		Bankroll:        0,
 		InPotAmount:     20,
 	}
-	player5 := &Player{
+	player5 := &model.Player{
 		Name:            "player5",
 		Index:           4,
-		Status:          PlayerStatusPlaying,
+		Status:          model.PlayerStatusPlaying,
 		Hands:           nil,
 		InitialBankroll: 50,
 		Bankroll:        0,
@@ -60,10 +61,10 @@ func testSettle(t *testing.T) {
 	}
 
 	// third tier
-	player6 := &Player{
+	player6 := &model.Player{
 		Name:            "player6",
 		Index:           5,
-		Status:          PlayerStatusPlaying,
+		Status:          model.PlayerStatusPlaying,
 		Hands:           nil,
 		InitialBankroll: 100,
 		Bankroll:        0,
@@ -71,8 +72,8 @@ func testSettle(t *testing.T) {
 	}
 
 	board := &Board{
-		Players: []*Player{player1, player2, player3, player4, player5, player6},
-		Game: &Game{
+		Players: []*model.Player{player1, player2, player3, player4, player5, player6},
+		Game: &model.Game{
 			Round:         "round_1",
 			Pot:           player1.InPotAmount + player2.InPotAmount + player3.InPotAmount + player4.InPotAmount + player5.InPotAmount + player6.InPotAmount,
 			SmallBlinds:   1,
