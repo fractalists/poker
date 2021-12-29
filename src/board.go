@@ -156,6 +156,8 @@ func (board *Board) Showdown() {
 		}
 	}
 
+	board.Render()
+
 	// calc finalPlayerTiers
 	finalPlayerTiers := board.calcFinalPlayerTiers()
 
@@ -171,6 +173,7 @@ func (board *Board) Showdown() {
 		}
 	}
 
+	// show winner
 	if len(finalPlayerTiers[0]) == 1 {
 		finalPlayer := finalPlayerTiers[0][0]
 		fmt.Printf("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
