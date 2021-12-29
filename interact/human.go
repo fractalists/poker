@@ -9,10 +9,10 @@ import (
 	"strings"
 )
 
-func CreateHumanReactFunc(selfIndex int) func(*model.Board) model.Action {
+func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 	return func(board *model.Board) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
-			panic("humanReact invalid inputs")
+			panic("humanInteract invalid inputs")
 		}
 
 		render(board)

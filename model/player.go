@@ -8,7 +8,7 @@ type Player struct {
 	Name            string
 	Index           int
 	Status          PlayerStatus
-	React           func(*Board) Action
+	Interact           func(*Board) Action
 	Hands           Cards
 	InitialBankroll int
 	Bankroll        int

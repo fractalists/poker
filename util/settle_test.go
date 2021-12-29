@@ -1,4 +1,4 @@
-package entity
+package util
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -90,7 +90,7 @@ func testSettle(t *testing.T) {
 		FinalPlayerTier{FinalPlayer{Player: player6, ScoreResult: ScoreResult{Score: 1}}},
 	}
 
-	settle(board, finalPlayerTiers)
+	Settle(board, finalPlayerTiers)
 
 	assert.Equal(t, 20, player1.Bankroll)
 	assert.Equal(t, 20, player2.Bankroll)

@@ -1,11 +1,10 @@
-package entity
+package process
 
 import (
 	"fmt"
-	"holdem/model"
 	"holdem/interact"
+	"holdem/model"
 	"holdem/util"
-	"sort"
 	"strconv"
 )
 
@@ -115,7 +114,7 @@ func interactWithPlayers(board *model.Board) {
 				continue
 			}
 
-			callReact(board, actualIndex)
+			callInteract(board, actualIndex)
 		}
 
 		if checkIfRoundIsFinish(board) {
@@ -158,9 +157,9 @@ func showdown(board *model.Board) {
 	model.Render(board)
 
 	// calc finalPlayerTiers
-	finalPlayerTiers := calcFinalPlayerTiers(board)
+	finalPlayerTiers := util.CalcFinalPlayerTiers(board)
 
-	settle(board, finalPlayerTiers)
+	util.Settle(board, finalPlayerTiers)
 
 	// check
 	if board.Game.Pot != 0 {
@@ -185,118 +184,6 @@ func showdown(board *model.Board) {
 	}
 }
 
-func calcFinalPlayerTiers(board *model.Board) FinalPlayerTiers {
-	finalPlayerTiers := FinalPlayerTiers{}
-
-	for i := 0; i < len(board.Players); i++ {
-		player := board.Players[i]
-		if player.Status != model.PlayerStatusPlaying && player.Status != model.PlayerStatusAllIn {
-			continue
-		}
-
-		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
-
-		addToFinalPlayerTiers(&finalPlayerTiers, player, scoreResult)
-	}
-
-	sort.Sort(finalPlayerTiers)
-	return finalPlayerTiers
-}
-
-func addToFinalPlayerTiers(finalPlayerTiers *FinalPlayerTiers, player *model.Player, scoreResult ScoreResult) {
-	finalPlayer := FinalPlayer{
-		Player:      player,
-		ScoreResult: scoreResult,
-	}
-	score := scoreResult.Score
-
-	found := false
-	for i := 0; i < len(*finalPlayerTiers); i++ {
-		if len((*finalPlayerTiers)[i]) > 0 {
-			if (*finalPlayerTiers)[i][0].ScoreResult.Score == score {
-				(*finalPlayerTiers)[i] = append((*finalPlayerTiers)[i], finalPlayer)
-				sort.Sort((*finalPlayerTiers)[i])
-				found = true
-				break
-			}
-		}
-	}
-
-	if found == false {
-		*finalPlayerTiers = append(*finalPlayerTiers, FinalPlayerTier{finalPlayer})
-	}
-}
-
-func settle(board *model.Board, finalPlayerTiers FinalPlayerTiers) {
-	if len(finalPlayerTiers) == 0 {
-		return
-	}
-
-	maxInPotAmountOfFirstTier := 0
-	for _, finalPlayer := range finalPlayerTiers[0] {
-		if finalPlayer.Player.InPotAmount > maxInPotAmountOfFirstTier {
-			maxInPotAmountOfFirstTier = finalPlayer.Player.InPotAmount
-		}
-	}
-
-	for i := 0; i < len(finalPlayerTiers[0]); i++ {
-		finalPlayer := finalPlayerTiers[0][i]
-		finalPlayerInPotAmount := finalPlayer.Player.InPotAmount
-		if finalPlayerInPotAmount == 0 {
-			continue
-		}
-
-		var validFinalPlayers []*model.Player
-		for j := 0; j < len(finalPlayerTiers[0]); j++ {
-			if finalPlayerTiers[0][j].Player.InPotAmount > 0 {
-				validFinalPlayers = append(validFinalPlayers, finalPlayerTiers[0][j].Player)
-			}
-		}
-
-		sidePot := 0
-		for _, player := range board.Players {
-			amountChange := util.Min(player.InPotAmount, finalPlayerInPotAmount)
-			sidePot += amountChange
-			player.InPotAmount -= amountChange
-		}
-
-		board.Game.Pot -= sidePot
-		nPartSidePot := divideAmountIntoNPart(sidePot, len(validFinalPlayers))
-		for j := 0; j < len(validFinalPlayers); j++ {
-			validFinalPlayers[j].Bankroll += nPartSidePot[j]
-		}
-	}
-
-	if maxInPotAmountOfFirstTier < board.Game.CurrentAmount {
-		// first tier players are not able to win all pot, so remove first tier and settle another round
-		newFinalPlayerTiers := finalPlayerTiers[1:]
-		board.Game.CurrentAmount -= maxInPotAmountOfFirstTier
-		settle(board, newFinalPlayerTiers)
-	}
-}
-
-func divideAmountIntoNPart(amount, n int) []int {
-	if amount < 0 || n <= 0 {
-		panic(fmt.Sprintf("invalid amount or n. amount: %d, n: %d", amount, n))
-	}
-
-	result := make([]int, n)
-	each := amount / n
-	residue := amount - ((amount / n) * n)
-
-	for i := 0; i < residue; i++ {
-		result[i] = 1
-	}
-
-	if each > 0 {
-		for i := 0; i < n; i++ {
-			result[i] += each
-		}
-	}
-
-	return result
-}
-
 func EndGame(board *model.Board) {
 	for _, player := range board.Players {
 		player.Hands = nil
@@ -307,17 +194,17 @@ func EndGame(board *model.Board) {
 	board.Game = nil
 }
 
-func callReact(board *model.Board, playerIndex int) {
+func callInteract(board *model.Board, playerIndex int) {
 	if playerIndex < 0 || playerIndex >= len(board.Players) {
-		panic("callReact invalid input")
+		panic("callInteract invalid input")
 	}
 
 	wrongInputCount := 0
 	wrongInputLimit := 3
 	var action model.Action
 	for wrongInputCount < wrongInputLimit {
-		deepCopyBoard := model.DeepCopyBoardWithoutLeak(board, playerIndex)
-		action = board.Players[playerIndex].React(deepCopyBoard)
+		deepCopyBoard := model.DeepCopyBoardToSpecificPlayerWithoutLeak(board, playerIndex)
+		action = board.Players[playerIndex].Interact(deepCopyBoard)
 		if err := checkAction(board, playerIndex, action); err != nil {
 			wrongInputCount++
 			continue
@@ -416,7 +303,7 @@ func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			React:           interact.CreateRandomAI(i),
+			Interact:           interact.CreateRandomAI(i),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,
@@ -424,6 +311,6 @@ func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
 		})
 	}
 
-	players[len(players)-1].React = interact.CreateHumanReactFunc(len(players) - 1)
+	players[len(players)-1].Interact = interact.CreateHumanInteractFunc(len(players) - 1)
 	return players
 }

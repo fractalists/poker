@@ -15,7 +15,7 @@ func Render(board *Board) {
 	}
 }
 
-func DeepCopyBoardWithoutLeak(board *Board, playerIndex int) *Board {
+func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Board {
 	var deepCopyPlayers []*Player
 	if board.Players != nil {
 		for i := 0; i < len(board.Players); i++ {
@@ -25,7 +25,7 @@ func DeepCopyBoardWithoutLeak(board *Board, playerIndex int) *Board {
 				Name:            player.Name,
 				Index:           player.Index,
 				Status:          player.Status,
-				React:           nil,
+				Interact:           nil,
 				Hands:           nil,
 				InitialBankroll: player.InitialBankroll,
 				Bankroll:        player.Bankroll,
