@@ -156,12 +156,29 @@ func (board *Board) Showdown() {
 		}
 	}
 
-	// calc finalPlayer tiers
+	// calc finalPlayerTiers
 	finalPlayerTiers := board.calcFinalPlayerTiers()
-	fmt.Printf("%v\n", finalPlayerTiers)
+
+	deepCopyBoard := board.deepCopyBoardWithoutLeak(0)
+	// calc and settle the pot in deepCopyBoard first
+	settle(deepCopyBoard, finalPlayerTiers)
+	// sync to the real board
+	board.Game.Pot = 0
+	for i := 0; i < len(board.Players); i++ {
+		board.Players[i].InPotAmount = 0
+		board.Players[i].Bankroll = deepCopyBoard.Players[i].Bankroll
+	}
+
+	if len(finalPlayerTiers[0]) == 1 {
+		finalPlayer := finalPlayerTiers[0][0]
+		fmt.Printf("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+	} else {
+		fmt.Printf("Winners are:\n")
+		for _, finalPlayer := range finalPlayerTiers[0] {
+			fmt.Printf("Name: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+		}
+	}
 }
-
-
 
 func (board *Board) calcFinalPlayerTiers() FinalPlayerTiers {
 	finalPlayerTiers := FinalPlayerTiers{}
@@ -205,41 +222,8 @@ func addToFinalPlayerTiers(finalPlayerTiers *FinalPlayerTiers, player *Player, s
 	}
 }
 
-func (board *Board) ShowdownBackup() {
-	for i := 0; i < len(board.Game.BoardCards); i++ {
-		board.Game.BoardCards[i].Revealed = true
-	}
-	board.Render()
+func settle(board *Board, tiers FinalPlayerTiers) {
 
-	scoreMap := map[*Player]ScoreResult{}
-	for i := 0; i < len(board.Players); i++ {
-		player := board.Players[i]
-		if player.Status != PlayerStatusPlaying && player.Status != PlayerStatusAllIn {
-			continue
-		}
-
-		for j := 0; j < len(player.Hands); j++ {
-			player.Hands[j].Revealed = true
-		}
-		scoreResult := Score(append(board.Game.BoardCards, player.Hands...))
-		scoreMap[player] = scoreResult
-	}
-
-	var winner *Player
-	winScore := 0
-	for player, scoreResult := range scoreMap {
-		if scoreResult.Score > winScore {
-			winScore = scoreResult.Score
-			winner = player
-		}
-	}
-	if winner == nil {
-		panic("nobody win!?")
-	}
-
-	// settle pot and bankroll
-
-	fmt.Printf("Winner is %s\nScore: %v \n", winner.Name, scoreMap[winner])
 }
 
 func (board *Board) EndGame() {

@@ -53,7 +53,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					continue
 				}
 
-				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", minRequiredAmount + 1, bankroll - 1)
+				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", minRequiredAmount+1, bankroll-1)
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
@@ -70,7 +70,7 @@ func createHumanReactFunc(selfIndex int) func(*Board) Action {
 					wrongInputCount++
 					continue
 				} else if amount <= minRequiredAmount || amount >= bankroll {
-					fmt.Println("!! invalid input amount !!")
+					fmt.Printf("!! invalid input amount !!\n")
 					wrongInputCount++
 					continue
 				}

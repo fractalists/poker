@@ -359,7 +359,7 @@ func getNHighestCards(cards Cards, n int) Cards {
 }
 
 type FinalPlayer struct {
-	Player *Player
+	Player      *Player
 	ScoreResult ScoreResult
 }
 
