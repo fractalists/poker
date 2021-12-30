@@ -1,12 +1,12 @@
 # high priority
 - fix game logic bug
     - only can bet once in one round
-- multi game rounds
 - improve ai
 - ai vs ai
 
 
 # low priority
+- support check?
 - logging
 - testing
 - gui
