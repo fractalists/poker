@@ -15,19 +15,20 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 		bankroll := board.Players[selfIndex].Bankroll
 
 		winRate := calcWinRate(board, selfIndex)
-		if (float32(minRequiredAmount) / float32(minRequiredAmount+currentPot)) < winRate {
-			return model.Action{
-				ActionType: model.ActionTypeFold,
-				Amount:     0,
-			}
-		} else if (bankroll < minRequiredAmount) && (float32(bankroll)/float32(bankroll+currentPot) < winRate) {
+		if (float32(minRequiredAmount) / float32(minRequiredAmount+currentPot)) > winRate {
 			return model.Action{
 				ActionType: model.ActionTypeFold,
 				Amount:     0,
 			}
 		}
 
-		expectedAmount := int(winRate * float32(currentPot) / (1.0 - winRate))
+		var expectedAmount int
+		if 1.0 - winRate < 0.000001 {
+			expectedAmount = 2147483647
+		} else {
+			expectedAmount = int(winRate * float32(currentPot) / (1.0 - winRate))
+		}
+		
 		if expectedAmount < bankroll {
 			if expectedAmount > minRequiredAmount {
 				return model.Action{
@@ -41,31 +42,80 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 				}
 			} else {
 				// expectedAmount < minRequiredAmount
-				// this is basically impossible, maybe due to accuracy loss, just call instead
 				return model.Action{
-					ActionType: model.ActionTypeCall,
-					Amount:     minRequiredAmount,
+					ActionType: model.ActionTypeFold,
+					Amount:     0,
 				}
 			}
 
-		} else if expectedAmount == bankroll {
-			return model.Action{
-				ActionType: model.ActionTypeAllIn,
-				Amount:     bankroll,
-			}
-
 		} else {
-			// expectedAmount > bankroll
-			// todo may have problem
+			// expectedAmount >= bankroll
 			return model.Action{
 				ActionType: model.ActionTypeAllIn,
 				Amount:     bankroll,
 			}
 		}
-
 	}
 }
 
 func calcWinRate(board *model.Board, selfIndex int) float32 {
-	// todo
+	opponentCount := 0
+	for i := 0; i < len(board.Players); i++ {
+		if board.Players[i].Status == model.PlayerStatusPlaying || board.Players[i].Status == model.PlayerStatusAllIn {
+			if i != selfIndex {
+				opponentCount++
+			}
+		}
+	}
+	if opponentCount == 0 {
+		return 0.9999999
+	}
+
+	hands := board.Players[selfIndex].Hands
+
+	var boardRevealCards model.Cards
+	for _, card := range board.Game.BoardCards {
+		if card.Revealed {
+			boardRevealCards = append(boardRevealCards, model.Card{Suit:card.Suit, Rank:card.Rank})
+		}
+	}
+
+	var unrevealedCards model.Cards
+	for _, card := range model.InitializeDeck() {
+		revealed := false
+		for _, revealCard := range hands {
+			if revealCard.Suit == card.Suit && revealCard.Rank == card.Rank {
+				revealed = true
+				break
+			}
+		}
+		if revealed {
+			continue
+		}
+
+		for _, revealCard := range boardRevealCards {
+			if revealCard.Suit == card.Suit && revealCard.Rank == card.Rank {
+				revealed = true
+				break
+			}
+		}
+		if revealed {
+			continue
+		}
+
+		unrevealedCards = append(unrevealedCards, model.Card{Suit:card.Suit,Rank: card.Rank})
+	}
+
+	return mentoCarlo(hands, boardRevealCards, unrevealedCards, opponentCount)
+}
+
+func mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCount int) float32 {
+	boardUnrevealedCount := 5 - len(boardRevealCards)
+
+	winCount := 0
+	lossCount := 0
+
+	for i := 0; i < 10000; i++ {
+
+	}
 }
