@@ -21,6 +21,10 @@ func main() {
 			process.InitGame(board, smallBlinds, match, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
 			process.PlayGame(board)
 			process.EndGame(board)
+
+			fmt.Printf("Match finish. Press any key to begin next match.\n")
+			reader := bufio.NewReader(os.Stdin)
+			reader.ReadString('\n')
 		}
 	}
 
