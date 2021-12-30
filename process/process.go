@@ -115,6 +115,9 @@ func EndGame(board *model.Board) {
 	for _, player := range board.Players {
 		player.Hands = nil
 		player.Status = model.PlayerStatusPlaying
+		if player.Bankroll == 0 {
+			player.Status = model.PlayerStatusOut
+		}
 		player.InPotAmount = 0
 	}
 
