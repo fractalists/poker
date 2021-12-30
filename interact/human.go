@@ -22,17 +22,17 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 
 		var desc string
 		if bankroll <= minRequiredAmount {
-			desc = "--> You can choose (enter number): \n" +
+			desc = fmt.Sprintf("--> You can choose (enter number): \n" +
 				"[!] Bet  # not available #\n" +
 				"[!] Call  # not available #\n" +
 				"[3] Fold\n" +
-				"[4] AllIn\n"
+				"[4] AllIn --> %d\n", bankroll)
 		} else {
-			desc = "--> You can choose (enter number): \n" +
-				"[1] Bet\n" +
-				"[2] Call\n" +
+			desc = fmt.Sprintf("--> You can choose (enter number): \n" +
+				"[1] Bet --> [%d, %d]\n" +
+				"[2] Call --> %d\n" +
 				"[3] Fold\n" +
-				"[4] AllIn\n"
+				"[4] AllIn --> %d\n", minRequiredAmount+1, bankroll-1, minRequiredAmount, bankroll)
 		}
 
 		wrongInputCount := 0
