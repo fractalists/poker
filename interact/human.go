@@ -20,6 +20,13 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
 		bankroll := board.Players[selfIndex].Bankroll
 
+		var callOrCheck string
+		if minRequiredAmount == 0 {
+			callOrCheck = "Check"
+		} else {
+			callOrCheck = "Call"
+		}
+
 		var desc string
 		if bankroll <= minRequiredAmount {
 			desc = fmt.Sprintf("--> You can choose (enter number): \n"+
@@ -30,9 +37,9 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 		} else {
 			desc = fmt.Sprintf("--> You can choose (enter number): \n"+
 				"[1] Bet --> [%d, %d]\n"+
-				"[2] Call --> %d\n"+
+				"[2] %s --> %d\n"+
 				"[3] Fold\n"+
-				"[4] AllIn --> %d\n", minRequiredAmount+1, bankroll-1, minRequiredAmount, bankroll)
+				"[4] AllIn --> %d\n", minRequiredAmount+1, bankroll-1, callOrCheck, minRequiredAmount, bankroll)
 		}
 
 		wrongInputCount := 0
