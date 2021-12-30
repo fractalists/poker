@@ -30,7 +30,7 @@ func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			Interact:        interact.CreateDumbRandomAI(i),
+			Interact:        interact.CreateOddsWarriorAI(i),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,
