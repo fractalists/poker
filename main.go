@@ -9,13 +9,20 @@ import (
 )
 
 func main() {
-	constant.DebugMode = true
+	constant.DebugMode = false
 
-	board := process.InitBoard(6, 100)
+	playerNum := 6
+	playerBankroll := 100
+	smallBlinds := 1
+	board := process.InitBoard(playerNum, playerBankroll)
 
-	process.InitGame(board, 1, 0, "round_1")
-	process.PlayGame(board)
-	process.EndGame(board)
+	for cycle := 0; cycle < 2; cycle++ {
+		for match := 0; match < playerNum; match++ {
+			process.InitGame(board, smallBlinds, match, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
+			process.PlayGame(board)
+			process.EndGame(board)
+		}
+	}
 
 	fmt.Printf("Game Over. Press any key to exit.\n")
 	reader := bufio.NewReader(os.Stdin)
