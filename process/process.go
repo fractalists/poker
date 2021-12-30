@@ -66,9 +66,11 @@ func PlayGame(board *model.Board) {
 	// PreFlop
 	game.Round = model.PREFLOP
 	for _, player := range board.Players {
-		card1 := game.DrawCard()
-		card2 := game.DrawCard()
-		player.Hands = model.Cards{card1, card2}
+		if player.Status == model.PlayerStatusPlaying {
+			card1 := game.DrawCard()
+			card2 := game.DrawCard()
+			player.Hands = model.Cards{card1, card2}
+		}
 	}
 	card1 := game.DrawCard()
 	card2 := game.DrawCard()
