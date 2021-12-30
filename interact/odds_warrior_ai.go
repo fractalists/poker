@@ -1,6 +1,7 @@
 package interact
 
 import (
+	"fmt"
 	"holdem/model"
 	"holdem/util"
 	"math/rand"
@@ -16,15 +17,7 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 		currentPot := board.Game.Pot
 		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
 		bankroll := board.Players[selfIndex].Bankroll
-
-		winRate := calcWinRate(board, selfIndex)
-		if (float32(minRequiredAmount) / float32(minRequiredAmount+currentPot)) > winRate {
-			return model.Action{
-				ActionType: model.ActionTypeFold,
-				Amount:     0,
-			}
-		}
-
+		smallBlinds := board.Game.SmallBlinds
 		opponentCount := 0
 		for i := 0; i < len(board.Players); i++ {
 			if board.Players[i].Status == model.PlayerStatusPlaying || board.Players[i].Status == model.PlayerStatusAllIn {
@@ -34,12 +27,21 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 			}
 		}
 
+		winRate := calcWinRate(board, selfIndex)
+		fmt.Printf("Player %d win rate is: %v\n", selfIndex+1, winRate)
+		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate {
+			return model.Action{
+				ActionType: model.ActionTypeFold,
+				Amount:     0,
+			}
+		}
+
 		var expectedAmount int
 		if 1.0-winRate < 0.000001 {
 			expectedAmount = 2147483647
 		} else {
 			//expectedAmount = int(winRate * float32(currentPot) / (1.0 - winRate))
-			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), winRate, float32(board.Game.SmallBlinds)))
+			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), winRate, float32(smallBlinds)))
 		}
 
 		if expectedAmount < bankroll {
@@ -73,22 +75,27 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 	}
 }
 
-func odds(minRequiredAmountInt, additionalAmountInt, potInt, opponentCountInt int) float32 {
-	minRequiredAmount := float32(minRequiredAmountInt)
-	additionalAmount := float32(additionalAmountInt)
-	pot := float32(potInt)
-	opponentCount := float32(opponentCountInt)
+func odds(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds float32) float32 {
+	if pot < 4*smallBlinds {
+		pot = 6.0 * pot
+	} else if pot < 8*smallBlinds {
+		pot = 3.0 * pot
+	} else if pot < 12*smallBlinds {
+		pot = 2 * pot
+	}
 
 	in := minRequiredAmount + additionalAmount
-	out := minRequiredAmount + additionalAmount + pot + 0.3 * additionalAmount * opponentCount
+	out := minRequiredAmount + additionalAmount + pot + 0.3*additionalAmount*opponentCount
 	return in / out
 }
 
 func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallBlinds float32) float32 {
-	if pot < 4 * smallBlinds {
-		pot = 1.5 * pot
-	} else if pot < 6 * smallBlinds {
-		pot = 1.4 * pot
+	if pot < 4*smallBlinds {
+		pot = 6.0 * pot
+	} else if pot < 8*smallBlinds {
+		pot = 3.0 * pot
+	} else if pot < 12*smallBlinds {
+		pot = 2 * pot
 	}
 	result := (minRequiredAmount - winRate*minRequiredAmount - winRate*pot) / (winRate - 1 + 0.2*opponentCount*winRate)
 
