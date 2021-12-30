@@ -25,11 +25,21 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 			}
 		}
 
+		opponentCount := 0
+		for i := 0; i < len(board.Players); i++ {
+			if board.Players[i].Status == model.PlayerStatusPlaying || board.Players[i].Status == model.PlayerStatusAllIn {
+				if i != selfIndex {
+					opponentCount++
+				}
+			}
+		}
+
 		var expectedAmount int
 		if 1.0-winRate < 0.000001 {
 			expectedAmount = 2147483647
 		} else {
-			expectedAmount = int(winRate * float32(currentPot) / (1.0 - winRate))
+			//expectedAmount = int(winRate * float32(currentPot) / (1.0 - winRate))
+			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), winRate, float32(board.Game.SmallBlinds)))
 		}
 
 		if expectedAmount < bankroll {
@@ -44,10 +54,12 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 					Amount:     minRequiredAmount,
 				}
 			} else {
+				// todo
 				// expectedAmount < minRequiredAmount
+				// this basically won't happen
 				return model.Action{
-					ActionType: model.ActionTypeFold,
-					Amount:     0,
+					ActionType: model.ActionTypeCall,
+					Amount:     minRequiredAmount,
 				}
 			}
 
@@ -59,6 +71,28 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 			}
 		}
 	}
+}
+
+func odds(minRequiredAmountInt, additionalAmountInt, potInt, opponentCountInt int) float32 {
+	minRequiredAmount := float32(minRequiredAmountInt)
+	additionalAmount := float32(additionalAmountInt)
+	pot := float32(potInt)
+	opponentCount := float32(opponentCountInt)
+
+	in := minRequiredAmount + additionalAmount
+	out := minRequiredAmount + additionalAmount + pot + 0.3 * additionalAmount * opponentCount
+	return in / out
+}
+
+func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallBlinds float32) float32 {
+	if pot < 4 * smallBlinds {
+		pot = 1.5 * pot
+	} else if pot < 6 * smallBlinds {
+		pot = 1.4 * pot
+	}
+	result := (minRequiredAmount - winRate*minRequiredAmount - winRate*pot) / (winRate - 1 + 0.2*opponentCount*winRate)
+
+	return util.Max(0.0, result)
 }
 
 func calcWinRate(board *model.Board, selfIndex int) float32 {
