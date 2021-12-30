@@ -131,7 +131,8 @@ func interactWithPlayers(board *model.Board) {
 		gotBigBlind = false
 	}
 
-	for {
+	roundIsFinish := false
+	for roundIsFinish == false {
 		for i := 0; i < len(board.Players); i++ {
 			actualIndex := (i + board.Game.SBIndex) % len(board.Players)
 			player := board.Players[actualIndex]
@@ -151,10 +152,11 @@ func interactWithPlayers(board *model.Board) {
 			}
 
 			callInteract(board, actualIndex)
-		}
-
-		if checkIfRoundIsFinish(board) {
-			break
+			
+			if checkIfRoundIsFinish(board) {
+				roundIsFinish = true
+				break
+			}
 		}
 	}
 
