@@ -3,11 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"holdem/constant"
 	"holdem/process"
 	"os"
 )
 
 func main() {
+	constant.DebugMode = true
+
 	board := process.InitBoard(6, 100)
 
 	process.InitGame(board, 1, 0, "round_1")

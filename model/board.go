@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"holdem/constant"
+)
 
 type Board struct {
 	Players []*Player
@@ -16,6 +19,10 @@ func Render(board *Board) {
 }
 
 func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Board {
+	if constant.DebugMode {
+		return board
+	}
+
 	var deepCopyPlayers []*Player
 	if board.Players != nil {
 		for i := 0; i < len(board.Players); i++ {
