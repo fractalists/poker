@@ -152,7 +152,7 @@ func interactWithPlayers(board *model.Board) {
 			}
 
 			callInteract(board, actualIndex)
-			
+
 			if checkIfRoundIsFinish(board) {
 				roundIsFinish = true
 				break

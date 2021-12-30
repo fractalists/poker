@@ -8,7 +8,6 @@ func Min(a, b int) int {
 	return b
 }
 
-
 func Max(a, b float32) float32 {
 	if a >= b {
 		return a
