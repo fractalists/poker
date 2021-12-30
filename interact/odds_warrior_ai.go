@@ -2,6 +2,7 @@ package interact
 
 import (
 	"fmt"
+	"holdem/constant"
 	"holdem/model"
 	"holdem/util"
 	"math/rand"
@@ -28,7 +29,9 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 		}
 
 		winRate := calcWinRate(board, selfIndex)
-		fmt.Printf("Player %d win rate is: %v\n", selfIndex+1, winRate)
+		if constant.DebugMode {
+			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate) // todo remove
+		}
 		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate {
 			return model.Action{
 				ActionType: model.ActionTypeFold,
@@ -40,7 +43,6 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 		if 1.0-winRate < 0.000001 {
 			expectedAmount = 2147483647
 		} else {
-			//expectedAmount = int(winRate * float32(currentPot) / (1.0 - winRate))
 			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), winRate, float32(smallBlinds)))
 		}
 
