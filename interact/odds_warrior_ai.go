@@ -2,6 +2,9 @@ package interact
 
 import (
 	"holdem/model"
+	"holdem/util"
+	"math/rand"
+	"time"
 )
 
 func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
@@ -23,12 +26,12 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 		}
 
 		var expectedAmount int
-		if 1.0 - winRate < 0.000001 {
+		if 1.0-winRate < 0.000001 {
 			expectedAmount = 2147483647
 		} else {
 			expectedAmount = int(winRate * float32(currentPot) / (1.0 - winRate))
 		}
-		
+
 		if expectedAmount < bankroll {
 			if expectedAmount > minRequiredAmount {
 				return model.Action{
@@ -76,7 +79,7 @@ func calcWinRate(board *model.Board, selfIndex int) float32 {
 	var boardRevealCards model.Cards
 	for _, card := range board.Game.BoardCards {
 		if card.Revealed {
-			boardRevealCards = append(boardRevealCards, model.Card{Suit:card.Suit, Rank:card.Rank})
+			boardRevealCards = append(boardRevealCards, model.Card{Suit: card.Suit, Rank: card.Rank})
 		}
 	}
 
@@ -103,7 +106,7 @@ func calcWinRate(board *model.Board, selfIndex int) float32 {
 			continue
 		}
 
-		unrevealedCards = append(unrevealedCards, model.Card{Suit:card.Suit,Rank: card.Rank})
+		unrevealedCards = append(unrevealedCards, model.Card{Suit: card.Suit, Rank: card.Rank})
 	}
 
 	return mentoCarlo(hands, boardRevealCards, unrevealedCards, opponentCount)
@@ -111,11 +114,77 @@ func calcWinRate(board *model.Board, selfIndex int) float32 {
 
 func mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCount int) float32 {
 	boardUnrevealedCount := 5 - len(boardRevealCards)
+	randomCardNeededCount := boardUnrevealedCount + (2 * opponentCount)
+
+	boardCards := boardRevealCards
+	for i := 0; i < boardUnrevealedCount; i++ {
+		boardCards = append(model.Cards{model.Card{}}, boardCards...)
+	}
+
+	var opponentHandsList []model.Cards
+	for i := 0; i < opponentCount; i++ {
+		opponentHandsList = append(opponentHandsList, model.Cards{model.Card{}, model.Card{}})
+	}
 
 	winCount := 0
 	lossCount := 0
-
+	tieCount := 0
 	for i := 0; i < 10000; i++ {
+		randomCards := getRandomNCards(&unrevealedCards, randomCardNeededCount)
 
+		index := 0
+		for j := 0; j < boardUnrevealedCount; j++ {
+			boardCards[j].Suit = (*randomCards)[index].Suit
+			boardCards[j].Rank = (*randomCards)[index].Rank
+			index++
+		}
+		for j := 0; j < opponentCount; j++ {
+			opponentHandsList[j][0].Suit = (*randomCards)[index].Suit
+			opponentHandsList[j][0].Rank = (*randomCards)[index].Rank
+			index++
+			opponentHandsList[j][1].Suit = (*randomCards)[index].Suit
+			opponentHandsList[j][1].Rank = (*randomCards)[index].Rank
+			index++
+		}
+
+		selfScoreResult := util.Score(append(hands, boardCards...))
+		selfScore := selfScoreResult.Score
+
+		opponentHighestScore := 0
+
+		for j := 0; j < opponentCount; j++ {
+			opponentScoreResult := util.Score(append(opponentHandsList[j], boardCards...))
+			opponentScore := opponentScoreResult.Score
+
+			if opponentScore > opponentHighestScore {
+				opponentHighestScore = opponentScore
+			}
+		}
+
+		if selfScore < opponentHighestScore {
+			lossCount++
+		} else if selfScore > opponentHighestScore {
+			winCount++
+		} else {
+			tieCount++
+		}
 	}
+
+	return (float32(winCount) + (0.5 * float32(tieCount))) / float32(winCount+tieCount+lossCount)
+}
+
+func getRandomNCards(cards *model.Cards, n int) *model.Cards {
+	length := len(*cards)
+	if n > length {
+		panic("getRandomNCards n > length")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(*cards), func(i, j int) {
+		(*cards)[i], (*cards)[j] = (*cards)[j], (*cards)[i]
+	})
+
+	result := (*cards)[:n]
+
+	return &result
 }
