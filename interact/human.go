@@ -25,9 +25,9 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 
 		var betTip string
 		if bankroll <= betMinRequiredAmount {
-			betTip = "[!] Bet  # insufficient bankroll #"
+			betTip = "[!] Bet  <insufficient bankroll>"
 		} else if selfIndex == game.LastRaisePlayerIndex {
-			betTip = "[!] Bet  # already bet in this round #"
+			betTip = "[!] Bet  <already bet in this round>"
 		} else {
 			betTip = fmt.Sprintf("[1] Bet --> [%d, %d]", betMinRequiredAmount, bankroll-1)
 		}
@@ -35,7 +35,7 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 		if minRequiredAmount == 0 {
 			callTip = "[2] Check"
 		} else if bankroll <= minRequiredAmount {
-			callTip = "[!] Call  # insufficient bankroll #"
+			callTip = "[!] Call  <insufficient bankroll>"
 		} else {
 			callTip = fmt.Sprintf("[2] Call --> %d", minRequiredAmount)
 		}
