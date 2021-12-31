@@ -15,10 +15,13 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 			panic("oddsWarriorAI invalid inputs")
 		}
 
-		currentPot := board.Game.Pot
-		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		game := board.Game
+		currentPot := game.Pot
+		smallBlinds := game.SmallBlinds
 		bankroll := board.Players[selfIndex].Bankroll
-		smallBlinds := board.Game.SmallBlinds
+		minRequiredAmount := game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		betMinRequiredAmount := minRequiredAmount + util.Max(game.LastRaiseAmount, 2*game.SmallBlinds)
+
 		opponentCount := 0
 		for i := 0; i < len(board.Players); i++ {
 			if board.Players[i].Status == model.PlayerStatusPlaying || board.Players[i].Status == model.PlayerStatusAllIn {
@@ -30,7 +33,7 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 
 		winRate := calcWinRate(board, selfIndex)
 		if constant.DebugMode {
-			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate) // todo remove
+			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
 		}
 		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate {
 			return model.Action{
