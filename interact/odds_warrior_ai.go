@@ -50,12 +50,12 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 		}
 
 		if expectedAmount < bankroll {
-			if expectedAmount > minRequiredAmount {
+			if expectedAmount >= betMinRequiredAmount {
 				return model.Action{
 					ActionType: model.ActionTypeBet,
 					Amount:     expectedAmount,
 				}
-			} else if expectedAmount == minRequiredAmount {
+			} else if expectedAmount >= minRequiredAmount {
 				return model.Action{
 					ActionType: model.ActionTypeCall,
 					Amount:     minRequiredAmount,
