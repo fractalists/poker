@@ -278,7 +278,7 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 		if action.Amount <= minRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("bet with an invalid amount: %d", action.Amount)
 		}
-		if raiseAmount := action.Amount - minRequiredAmount; raiseAmount < 2 * game.LastRaiseAmount {
+		if raiseAmount := action.Amount - minRequiredAmount; raiseAmount < 2*game.LastRaiseAmount {
 			return fmt.Errorf("invalid raise amount (less than 2*LastRaiseAmount): %d", action.Amount)
 		}
 		if playerIndex == game.LastRaisePlayerIndex {
@@ -289,11 +289,14 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 		if action.Amount != minRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("call with an invalid amount: %d", action.Amount)
 		}
+
 	case model.ActionTypeFold:
+
 	case model.ActionTypeAllIn:
 		if action.Amount == 0 || action.Amount != bankroll {
 			return fmt.Errorf("allIn with an invalid amount: %d", action.Amount)
 		}
+
 	default:
 		return fmt.Errorf("unknown actionType: %s", action.ActionType)
 	}
