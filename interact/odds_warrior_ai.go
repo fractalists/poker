@@ -103,11 +103,11 @@ func (oddsWarriorAi *OddsWarriorAi) CreateOddsWarriorInteract(selfIndex int, get
 
 func odds(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds float32) float32 {
 	if pot < 4*smallBlinds {
-		pot = 6.0 * pot
-	} else if pot < 8*smallBlinds {
-		pot = 3.0 * pot
-	} else if pot < 12*smallBlinds {
 		pot = 2 * pot
+	} else if pot < 6*smallBlinds {
+		pot = 1.5 * pot
+	} else if pot < 8*smallBlinds {
+		pot = 1.2 * pot
 	}
 
 	in := minRequiredAmount + additionalAmount
