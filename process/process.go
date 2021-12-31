@@ -147,8 +147,9 @@ func interactWithPlayers(board *model.Board) {
 		gotBigBlind = false
 	}
 
-	roundIsFinish := false
-	for roundIsFinish == false {
+	firstRoundInteractIsFinish := false
+	allInteractIsFinish := false
+	for allInteractIsFinish == false {
 		for i := 0; i < len(board.Players); i++ {
 			actualIndex := (i + game.SBIndex) % len(board.Players)
 			player := board.Players[actualIndex]
@@ -179,10 +180,15 @@ func interactWithPlayers(board *model.Board) {
 
 			callInteract(board, actualIndex)
 
-			if checkIfRoundIsFinish(board) {
-				roundIsFinish = true
+			if firstRoundInteractIsFinish && checkIfAllInteractIsFinish(board) {
+				allInteractIsFinish = true
 				break
 			}
+		}
+
+		firstRoundInteractIsFinish = true
+		if checkIfAllInteractIsFinish(board) {
+			allInteractIsFinish = true
 		}
 	}
 
@@ -344,7 +350,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 	}
 }
 
-func checkIfRoundIsFinish(board *model.Board) bool {
+func checkIfAllInteractIsFinish(board *model.Board) bool {
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying && player.InPotAmount != board.Game.CurrentAmount {
 			return false
