@@ -140,16 +140,11 @@ func interactWithPlayers(board *model.Board) {
 
 	game := board.Game
 
-	gotSmallBlind := true
-	gotBigBlind := true
-	if game.Round == model.PREFLOP {
-		gotSmallBlind = false
-		gotBigBlind = false
-	}
+	interactStartIndex := game.SBIndex
 
-	firstRoundInteractIsFinish := false
-	allInteractIsFinish := false
-	for allInteractIsFinish == false {
+	if game.Round == model.PREFLOP {
+		actualSbIndex := -1
+		actualBbIndex := -1
 		for i := 0; i < len(board.Players); i++ {
 			actualIndex := (i + game.SBIndex) % len(board.Players)
 			player := board.Players[actualIndex]
@@ -157,24 +152,36 @@ func interactWithPlayers(board *model.Board) {
 				continue
 			}
 
-			if gotSmallBlind == false {
+			if actualSbIndex == -1 {
 				smallBlinds := game.SmallBlinds
-				currentPlayer := board.Players[actualIndex]
-				currentPlayer.Bankroll -= smallBlinds
-				currentPlayer.InPotAmount += smallBlinds
+				player.Bankroll -= smallBlinds
+				player.InPotAmount += smallBlinds
 				game.Pot += smallBlinds
 				game.CurrentAmount = smallBlinds
-				gotSmallBlind = true
+				actualSbIndex = actualIndex
 				continue
 			}
-			if gotSmallBlind && gotBigBlind == false {
+			if actualSbIndex != -1 && actualBbIndex == -1 {
 				bigBlinds := 2 * game.SmallBlinds
-				currentPlayer := board.Players[actualIndex]
-				currentPlayer.Bankroll -= bigBlinds
-				currentPlayer.InPotAmount += bigBlinds
+				player.Bankroll -= bigBlinds
+				player.InPotAmount += bigBlinds
 				game.Pot += bigBlinds
 				game.CurrentAmount = bigBlinds
-				gotBigBlind = true
+				actualBbIndex = actualIndex
+
+				interactStartIndex = actualIndex + 1
+				break
+			}
+		}
+	}
+
+	firstRoundInteractIsFinish := false
+	allInteractIsFinish := false
+	for allInteractIsFinish == false {
+		for i := 0; i < len(board.Players); i++ {
+			actualIndex := (i + interactStartIndex) % len(board.Players)
+			player := board.Players[actualIndex]
+			if player.Status != model.PlayerStatusPlaying {
 				continue
 			}
 
