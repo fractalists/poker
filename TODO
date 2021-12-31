@@ -8,6 +8,7 @@
 
 
 # low priority
+- support different rules
 - logging
 - testing
 - gui
