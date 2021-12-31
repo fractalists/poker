@@ -268,8 +268,9 @@ func callInteract(board *model.Board, playerIndex int) {
 }
 
 func checkAction(board *model.Board, playerIndex int, action model.Action) error {
+	game := board.Game
 	currentPlayer := board.Players[playerIndex]
-	minRequiredAmount := board.Game.CurrentAmount - currentPlayer.InPotAmount
+	minRequiredAmount := game.CurrentAmount - currentPlayer.InPotAmount
 	bankroll := currentPlayer.Bankroll
 
 	switch action.ActionType {
@@ -277,6 +278,13 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 		if action.Amount <= minRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("bet with an invalid amount: %d", action.Amount)
 		}
+		if raiseAmount := action.Amount - minRequiredAmount; raiseAmount < 2 * game.LastRaiseAmount {
+			return fmt.Errorf("invalid raise amount (less than 2*LastRaiseAmount): %d", action.Amount)
+		}
+		if playerIndex == game.LastRaisePlayerIndex {
+			return fmt.Errorf("you have already bet in this round")
+		}
+
 	case model.ActionTypeCall:
 		if action.Amount != minRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("call with an invalid amount: %d", action.Amount)
