@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const mentoCarloTimes = 30000
+
 func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 	return func(board *model.Board) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
@@ -175,7 +177,7 @@ func mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCo
 	winCount := 0
 	lossCount := 0
 	tieCount := 0
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < mentoCarloTimes; i++ {
 		randomCards := getRandomNCards(&unrevealedCards, randomCardNeededCount)
 
 		index := 0
