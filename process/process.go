@@ -65,6 +65,8 @@ func PlayGame(board *model.Board) {
 
 	// PreFlop
 	game.Round = model.PREFLOP
+	game.LastRaiseAmount = 0
+	game.LastRaisePlayerIndex = -1
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying {
 			card1 := game.DrawCard()
@@ -86,6 +88,8 @@ func PlayGame(board *model.Board) {
 
 	// Flop
 	game.Round = model.FLOP
+	game.LastRaiseAmount = 0
+	game.LastRaisePlayerIndex = -1
 	game.BoardCards[0].Revealed = true
 	game.BoardCards[1].Revealed = true
 	game.BoardCards[2].Revealed = true
@@ -97,6 +101,8 @@ func PlayGame(board *model.Board) {
 
 	// Turn
 	game.Round = model.TURN
+	game.LastRaiseAmount = 0
+	game.LastRaisePlayerIndex = -1
 	game.BoardCards[3].Revealed = true
 	interactWithPlayers(board)
 	if game.Round == model.SHOWDOWN {
@@ -106,6 +112,8 @@ func PlayGame(board *model.Board) {
 
 	// River
 	game.Round = model.RIVER
+	game.LastRaiseAmount = 0
+	game.LastRaisePlayerIndex = -1
 	game.BoardCards[4].Revealed = true
 	interactWithPlayers(board)
 
@@ -246,6 +254,17 @@ func callInteract(board *model.Board, playerIndex int) {
 	}
 
 	performAction(board, playerIndex, action)
+
+	if action.ActionType == model.ActionTypeBet {
+		board.Game.LastRaiseAmount = action.Amount + board.Players[playerIndex].InPotAmount - board.Game.CurrentAmount
+		board.Game.LastRaisePlayerIndex = playerIndex
+	} else if action.ActionType == model.ActionTypeAllIn {
+		raiseAmount := action.Amount + board.Players[playerIndex].InPotAmount - board.Game.CurrentAmount
+		if raiseAmount >= board.Game.LastRaiseAmount {
+			board.Game.LastRaiseAmount = raiseAmount
+			board.Game.LastRaisePlayerIndex = playerIndex
+		}
+	}
 }
 
 func checkAction(board *model.Board, playerIndex int, action model.Action) error {
