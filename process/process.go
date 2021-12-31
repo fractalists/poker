@@ -137,9 +137,11 @@ func EndGame(board *model.Board) {
 func interactWithPlayers(board *model.Board) {
 	model.Render(board)
 
+	game := board.Game
+
 	gotSmallBlind := true
 	gotBigBlind := true
-	if board.Game.Round == model.PREFLOP {
+	if game.Round == model.PREFLOP {
 		gotSmallBlind = false
 		gotBigBlind = false
 	}
@@ -147,19 +149,29 @@ func interactWithPlayers(board *model.Board) {
 	roundIsFinish := false
 	for roundIsFinish == false {
 		for i := 0; i < len(board.Players); i++ {
-			actualIndex := (i + board.Game.SBIndex) % len(board.Players)
+			actualIndex := (i + game.SBIndex) % len(board.Players)
 			player := board.Players[actualIndex]
 			if player.Status != model.PlayerStatusPlaying {
 				continue
 			}
 
 			if gotSmallBlind == false {
-				performAction(board, actualIndex, model.Action{ActionType: model.ActionTypeBet, Amount: board.Game.SmallBlinds})
+				smallBlinds := game.SmallBlinds
+				currentPlayer := board.Players[actualIndex]
+				currentPlayer.Bankroll -= smallBlinds
+				currentPlayer.InPotAmount += smallBlinds
+				game.Pot += smallBlinds
+				game.CurrentAmount = smallBlinds
 				gotSmallBlind = true
 				continue
 			}
 			if gotSmallBlind && gotBigBlind == false {
-				performAction(board, actualIndex, model.Action{ActionType: model.ActionTypeBet, Amount: 2 * board.Game.SmallBlinds})
+				bigBlinds := 2 * game.SmallBlinds
+				currentPlayer := board.Players[actualIndex]
+				currentPlayer.Bankroll -= bigBlinds
+				currentPlayer.InPotAmount += bigBlinds
+				game.Pot += bigBlinds
+				game.CurrentAmount = bigBlinds
 				gotBigBlind = true
 				continue
 			}
@@ -179,7 +191,7 @@ func interactWithPlayers(board *model.Board) {
 	}
 
 	// no more interact is needed, proceed to showdown
-	board.Game.Round = model.SHOWDOWN
+	game.Round = model.SHOWDOWN
 }
 
 func showdown(board *model.Board) {
@@ -254,17 +266,6 @@ func callInteract(board *model.Board, playerIndex int) {
 	}
 
 	performAction(board, playerIndex, action)
-
-	if action.ActionType == model.ActionTypeBet {
-		board.Game.LastRaiseAmount = action.Amount + board.Players[playerIndex].InPotAmount - board.Game.CurrentAmount
-		board.Game.LastRaisePlayerIndex = playerIndex
-	} else if action.ActionType == model.ActionTypeAllIn {
-		raiseAmount := action.Amount + board.Players[playerIndex].InPotAmount - board.Game.CurrentAmount
-		if raiseAmount >= board.Game.LastRaiseAmount {
-			board.Game.LastRaiseAmount = raiseAmount
-			board.Game.LastRaisePlayerIndex = playerIndex
-		}
-	}
 }
 
 func checkAction(board *model.Board, playerIndex int, action model.Action) error {
@@ -304,6 +305,7 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 }
 
 func performAction(board *model.Board, playerIndex int, action model.Action) {
+	game := board.Game
 	currentPlayer := board.Players[playerIndex]
 	fmt.Printf("--> [%s]'s action: %v\n", currentPlayer.Name, action)
 
@@ -311,22 +313,33 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 	case model.ActionTypeBet:
 		currentPlayer.Bankroll -= action.Amount
 		currentPlayer.InPotAmount += action.Amount
-		board.Game.Pot += action.Amount
-		board.Game.CurrentAmount = currentPlayer.InPotAmount
+		game.Pot += action.Amount
+		game.CurrentAmount = currentPlayer.InPotAmount
+		game.LastRaiseAmount = action.Amount + currentPlayer.InPotAmount - game.CurrentAmount
+		game.LastRaisePlayerIndex = playerIndex
+
 	case model.ActionTypeCall:
 		currentPlayer.Bankroll -= action.Amount
 		currentPlayer.InPotAmount += action.Amount
-		board.Game.Pot += action.Amount
+		game.Pot += action.Amount
+
 	case model.ActionTypeFold:
 		currentPlayer.Status = model.PlayerStatusOut
+
 	case model.ActionTypeAllIn:
 		currentPlayer.Status = model.PlayerStatusAllIn
 		currentPlayer.Bankroll -= action.Amount
 		currentPlayer.InPotAmount += action.Amount
-		board.Game.Pot += action.Amount
-		if currentPlayer.InPotAmount > board.Game.CurrentAmount {
-			board.Game.CurrentAmount = currentPlayer.InPotAmount
+		game.Pot += action.Amount
+		if currentPlayer.InPotAmount > game.CurrentAmount {
+			game.CurrentAmount = currentPlayer.InPotAmount
 		}
+		raiseAmount := action.Amount + currentPlayer.InPotAmount - game.CurrentAmount
+		if raiseAmount >= game.LastRaiseAmount {
+			game.LastRaiseAmount = raiseAmount
+			game.LastRaisePlayerIndex = playerIndex
+		}
+
 	default:
 		panic(fmt.Sprintf("unknown actionType: %s", action.ActionType))
 	}
