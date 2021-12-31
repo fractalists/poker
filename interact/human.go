@@ -21,7 +21,7 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 		game := board.Game
 		bankroll := board.Players[selfIndex].Bankroll
 		minRequiredAmount := game.CurrentAmount - board.Players[selfIndex].InPotAmount
-		betMinRequiredAmount := minRequiredAmount + util.Max(2*game.LastRaiseAmount, 2*game.SmallBlinds)
+		betMinRequiredAmount := minRequiredAmount + util.Max(game.LastRaiseAmount, 2*game.SmallBlinds)
 
 		var betTip string
 		if bankroll <= betMinRequiredAmount {
