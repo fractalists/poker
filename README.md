@@ -1,1 +1,1 @@
-# Unlimited Texas hold'em
+# Unlimited Texas Hold'em
