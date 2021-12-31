@@ -9,13 +9,25 @@ import (
 	"time"
 )
 
-const mentoCarloTimes = 30000
+type OddsWarriorAi struct {
+	board            *model.Board
+	selfIndex        int
+	mentoCarloTimes  int
+	getBoardInfoFunc func() *model.Board
+}
 
-func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
+func (oddsWarriorAi *OddsWarriorAi) CreateOddsWarriorInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(*model.Board) model.Action {
+	oddsWarriorAi.selfIndex = selfIndex
+	oddsWarriorAi.getBoardInfoFunc = getBoardInfoFunc
+	if oddsWarriorAi.mentoCarloTimes == 0 {
+		oddsWarriorAi.mentoCarloTimes = 30000
+	}
+
 	return func(board *model.Board) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
 			panic("oddsWarriorAI invalid inputs")
 		}
+		oddsWarriorAi.board = board
 
 		game := board.Game
 		currentPot := game.Pot
@@ -33,7 +45,7 @@ func CreateOddsWarriorAI(selfIndex int) func(*model.Board) model.Action {
 			}
 		}
 
-		winRate := calcWinRate(board, selfIndex)
+		winRate := oddsWarriorAi.calcWinRate(board, selfIndex)
 		if constant.DebugMode {
 			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
 		}
@@ -109,7 +121,7 @@ func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallB
 	return util.MaxFloat32(0.0, result)
 }
 
-func calcWinRate(board *model.Board, selfIndex int) float32 {
+func (oddsWarriorAi *OddsWarriorAi) calcWinRate(board *model.Board, selfIndex int) float32 {
 	opponentCount := 0
 	for i := 0; i < len(board.Players); i++ {
 		if board.Players[i].Status == model.PlayerStatusPlaying || board.Players[i].Status == model.PlayerStatusAllIn {
@@ -157,10 +169,10 @@ func calcWinRate(board *model.Board, selfIndex int) float32 {
 		unrevealedCards = append(unrevealedCards, model.Card{Suit: card.Suit, Rank: card.Rank})
 	}
 
-	return mentoCarlo(hands, boardRevealCards, unrevealedCards, opponentCount)
+	return oddsWarriorAi.mentoCarlo(hands, boardRevealCards, unrevealedCards, opponentCount)
 }
 
-func mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCount int) float32 {
+func (oddsWarriorAi *OddsWarriorAi) mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCount int) float32 {
 	boardUnrevealedCount := 5 - len(boardRevealCards)
 	randomCardNeededCount := boardUnrevealedCount + (2 * opponentCount)
 
@@ -177,7 +189,7 @@ func mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCo
 	winCount := 0
 	lossCount := 0
 	tieCount := 0
-	for i := 0; i < mentoCarloTimes; i++ {
+	for i := 0; i < oddsWarriorAi.mentoCarloTimes; i++ {
 		randomCards := getRandomNCards(&unrevealedCards, randomCardNeededCount)
 
 		index := 0

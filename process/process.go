@@ -9,14 +9,12 @@ import (
 )
 
 func InitBoard(playerNum int, playerBankroll int) *model.Board {
-	board := &model.Board{
-		Players: initializePlayers(playerNum, playerBankroll),
-		Game:    nil,
-	}
+	board := &model.Board{}
+	board.Players = initializePlayers(board, playerNum, playerBankroll)
 	return board
 }
 
-func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
+func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []*model.Player {
 	if playerNum < 2 || playerNum > 23 {
 		panic(fmt.Sprintf("invalid playerNum: %d", playerNum))
 	}
@@ -30,7 +28,7 @@ func initializePlayers(playerNum int, playerBankroll int) []*model.Player {
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			Interact:        interact.CreateOddsWarriorAI(i),
+			Interact:        (&interact.OddsWarriorAi{}).CreateOddsWarriorInteract(i, model.GenGetBoardInfoFunc(board, i)),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,

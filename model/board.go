@@ -89,3 +89,9 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 	}
 	return deepCopyBoard
 }
+
+func GenGetBoardInfoFunc(board *Board, playerIndex int) func() *Board {
+	return func() *Board {
+		return DeepCopyBoardToSpecificPlayerWithoutLeak(board, playerIndex)
+	}
+}

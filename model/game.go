@@ -58,6 +58,10 @@ func (game *Game) DrawCard() Card {
 }
 
 func (game *Game) String() string {
+	if game == nil {
+		return "# The game hasn't started yet\n"
+	}
+
 	return fmt.Sprintf("# BoardCards: %v\n"+
 		"# Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
 		"# Desc: %s\n",
