@@ -1,6 +1,8 @@
 # high priority
 - fix game logic bug
-    - only can bet once in one round
+    - make all other fold no need to showdown
+    - raise amount limit
+- game result callback
 - improve ai
 - ai vs ai
 
