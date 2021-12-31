@@ -28,12 +28,21 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 		for i := 0; i < len(board.Players); i++ {
 			player := board.Players[i]
 
+			var hands Cards
+			for handsIndex := 0; handsIndex < len(player.Hands); handsIndex++ {
+				if i == playerIndex {
+					hands = append(hands, Card{Suit: player.Hands[handsIndex].Suit, Rank: player.Hands[handsIndex].Rank, Revealed: true})
+				} else {
+					hands = append(hands, Card{Revealed: false})
+				}
+			}
+
 			deepCopyPlayer := &Player{
 				Name:            player.Name,
 				Index:           player.Index,
 				Status:          player.Status,
 				Interact:        nil,
-				Hands:           Cards{Card{Revealed: false}, Card{Revealed: false}},
+				Hands:           hands,
 				InitialBankroll: player.InitialBankroll,
 				Bankroll:        player.Bankroll,
 				InPotAmount:     player.InPotAmount,
@@ -41,13 +50,6 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 
 			deepCopyPlayers = append(deepCopyPlayers, deepCopyPlayer)
 		}
-
-		deepCopyPlayers[playerIndex].Hands[0].Suit = board.Players[playerIndex].Hands[0].Suit
-		deepCopyPlayers[playerIndex].Hands[0].Rank = board.Players[playerIndex].Hands[0].Rank
-		deepCopyPlayers[playerIndex].Hands[0].Revealed = true
-		deepCopyPlayers[playerIndex].Hands[1].Suit = board.Players[playerIndex].Hands[1].Suit
-		deepCopyPlayers[playerIndex].Hands[1].Rank = board.Players[playerIndex].Hands[1].Rank
-		deepCopyPlayers[playerIndex].Hands[1].Revealed = true
 	}
 
 	game := board.Game

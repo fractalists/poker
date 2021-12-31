@@ -1,7 +1,6 @@
 # high priority
 - fix game logic bug
     - make all other fold no need to showdown
-- add game result callback // re-use the interact and notify ai even it is out
 - improve ai
 - ai vs ai
 

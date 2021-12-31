@@ -16,6 +16,13 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 			panic("humanInteract invalid inputs")
 		}
 
+		if board.Players[selfIndex].Status != model.PlayerStatusPlaying {
+			return model.Action{
+				ActionType: model.ActionTypeKeepWatching,
+				Amount:     0,
+			}
+		}
+
 		render(board)
 
 		game := board.Game

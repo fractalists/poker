@@ -29,6 +29,13 @@ func (oddsWarriorAi *OddsWarriorAi) CreateOddsWarriorInteract(selfIndex int, get
 		}
 		oddsWarriorAi.board = board
 
+		if board.Players[selfIndex].Status != model.PlayerStatusPlaying {
+			return model.Action{
+				ActionType: model.ActionTypeKeepWatching,
+				Amount:     0,
+			}
+		}
+
 		game := board.Game
 		currentPot := game.Pot
 		smallBlinds := game.SmallBlinds

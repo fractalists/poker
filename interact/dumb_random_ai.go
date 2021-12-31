@@ -13,6 +13,13 @@ func CreateDumbRandomAI(selfIndex int) func(*model.Board) model.Action {
 			panic("dumbRandomAI invalid inputs")
 		}
 
+		if board.Players[selfIndex].Status != model.PlayerStatusPlaying {
+			return model.Action{
+				ActionType: model.ActionTypeKeepWatching,
+				Amount:     0,
+			}
+		}
+
 		rand.Seed(time.Now().UnixNano())
 		random := rand.Intn(4)
 

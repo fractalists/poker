@@ -175,10 +175,6 @@ func interactWithPlayers(board *model.Board) {
 	for allInteractIsFinish == false {
 		for i := 0; i < len(board.Players); i++ {
 			actualIndex := (i + interactStartIndex) % len(board.Players)
-			player := board.Players[actualIndex]
-			if player.Status != model.PlayerStatusPlaying {
-				continue
-			}
 
 			callInteract(board, actualIndex)
 
@@ -269,6 +265,7 @@ func callInteract(board *model.Board, playerIndex int) {
 		deepCopyBoard := model.DeepCopyBoardToSpecificPlayerWithoutLeak(board, playerIndex)
 		action = board.Players[playerIndex].Interact(deepCopyBoard)
 		if err := checkAction(board, playerIndex, action); err != nil {
+			fmt.Printf("%s made an invalid action. error: %v\n", board.Players[playerIndex].Name, err)
 			wrongInputCount++
 			continue
 		}
@@ -285,9 +282,13 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 	minRequiredAmount := game.CurrentAmount - currentPlayer.InPotAmount
 	betMinRequiredAmount := minRequiredAmount + util.Max(game.LastRaiseAmount, 2*game.SmallBlinds)
 
+	if board.Players[playerIndex].Status != model.PlayerStatusPlaying && action.ActionType != model.ActionTypeKeepWatching {
+		return fmt.Errorf("you should keep watching")
+	}
+
 	switch action.ActionType {
 	case model.ActionTypeBet:
-		if action.Amount <= betMinRequiredAmount || action.Amount >= bankroll {
+		if action.Amount < betMinRequiredAmount || action.Amount >= bankroll {
 			return fmt.Errorf("bet with an invalid amount: %d", action.Amount)
 		}
 		if playerIndex == game.LastRaisePlayerIndex {
@@ -306,6 +307,11 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 			return fmt.Errorf("allIn with an invalid amount: %d", action.Amount)
 		}
 
+	case model.ActionTypeKeepWatching:
+		if board.Players[playerIndex].Status == model.PlayerStatusPlaying {
+			return fmt.Errorf("you should make your move, not just watching")
+		}
+
 	default:
 		return fmt.Errorf("unknown actionType: %s", action.ActionType)
 	}
@@ -313,6 +319,10 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 }
 
 func performAction(board *model.Board, playerIndex int, action model.Action) {
+	if action.ActionType == model.ActionTypeKeepWatching {
+		return
+	}
+
 	game := board.Game
 	currentPlayer := board.Players[playerIndex]
 	fmt.Printf("--> [%s]'s action: %v\n", currentPlayer.Name, action)
