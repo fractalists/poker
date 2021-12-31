@@ -101,7 +101,7 @@ func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallB
 	}
 	result := (minRequiredAmount - winRate*minRequiredAmount - winRate*pot) / (winRate - 1 + 0.2*opponentCount*winRate)
 
-	return util.Max(0.0, result)
+	return util.MaxFloat32(0.0, result)
 }
 
 func calcWinRate(board *model.Board, selfIndex int) float32 {

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"holdem/model"
+	"holdem/util"
 	"os"
 	"strconv"
 	"strings"
@@ -17,30 +18,39 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 
 		render(board)
 
-		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		game := board.Game
 		bankroll := board.Players[selfIndex].Bankroll
+		minRequiredAmount := game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		betMinRequiredAmount := minRequiredAmount + util.Max(2*game.LastRaiseAmount, 2*game.SmallBlinds)
 
-		var callOrCheck string
+		var betTip string
+		if bankroll <= betMinRequiredAmount {
+			betTip = "[!] Bet  # insufficient bankroll #"
+		} else if selfIndex == game.LastRaisePlayerIndex {
+			betTip = "[!] Bet  # already bet in this round #"
+		} else {
+			betTip = fmt.Sprintf("[1] Bet --> [%d, %d]", betMinRequiredAmount, bankroll-1)
+		}
+		var callTip string
 		if minRequiredAmount == 0 {
-			callOrCheck = "Check"
+			callTip = "[2] Check"
+		} else if bankroll <= minRequiredAmount {
+			callTip = "[!] Call  # insufficient bankroll #"
 		} else {
-			callOrCheck = "Call"
+			callTip = fmt.Sprintf("[2] Call --> %d", minRequiredAmount)
 		}
+		foldTip := "[3] Fold"
+		allInTip := fmt.Sprintf("[4] AllIn --> %d", bankroll)
 
-		var desc string
-		if bankroll <= minRequiredAmount {
-			desc = fmt.Sprintf("--> You can choose (enter number): \n"+
-				"[!] Bet  # not available #\n"+
-				"[!] Call  # not available #\n"+
-				"[3] Fold\n"+
-				"[4] AllIn --> %d\n", bankroll)
-		} else {
-			desc = fmt.Sprintf("--> You can choose (enter number): \n"+
-				"[1] Bet --> [%d, %d]\n"+
-				"[2] %s --> %d\n"+
-				"[3] Fold\n"+
-				"[4] AllIn --> %d\n", minRequiredAmount+1, bankroll-1, callOrCheck, minRequiredAmount, bankroll)
-		}
+		desc := fmt.Sprintf("--> You can choose (enter number): \n"+
+			"%s\n"+
+			"%s\n"+
+			"%s\n"+
+			"%s\n",
+			betTip,
+			callTip,
+			foldTip,
+			allInTip)
 
 		wrongInputCount := 0
 		wrongInputLimit := 3
