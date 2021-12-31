@@ -2,7 +2,8 @@
 - fix game logic bug
     - make all other fold no need to showdown
     - raise amount limit
-- game result callback
+    - round process bug
+- add game result callback
 - improve ai
 - ai vs ai
 
