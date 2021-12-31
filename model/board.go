@@ -50,20 +50,23 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 		deepCopyPlayers[playerIndex].Hands[1].Revealed = true
 	}
 
+	game := board.Game
 	var deepCopyGame *Game
-	if board.Game != nil {
+	if game != nil {
 		deepCopyGame = &Game{
-			Round:         board.Game.Round,
-			Deck:          nil,
-			Pot:           board.Game.Pot,
-			SmallBlinds:   board.Game.SmallBlinds,
-			BoardCards:    nil,
-			CurrentAmount: board.Game.CurrentAmount,
-			SBIndex:       board.Game.SmallBlinds,
-			Desc:          board.Game.Desc,
+			Round:                game.Round,
+			Deck:                 nil,
+			Pot:                  game.Pot,
+			SmallBlinds:          game.SmallBlinds,
+			BoardCards:           nil,
+			CurrentAmount:        game.CurrentAmount,
+			LastRaiseAmount:      game.LastRaiseAmount,
+			LastRaisePlayerIndex: game.LastRaisePlayerIndex,
+			SBIndex:              game.SmallBlinds,
+			Desc:                 game.Desc,
 		}
 
-		for _, card := range board.Game.BoardCards {
+		for _, card := range game.BoardCards {
 			if card.Revealed {
 				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, Card{
 					Suit:     card.Suit,
