@@ -2,6 +2,7 @@ package interact
 
 import (
 	"holdem/model"
+	"holdem/util"
 	"math/rand"
 	"time"
 )
@@ -15,12 +16,13 @@ func CreateDumbRandomAI(selfIndex int) func(*model.Board) model.Action {
 		rand.Seed(time.Now().UnixNano())
 		random := rand.Intn(4)
 
-		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
 		bankroll := board.Players[selfIndex].Bankroll
+		minRequiredAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		betMinRequiredAmount := minRequiredAmount + util.Max(board.Game.LastRaiseAmount, 2*board.Game.SmallBlinds)
 
 		switch random {
 		case 0:
-			if bankroll <= minRequiredAmount+1 {
+			if bankroll <= betMinRequiredAmount+1 || selfIndex == board.Game.LastRaisePlayerIndex {
 				return model.Action{
 					ActionType: model.ActionTypeAllIn,
 					Amount:     bankroll,
@@ -28,7 +30,7 @@ func CreateDumbRandomAI(selfIndex int) func(*model.Board) model.Action {
 			}
 			return model.Action{
 				ActionType: model.ActionTypeBet,
-				Amount:     minRequiredAmount + 1 + rand.Intn(bankroll-minRequiredAmount-1),
+				Amount:     betMinRequiredAmount + 1 + rand.Intn(bankroll-betMinRequiredAmount-1),
 			}
 		case 1:
 			if bankroll < minRequiredAmount {
@@ -42,8 +44,7 @@ func CreateDumbRandomAI(selfIndex int) func(*model.Board) model.Action {
 				Amount:     minRequiredAmount,
 			}
 		case 2:
-			// todo
-			// won't fold in some situation
+			// should not fold in some situation, but this is a dumb ai
 			return model.Action{
 				ActionType: model.ActionTypeFold,
 				Amount:     0,
