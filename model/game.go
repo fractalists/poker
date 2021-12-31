@@ -5,14 +5,16 @@ import (
 )
 
 type Game struct {
-	Round         Round
-	Deck          Cards
-	Pot           int
-	SmallBlinds   int
-	BoardCards    Cards
-	CurrentAmount int
-	SBIndex       int
-	Desc          string
+	Round                Round
+	Deck                 Cards
+	Pot                  int
+	SmallBlinds          int
+	BoardCards           Cards
+	CurrentAmount        int
+	LastRaiseAmount      int
+	LastRaisePlayerIndex int
+	SBIndex              int
+	Desc                 string
 }
 
 type Round string
@@ -39,6 +41,8 @@ func (game *Game) Init(smallBlinds int, sbIndex int, desc string) {
 	game.Pot = 0
 	game.SmallBlinds = smallBlinds
 	game.CurrentAmount = 2 * smallBlinds
+	game.LastRaiseAmount = 0
+	game.LastRaisePlayerIndex = -1
 	game.SBIndex = sbIndex
 	game.Desc = desc
 }
@@ -55,9 +59,9 @@ func (game *Game) DrawCard() Card {
 
 func (game *Game) String() string {
 	return fmt.Sprintf("# BoardCards: %v\n"+
-		"# Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d\n"+
+		"# Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
 		"# Desc: %s\n",
 		game.BoardCards,
-		game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount,
+		game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount, game.LastRaiseAmount,
 		game.Desc)
 }
