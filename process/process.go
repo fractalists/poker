@@ -124,7 +124,7 @@ func PlayGame(board *model.Board) {
 func EndGame(board *model.Board) {
 	for _, player := range board.Players {
 		player.Hands = nil
-		if player.Bankroll > 0 {
+		if player.Bankroll >= board.Game.SmallBlinds {
 			player.Status = model.PlayerStatusPlaying
 		} else {
 			player.Status = model.PlayerStatusOut
@@ -136,10 +136,7 @@ func EndGame(board *model.Board) {
 }
 
 func interactWithPlayers(board *model.Board) {
-	model.Render(board)
-
 	game := board.Game
-
 	interactStartIndex := game.SBIndex
 
 	if game.Round == model.PREFLOP {
@@ -163,6 +160,12 @@ func interactWithPlayers(board *model.Board) {
 			}
 			if actualSbIndex != -1 && actualBbIndex == -1 {
 				bigBlinds := 2 * game.SmallBlinds
+				if player.Bankroll < bigBlinds {
+					player.Status = model.PlayerStatusOut
+					fmt.Printf("%s doesn't have enough 1BB, out!", player.Name)
+					continue
+				}
+
 				player.Bankroll -= bigBlinds
 				player.InPotAmount += bigBlinds
 				game.Pot += bigBlinds
@@ -174,6 +177,8 @@ func interactWithPlayers(board *model.Board) {
 			}
 		}
 	}
+
+	model.Render(board)
 
 	firstRoundInteractIsFinish := false
 	allInteractIsFinish := false
