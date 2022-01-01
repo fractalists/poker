@@ -74,13 +74,13 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 			}
 
 			if actionNumber == "1" {
-				if bankroll <= minRequiredAmount {
+				if bankroll < betMinRequiredAmount {
 					fmt.Printf("!! You don't have enough money to bet !!\n")
 					wrongInputCount++
 					continue
 				}
 
-				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", minRequiredAmount+1, bankroll-1)
+				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", betMinRequiredAmount, bankroll-1)
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
