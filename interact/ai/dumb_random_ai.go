@@ -1,4 +1,4 @@
-package interact
+package ai
 
 import (
 	"holdem/model"

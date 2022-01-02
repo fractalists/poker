@@ -2,7 +2,8 @@ package process
 
 import (
 	"fmt"
-	"holdem/interact"
+	"holdem/interact/ai"
+	"holdem/interact/human"
 	"holdem/model"
 	"holdem/util"
 	"strconv"
@@ -28,7 +29,7 @@ func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			Interact:        (&interact.OddsWarriorAi{}).CreateOddsWarriorInteract(i, model.GenGetBoardInfoFunc(board, i)),
+			Interact:        (&ai.OddsWarriorAi{}).CreateOddsWarriorInteract(i, model.GenGetBoardInfoFunc(board, i)),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,
@@ -36,7 +37,7 @@ func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []
 		})
 	}
 
-	players[len(players)-1].Interact = interact.CreateHumanInteractFunc(len(players) - 1)
+	players[len(players)-1].Interact = human.CreateHumanInteractFunc(len(players) - 1)
 	return players
 }
 

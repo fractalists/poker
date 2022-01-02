@@ -1,4 +1,4 @@
-package interact
+package human
 
 import (
 	"bufio"
