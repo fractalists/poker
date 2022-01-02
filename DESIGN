@@ -1,0 +1,16 @@
+# board 提供
+- query 接口
+query() *model.board
+
+# ai/human 提供
+- interact 回调
+func(board *model.Board, type mode.InteractType) model.Action
+
+- initAI 接口
+initAI(board *model.board, selfIndex int, query func() *model.board) func(board *model.Board, type mode.InteractType) model.Action
+
+
+# 模型
+mode.InteractType
+- notify
+- ask
