@@ -29,7 +29,7 @@ func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			Interact:        (&ai.OddsWarriorAi{}).CreateOddsWarriorInteract(i, model.GenGetBoardInfoFunc(board, i)),
+			Interact:        (&ai.OddsWarriorAI{}).CreateOddsWarriorInteract(i, model.GenGetBoardInfoFunc(board, i)),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,
