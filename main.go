@@ -10,6 +10,7 @@ import (
 
 func main() {
 	constant.DebugMode = false
+	constant.Language = constant.ZH_CN
 
 	playerNum := 6
 	playerBankroll := 100

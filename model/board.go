@@ -14,6 +14,39 @@ type Board struct {
 }
 
 func Render(board *Board) {
+	if constant.Language == constant.ZH_CN {
+		zhCNRender(board)
+	} else {
+		enUSRender(board)
+	}
+}
+
+func zhCNRender(board *Board) {
+	if board == nil {
+		return
+	}
+
+	clear()
+
+	game := board.Game
+	fmt.Printf("---------------------------------------------------------------\n")
+	if game == nil {
+		fmt.Printf("# 游戏还未开始。\n")
+	} else {
+		fmt.Printf("# 描述: %s | 小盲注: %d\n"+
+			"# 阶段: %s, 底池: %d, 当前金额: %d, 前一次加注金额: %d\n"+
+			"# 公共牌: %v\n",
+			game.Desc, game.SmallBlinds,
+			game.Round, game.Pot, game.CurrentAmount, game.LastRaiseAmount,
+			game.BoardCards)
+	}
+
+	for _, player := range board.Players {
+		fmt.Printf("[%s] 手牌:%v, 已下注:%d, 剩余资金:%d, 状态:%s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
+	}
+}
+
+func enUSRender(board *Board) {
 	if board == nil {
 		return
 	}
@@ -34,30 +67,7 @@ func Render(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		fmt.Printf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
-	}
-}
-
-func BriefRender(board *Board) {
-	if board == nil {
-		return
-	}
-
-	clear()
-
-	game := board.Game
-	fmt.Printf("---------------------------------------------------------------\n")
-	if game == nil {
-		fmt.Printf("# The game hasn't started yet\n")
-	} else {
-		fmt.Printf("# Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
-			"# BoardCards: %v\n",
-			game.Pot, game.CurrentAmount, game.LastRaiseAmount,
-			game.BoardCards)
-	}
-
-	for _, player := range board.Players {
-		fmt.Printf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
+		fmt.Printf("[%s] hands:%v, inPot:%d, bankroll:%d, status:%s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
 	}
 }
 
