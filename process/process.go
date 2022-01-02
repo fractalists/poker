@@ -112,6 +112,7 @@ func PlayGame(board *model.Board) {
 	// River
 	game.Round = model.RIVER
 	game.BoardCards[4].Revealed = true
+	interactWithPlayers(board)
 	if game.Round == model.FINISH {
 		return
 	} else if checkIfCanJumpToShowdown(board) {
