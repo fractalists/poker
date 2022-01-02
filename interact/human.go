@@ -23,7 +23,7 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 			}
 		}
 
-		render(board)
+		model.Render(board)
 
 		game := board.Game
 		bankroll := board.Players[selfIndex].Bankroll
@@ -49,11 +49,12 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 		foldTip := "[3] Fold"
 		allInTip := fmt.Sprintf("[4] AllIn --> %d", bankroll)
 
-		desc := fmt.Sprintf("--> You can choose (enter number): \n"+
+		desc := fmt.Sprintf("--> You are %s, please choose (enter number): \n"+
 			"%s\n"+
 			"%s\n"+
 			"%s\n"+
 			"%s\n",
+			board.Players[selfIndex].Name,
 			betTip,
 			callTip,
 			foldTip,
@@ -137,13 +138,5 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 			}
 		}
 		return model.Action{ActionType: model.ActionTypeFold, Amount: 0}
-	}
-}
-
-func render(board *model.Board) {
-	fmt.Printf("---------------------------------------------------------------\n"+
-		"%v", board.Game)
-	for _, player := range board.Players {
-		fmt.Printf("%v\n", player)
 	}
 }

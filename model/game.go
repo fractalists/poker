@@ -63,10 +63,10 @@ func (game *Game) String() string {
 		return "# The game hasn't started yet\n"
 	}
 
-	return fmt.Sprintf("# BoardCards: %v\n"+
-		"# Round: %s, Pot: %d, SmallBlinds: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
-		"# Desc: %s\n",
-		game.BoardCards,
-		game.Round, game.Pot, game.SmallBlinds, game.CurrentAmount, game.LastRaiseAmount,
-		game.Desc)
+	return fmt.Sprintf("# Desc: %s | SmallBlinds: %d\n"+
+		"# Round: %s, Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
+		"# BoardCards: %v\n",
+		game.Desc, game.SmallBlinds,
+		game.Round, game.Pot, game.CurrentAmount, game.LastRaiseAmount,
+		game.BoardCards)
 }
