@@ -25,6 +25,7 @@ const FLOP Round = "FLOP"
 const TURN Round = "TURN"
 const RIVER Round = "RIVER"
 const SHOWDOWN Round = "SHOWDOWN"
+const FINISH Round = "FINISH"
 
 type Position string
 

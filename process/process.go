@@ -77,7 +77,9 @@ func PlayGame(board *model.Board) {
 	card5 := game.DrawCard()
 	game.BoardCards = model.Cards{card1, card2, card3, card4, card5}
 	interactWithPlayers(board)
-	if game.Round == model.SHOWDOWN {
+	if game.Round == model.FINISH {
+		return
+	} else if checkIfCanJumpToShowdown(board) {
 		showdown(board)
 		return
 	}
@@ -88,7 +90,9 @@ func PlayGame(board *model.Board) {
 	game.BoardCards[1].Revealed = true
 	game.BoardCards[2].Revealed = true
 	interactWithPlayers(board)
-	if game.Round == model.SHOWDOWN {
+	if game.Round == model.FINISH {
+		return
+	} else if checkIfCanJumpToShowdown(board) {
 		showdown(board)
 		return
 	}
@@ -97,7 +101,9 @@ func PlayGame(board *model.Board) {
 	game.Round = model.TURN
 	game.BoardCards[3].Revealed = true
 	interactWithPlayers(board)
-	if game.Round == model.SHOWDOWN {
+	if game.Round == model.FINISH {
+		return
+	} else if checkIfCanJumpToShowdown(board) {
 		showdown(board)
 		return
 	}
@@ -105,7 +111,12 @@ func PlayGame(board *model.Board) {
 	// River
 	game.Round = model.RIVER
 	game.BoardCards[4].Revealed = true
-	interactWithPlayers(board)
+	if game.Round == model.FINISH {
+		return
+	} else if checkIfCanJumpToShowdown(board) {
+		showdown(board)
+		return
+	}
 
 	game.Round = model.SHOWDOWN
 	showdown(board)
@@ -178,6 +189,11 @@ func interactWithPlayers(board *model.Board) {
 
 			callInteract(board, actualIndex)
 
+			if checkIfOnlyOneLeft(board) {
+				settleBecauseOthersAllFold(board)
+				return
+			}
+
 			if firstRoundInteractIsFinish && checkIfAllInteractIsFinish(board) {
 				allInteractIsFinish = true
 				break
@@ -190,29 +206,26 @@ func interactWithPlayers(board *model.Board) {
 		}
 	}
 
-	// round is finish, then check if game needs ongoing
-	if checkIfGameNeedsOngoing(board) == false {
-		// no more interact is needed, proceed to showdown
-		game.Round = model.SHOWDOWN
-	}
-
 	game.LastRaiseAmount = 0
 	game.LastRaisePlayerIndex = -1
 }
 
 func showdown(board *model.Board) {
+	game := board.Game
+	game.Round = model.SHOWDOWN
+
 	// check
 	pot := 0
 	for _, player := range board.Players {
 		pot += player.InPotAmount
 	}
-	if pot != board.Game.Pot {
-		panic("there must be something wrong")
+	if pot != game.Pot {
+		panic("game.Pot != all player's inPotAmount")
 	}
 
 	// reveal cards
-	for i := 0; i < len(board.Game.BoardCards); i++ {
-		board.Game.BoardCards[i].Revealed = true
+	for i := 0; i < len(game.BoardCards); i++ {
+		game.BoardCards[i].Revealed = true
 	}
 	for i := 0; i < len(board.Players); i++ {
 		player := board.Players[i]
@@ -231,7 +244,7 @@ func showdown(board *model.Board) {
 	util.Settle(board, finalPlayerTiers)
 
 	// check
-	if board.Game.Pot != 0 {
+	if game.Pot != 0 {
 		panic("there is something left")
 	}
 	for i := 0; i < len(board.Players); i++ {
@@ -240,6 +253,7 @@ func showdown(board *model.Board) {
 		}
 	}
 
+	game.Round = model.FINISH
 	model.Render(board)
 	// show winner
 	if len(finalPlayerTiers[0]) == 1 {
@@ -251,6 +265,48 @@ func showdown(board *model.Board) {
 			fmt.Printf("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
 		}
 	}
+}
+
+func settleBecauseOthersAllFold(board *model.Board) {
+	theLastPlayerIndex := -1
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Status == model.PlayerStatusPlaying || player.Status == model.PlayerStatusAllIn {
+			if theLastPlayerIndex == -1 {
+				theLastPlayerIndex = i
+			} else {
+				panic("there are more than one player left")
+			}
+		}
+	}
+	theLastPlayer := board.Players[theLastPlayerIndex]
+
+	// check
+	pot := 0
+	for _, player := range board.Players {
+		pot += player.InPotAmount
+	}
+	if pot != board.Game.Pot {
+		panic("game.Pot != all player's inPotAmount")
+	}
+
+	finalPlayerTiers := util.FinalPlayerTiers{util.FinalPlayerTier{util.FinalPlayer{Player: theLastPlayer, ScoreResult: util.ScoreResult{}}}}
+	util.Settle(board, finalPlayerTiers)
+
+	// check
+	if board.Game.Pot != 0 {
+		panic("there is something left")
+	}
+	for i := 0; i < len(board.Players); i++ {
+		if board.Players[i].InPotAmount != 0 {
+			panic(fmt.Sprintf("InPotAmount != 0, player index: %d", i))
+		}
+	}
+
+	board.Game.Round = model.FINISH
+	model.Render(board)
+	// show winner
+	fmt.Printf("Winner is: %s\nScore: %v \n", theLastPlayer.Name, nil)
 }
 
 func callInteract(board *model.Board, playerIndex int) {
@@ -372,7 +428,7 @@ func checkIfAllInteractIsFinish(board *model.Board) bool {
 	return true
 }
 
-func checkIfGameNeedsOngoing(board *model.Board) bool {
+func checkIfCanJumpToShowdown(board *model.Board) bool {
 	playingPlayerCount := 0
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying && player.Bankroll > 0 {
@@ -380,5 +436,16 @@ func checkIfGameNeedsOngoing(board *model.Board) bool {
 		}
 	}
 
-	return playingPlayerCount >= 2
+	return playingPlayerCount <= 1
+}
+
+func checkIfOnlyOneLeft(board *model.Board) bool {
+	playingOrAllInCount := 0
+	for _, player := range board.Players {
+		if player.Status == model.PlayerStatusPlaying || player.Status == model.PlayerStatusAllIn {
+			playingOrAllInCount++
+		}
+	}
+
+	return playingOrAllInCount == 1
 }
