@@ -14,11 +14,50 @@ type Board struct {
 }
 
 func Render(board *Board) {
+	if board == nil {
+		return
+	}
+
 	clear()
-	fmt.Printf("---------------------------------------------------------------\n"+
-		"%v", board.Game)
+
+	game := board.Game
+	fmt.Printf("---------------------------------------------------------------\n")
+	if game == nil {
+		fmt.Printf("# The game hasn't started yet\n")
+	} else {
+		fmt.Printf("# Desc: %s | SmallBlinds: %d\n"+
+			"# Round: %s, Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
+			"# BoardCards: %v\n",
+			game.Desc, game.SmallBlinds,
+			game.Round, game.Pot, game.CurrentAmount, game.LastRaiseAmount,
+			game.BoardCards)
+	}
+
 	for _, player := range board.Players {
-		fmt.Printf("%v\n", player)
+		fmt.Printf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
+	}
+}
+
+func BriefRender(board *Board) {
+	if board == nil {
+		return
+	}
+
+	clear()
+
+	game := board.Game
+	fmt.Printf("---------------------------------------------------------------\n")
+	if game == nil {
+		fmt.Printf("# The game hasn't started yet\n")
+	} else {
+		fmt.Printf("# Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
+			"# BoardCards: %v\n",
+			game.Pot, game.CurrentAmount, game.LastRaiseAmount,
+			game.BoardCards)
+	}
+
+	for _, player := range board.Players {
+		fmt.Printf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
 	}
 }
 
