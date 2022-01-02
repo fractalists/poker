@@ -306,7 +306,7 @@ func settleBecauseOthersAllFold(board *model.Board) {
 	board.Game.Round = model.FINISH
 	model.Render(board)
 	// show winner
-	fmt.Printf("Winner is: %s\nScore: %v \n", theLastPlayer.Name, nil)
+	fmt.Printf("Winner is: %s\nScore: No score, all others folded.\n", theLastPlayer.Name)
 }
 
 func callInteract(board *model.Board, playerIndex int) {

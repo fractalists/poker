@@ -3,6 +3,9 @@ package model
 import (
 	"fmt"
 	"holdem/constant"
+	"os"
+	"os/exec"
+	"runtime"
 )
 
 type Board struct {
@@ -11,6 +14,7 @@ type Board struct {
 }
 
 func Render(board *Board) {
+	clear()
 	fmt.Printf("---------------------------------------------------------------\n"+
 		"%v", board.Game)
 	for _, player := range board.Players {
@@ -95,5 +99,29 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 func GenGetBoardInfoFunc(board *Board, playerIndex int) func() *Board {
 	return func() *Board {
 		return DeepCopyBoardToSpecificPlayerWithoutLeak(board, playerIndex)
+	}
+}
+
+var systemClearFuncMap = map[string]func(){
+	"linux": func() {
+		cmd := exec.Command("clear") //Linux example, its tested
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	},
+	"windows": func() {
+		cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	},
+	"darwin": func() {
+		cmd := exec.Command("clear") //Linux example, its tested
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	},
+}
+
+func clear() {
+	if clearFunc, ok := systemClearFuncMap[runtime.GOOS]; ok {
+		clearFunc()
 	}
 }
