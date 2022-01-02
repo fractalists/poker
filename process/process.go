@@ -124,16 +124,16 @@ func PlayGame(board *model.Board) {
 }
 
 func EndGame(board *model.Board) {
-	for _, player := range board.Players {
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		player.InPotAmount = 0
 		player.Hands = nil
 		if player.Bankroll >= board.Game.SmallBlinds {
 			player.Status = model.PlayerStatusPlaying
 		} else {
 			player.Status = model.PlayerStatusOut
 		}
-		player.InPotAmount = 0
 	}
-
 	board.Game = nil
 }
 
@@ -249,8 +249,14 @@ func showdown(board *model.Board) {
 		panic("there is something left")
 	}
 	for i := 0; i < len(board.Players); i++ {
-		if board.Players[i].InPotAmount != 0 {
+		player := board.Players[i]
+		if player.InPotAmount != 0 {
 			panic(fmt.Sprintf("InPotAmount != 0, player index: %d", i))
+		}
+		if player.Bankroll >= board.Game.SmallBlinds {
+			player.Status = model.PlayerStatusPlaying
+		} else {
+			player.Status = model.PlayerStatusOut
 		}
 	}
 
@@ -299,8 +305,14 @@ func settleBecauseOthersAllFold(board *model.Board) {
 		panic("there is something left")
 	}
 	for i := 0; i < len(board.Players); i++ {
-		if board.Players[i].InPotAmount != 0 {
+		player := board.Players[i]
+		if player.InPotAmount != 0 {
 			panic(fmt.Sprintf("InPotAmount != 0, player index: %d", i))
+		}
+		if player.Bankroll >= board.Game.SmallBlinds {
+			player.Status = model.PlayerStatusPlaying
+		} else {
+			player.Status = model.PlayerStatusOut
 		}
 	}
 
@@ -382,7 +394,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 
 	game := board.Game
 	currentPlayer := board.Players[playerIndex]
-	fmt.Printf("--> [%s]'s action: %v\n", currentPlayer.Name, action)
+	fmt.Printf("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
 
 	switch action.ActionType {
 	case model.ActionTypeBet:

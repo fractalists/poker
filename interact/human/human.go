@@ -49,7 +49,7 @@ func CreateHumanInteractFunc(selfIndex int) func(*model.Board) model.Action {
 		foldTip := "[3] Fold"
 		allInTip := fmt.Sprintf("[4] AllIn --> %d", bankroll)
 
-		desc := fmt.Sprintf("--> You are %s, please choose (enter number): \n"+
+		desc := fmt.Sprintf("\n--> You are %s, please choose (enter number): \n"+
 			"%s\n"+
 			"%s\n"+
 			"%s\n"+
