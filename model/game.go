@@ -13,7 +13,6 @@ type Game struct {
 	CurrentAmount        int
 	LastRaiseAmount      int
 	LastRaisePlayerIndex int
-	SmallBlindOffset     int
 	Desc                 string
 }
 
@@ -27,15 +26,7 @@ const RIVER Round = "RIVER"
 const SHOWDOWN Round = "SHOWDOWN"
 const FINISH Round = "FINISH"
 
-type Position string
-
-// todo
-const SB Position = "SB"
-const BB Position = "BB"
-const UTG Position = "UTG"
-const BUTTON Position = "BUTTON"
-
-func (game *Game) Init(smallBlinds int, smallBlindOffset int, desc string) {
+func (game *Game) Init(smallBlinds int, desc string) {
 	game.Round = INIT
 	game.Deck = InitializeDeck()
 	game.Pot = 0
@@ -43,7 +34,6 @@ func (game *Game) Init(smallBlinds int, smallBlindOffset int, desc string) {
 	game.CurrentAmount = 2 * smallBlinds
 	game.LastRaiseAmount = 0
 	game.LastRaisePlayerIndex = -1
-	game.SmallBlindOffset = smallBlindOffset
 	game.Desc = desc
 }
 

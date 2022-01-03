@@ -19,7 +19,7 @@ func main() {
 
 	for cycle := 0; cycle < 2; cycle++ {
 		for match := 0; match < playerNum; match++ {
-			process.InitGame(board, smallBlinds, match, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
+			process.InitGame(board, smallBlinds, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
 			process.PlayGame(board)
 			process.EndGame(board)
 

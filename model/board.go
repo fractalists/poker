@@ -123,7 +123,6 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 			CurrentAmount:        game.CurrentAmount,
 			LastRaiseAmount:      game.LastRaiseAmount,
 			LastRaisePlayerIndex: game.LastRaisePlayerIndex,
-			SmallBlindOffset:     game.SmallBlindOffset,
 			Desc:                 game.Desc,
 		}
 
