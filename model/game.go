@@ -33,7 +33,6 @@ type Position string
 const SB Position = "SB"
 const BB Position = "BB"
 const UTG Position = "UTG"
-const CUTOFF Position = "CUTOFF"
 const BUTTON Position = "BUTTON"
 
 func (game *Game) Init(smallBlinds int, smallBlindOffset int, desc string) {

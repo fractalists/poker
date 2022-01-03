@@ -1,5 +1,7 @@
 # high priority
+- fix smallBlindOffset bug
 - define the interact interface between board and ai/human
+- add position description
 - improve ai
 - ai vs ai
 
