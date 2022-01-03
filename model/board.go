@@ -14,6 +14,63 @@ type Board struct {
 	Game             *Game
 }
 
+type Position string
+
+const PositionSmallBlind Position = "SB"
+const PositionBigBlind Position = "BB"
+const PositionUnderTheGun Position = "UTG"
+const PositionButton Position = "BUTTON"
+
+func GenPositionIndexMap(board *Board) map[Position]int {
+	if board == nil {
+		panic("GenPositionIndexMap board is nil")
+	}
+
+	var activePlayerIndexList []int
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Status == PlayerStatusPlaying {
+			activePlayerIndexList = append(activePlayerIndexList, i)
+		}
+	}
+	if activePlayerIndexList == nil || len(activePlayerIndexList) < 2 {
+		panic("activePlayer less than 2")
+	}
+
+	oldPositionIndexMap := board.PositionIndexMap
+	activePlayerSmallBlindIndex := 0
+	if len(oldPositionIndexMap) > 0 {
+		var newSmallBlindIndex int
+		oldSmallBlindIndex := oldPositionIndexMap[PositionSmallBlind]
+		for i := 0; i < len(board.Players); i++ {
+			actualIndex := (i + 1 + oldSmallBlindIndex) % len(board.Players)
+			if board.Players[actualIndex].Status == PlayerStatusPlaying {
+				newSmallBlindIndex = actualIndex
+				break
+			}
+		}
+
+		for i := 0; i < len(activePlayerIndexList); i++ {
+			if activePlayerIndexList[i] == newSmallBlindIndex {
+				activePlayerSmallBlindIndex = i
+				break
+			}
+		}
+	}
+
+	smallBlindIndex := activePlayerIndexList[activePlayerSmallBlindIndex]
+	bigBlindIndex := activePlayerIndexList[(activePlayerSmallBlindIndex + 1) % len(activePlayerIndexList)]
+	underTheGunIndex := activePlayerIndexList[(activePlayerSmallBlindIndex + 2) % len(activePlayerIndexList)]
+	buttonIndex := activePlayerIndexList[(activePlayerSmallBlindIndex - 1 + len(activePlayerIndexList)) % len(activePlayerIndexList)]
+
+	return map[Position]int {
+		PositionSmallBlind: smallBlindIndex,
+		PositionBigBlind: bigBlindIndex,
+		PositionUnderTheGun: underTheGunIndex,
+		PositionButton: buttonIndex,
+	}
+}
+
 func Render(board *Board) {
 	if constant.Language == constant.ZH_CN {
 		zhCNRender(board)
