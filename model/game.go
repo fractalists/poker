@@ -26,17 +26,6 @@ const RIVER Round = "RIVER"
 const SHOWDOWN Round = "SHOWDOWN"
 const FINISH Round = "FINISH"
 
-func (game *Game) Init(smallBlinds int, desc string) {
-	game.Round = INIT
-	game.Deck = InitializeDeck()
-	game.Pot = 0
-	game.SmallBlinds = smallBlinds
-	game.CurrentAmount = 2 * smallBlinds
-	game.LastRaiseAmount = 0
-	game.LastRaisePlayerIndex = -1
-	game.Desc = desc
-}
-
 func (game *Game) DrawCard() Card {
 	if len(game.Deck) == 0 {
 		panic("failed to draw card. deck is empty")

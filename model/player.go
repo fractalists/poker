@@ -8,7 +8,7 @@ type Player struct {
 	Name            string
 	Index           int
 	Status          PlayerStatus
-	Interact        func(*Board) Action
+	Interact        func(*Board, InteractType) Action
 	Hands           Cards
 	InitialBankroll int
 	Bankroll        int

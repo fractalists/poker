@@ -16,14 +16,14 @@ type OddsWarriorAI struct {
 	getBoardInfoFunc func() *model.Board
 }
 
-func (oddsWarriorAI *OddsWarriorAI) CreateOddsWarriorInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(*model.Board) model.Action {
+func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(board *model.Board, interactType model.InteractType) model.Action {
 	oddsWarriorAI.selfIndex = selfIndex
 	oddsWarriorAI.getBoardInfoFunc = getBoardInfoFunc
 	if oddsWarriorAI.mentoCarloTimes == 0 {
 		oddsWarriorAI.mentoCarloTimes = 30000
 	}
 
-	return func(board *model.Board) model.Action {
+	return func(board *model.Board, interactType model.InteractType) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
 			panic("oddsWarriorAI invalid inputs")
 		}

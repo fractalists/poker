@@ -153,15 +153,6 @@ func (cards Cards) Len() int {
 }
 
 func (cards Cards) Less(i, j int) bool {
-	// descending
-	//rankI := cards[i].RankToInt()
-	//rankJ := cards[j].RankToInt()
-	//
-	//if rankI != rankJ {
-	//	return cards[i].RankToInt() > cards[j].RankToInt()
-	//}
-	//
-	//return cards[i].SuitToInt() > cards[j].SuitToInt()
 	return cards[i].RankToInt() > cards[j].RankToInt()
 }
 

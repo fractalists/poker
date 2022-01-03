@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
-func CreateDumbRandomAI(selfIndex int) func(*model.Board) model.Action {
-	return func(board *model.Board) model.Action {
+type DumbRandomAI struct{}
+
+func (dumbRandomAI *DumbRandomAI) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(board *model.Board, interactType model.InteractType) model.Action {
+	return func(board *model.Board, interactType model.InteractType) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {
 			panic("dumbRandomAI invalid inputs")
 		}

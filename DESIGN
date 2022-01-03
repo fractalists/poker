@@ -7,10 +7,10 @@ query() *model.board
 func(board *model.Board, type mode.InteractType) model.Action
 
 - initAI 接口
-initAI(board *model.board, selfIndex int, query func() *model.board) func(board *model.Board, type mode.InteractType) model.Action
+InitInteract(selfIndex int, getBoardInfoFunc func() *Board) func(board *Board, interactType InteractType) Action
 
 
 # 模型
-mode.InteractType
+model.InteractType
 - notify
 - ask

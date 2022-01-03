@@ -2,34 +2,29 @@ package process
 
 import (
 	"fmt"
-	"holdem/interact/ai"
-	"holdem/interact/human"
 	"holdem/model"
 	"holdem/util"
 	"strconv"
 )
 
-func InitBoard(playerNum int, playerBankroll int) *model.Board {
-	board := &model.Board{}
-	board.Players = initializePlayers(board, playerNum, playerBankroll)
-	return board
-}
-
-func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []*model.Player {
-	if playerNum < 2 || playerNum > 23 {
-		panic(fmt.Sprintf("invalid playerNum: %d", playerNum))
+func InitializePlayers(board *model.Board, interactList []model.Interact, playerBankroll int) {
+	if board == nil {
+		panic("InitializePlayers board is nil")
+	}
+	if len(interactList) < 2 || len(interactList) > 23 {
+		panic(fmt.Sprintf("invalid player number: %d", len(interactList)))
 	}
 	if playerBankroll < 2 {
 		panic(fmt.Sprintf("invalid playerBankroll: %d", playerBankroll))
 	}
 
 	var players []*model.Player
-	for i := 0; i < playerNum; i++ {
+	for i := 0; i < len(interactList); i++ {
 		players = append(players, &model.Player{
 			Name:            "Player" + strconv.Itoa(i+1),
 			Index:           i,
 			Status:          model.PlayerStatusPlaying,
-			Interact:        (&ai.OddsWarriorAI{}).CreateOddsWarriorInteract(i, model.GenGetBoardInfoFunc(board, i)),
+			Interact:        (interactList[i]).InitInteract(i, model.GenGetBoardInfoFunc(board, i)),
 			Hands:           model.Cards{},
 			InitialBankroll: playerBankroll,
 			Bankroll:        playerBankroll,
@@ -37,24 +32,81 @@ func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []
 		})
 	}
 
-	players[len(players)-1].Interact = human.CreateHumanInteractFunc(len(players) - 1)
-	return players
+	board.Players = players
 }
 
 func InitGame(board *model.Board, smallBlinds int, desc string) {
-	if len(board.Players) == 0 {
-		panic("board has not been initialized")
+	if len(board.Players) < 2 {
+		panic("insufficient players")
 	}
-	if board.Game != nil && board.Game.Round != model.SHOWDOWN {
+	if board.Game != nil && board.Game.Round != model.FINISH {
 		panic("previous game is continuing")
 	}
 	if smallBlinds < 1 || smallBlinds > board.Players[0].InitialBankroll/2 {
-		panic(fmt.Sprintf("smallBlinds too small: %d", smallBlinds))
+		panic(fmt.Sprintf("invalid smallBlinds: %d", smallBlinds))
 	}
 
-	board.PositionIndexMap = model.GenPositionIndexMap(board)
+	board.PositionIndexMap = genPositionIndexMap(board)
 	board.Game = &model.Game{}
-	board.Game.Init(smallBlinds, desc)
+	game := board.Game
+	game.Round = model.INIT
+	game.Deck = model.InitializeDeck()
+	game.Pot = 0
+	game.SmallBlinds = smallBlinds
+	game.CurrentAmount = 2 * smallBlinds
+	game.LastRaiseAmount = 0
+	game.LastRaisePlayerIndex = -1
+	game.Desc = desc
+}
+
+func genPositionIndexMap(board *model.Board) map[model.Position]int {
+	if board == nil {
+		panic("GenPositionIndexMap board is nil")
+	}
+
+	var activePlayerIndexList []int
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Status == model.PlayerStatusPlaying {
+			activePlayerIndexList = append(activePlayerIndexList, i)
+		}
+	}
+	if activePlayerIndexList == nil || len(activePlayerIndexList) < 2 {
+		panic("activePlayer less than 2")
+	}
+
+	oldPositionIndexMap := board.PositionIndexMap
+	activePlayerSmallBlindIndex := 0
+	if len(oldPositionIndexMap) > 0 {
+		var newSmallBlindIndex int
+		oldSmallBlindIndex := oldPositionIndexMap[model.PositionSmallBlind]
+		for i := 0; i < len(board.Players); i++ {
+			actualIndex := (i + 1 + oldSmallBlindIndex) % len(board.Players)
+			if board.Players[actualIndex].Status == model.PlayerStatusPlaying {
+				newSmallBlindIndex = actualIndex
+				break
+			}
+		}
+
+		for i := 0; i < len(activePlayerIndexList); i++ {
+			if activePlayerIndexList[i] == newSmallBlindIndex {
+				activePlayerSmallBlindIndex = i
+				break
+			}
+		}
+	}
+
+	smallBlindIndex := activePlayerIndexList[activePlayerSmallBlindIndex]
+	bigBlindIndex := activePlayerIndexList[(activePlayerSmallBlindIndex+1)%len(activePlayerIndexList)]
+	underTheGunIndex := activePlayerIndexList[(activePlayerSmallBlindIndex+2)%len(activePlayerIndexList)]
+	buttonIndex := activePlayerIndexList[(activePlayerSmallBlindIndex-1+len(activePlayerIndexList))%len(activePlayerIndexList)]
+
+	return map[model.Position]int{
+		model.PositionSmallBlind:  smallBlindIndex,
+		model.PositionBigBlind:    bigBlindIndex,
+		model.PositionUnderTheGun: underTheGunIndex,
+		model.PositionButton:      buttonIndex,
+	}
 }
 
 func PlayGame(board *model.Board) {
@@ -313,7 +365,16 @@ func callInteract(board *model.Board, playerIndex int) {
 	var action model.Action
 	for wrongInputCount < wrongInputLimit {
 		deepCopyBoard := model.DeepCopyBoardToSpecificPlayerWithoutLeak(board, playerIndex)
-		action = board.Players[playerIndex].Interact(deepCopyBoard)
+
+		var interactType model.InteractType
+		if board.Players[playerIndex].Status == model.PlayerStatusPlaying {
+			interactType = model.InteractTypeAsk
+		} else {
+			interactType = model.InteractTypeNotify
+		}
+
+		action = board.Players[playerIndex].Interact(deepCopyBoard, interactType)
+
 		if err := checkAction(board, playerIndex, action); err != nil {
 			fmt.Printf("%s made an invalid action. error: %v\n", board.Players[playerIndex].Name, err)
 			wrongInputCount++
