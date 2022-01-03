@@ -59,15 +59,15 @@ func GenPositionIndexMap(board *Board) map[Position]int {
 	}
 
 	smallBlindIndex := activePlayerIndexList[activePlayerSmallBlindIndex]
-	bigBlindIndex := activePlayerIndexList[(activePlayerSmallBlindIndex + 1) % len(activePlayerIndexList)]
-	underTheGunIndex := activePlayerIndexList[(activePlayerSmallBlindIndex + 2) % len(activePlayerIndexList)]
-	buttonIndex := activePlayerIndexList[(activePlayerSmallBlindIndex - 1 + len(activePlayerIndexList)) % len(activePlayerIndexList)]
+	bigBlindIndex := activePlayerIndexList[(activePlayerSmallBlindIndex+1)%len(activePlayerIndexList)]
+	underTheGunIndex := activePlayerIndexList[(activePlayerSmallBlindIndex+2)%len(activePlayerIndexList)]
+	buttonIndex := activePlayerIndexList[(activePlayerSmallBlindIndex-1+len(activePlayerIndexList))%len(activePlayerIndexList)]
 
-	return map[Position]int {
-		PositionSmallBlind: smallBlindIndex,
-		PositionBigBlind: bigBlindIndex,
+	return map[Position]int{
+		PositionSmallBlind:  smallBlindIndex,
+		PositionBigBlind:    bigBlindIndex,
 		PositionUnderTheGun: underTheGunIndex,
-		PositionButton: buttonIndex,
+		PositionButton:      buttonIndex,
 	}
 }
 
