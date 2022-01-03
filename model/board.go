@@ -22,6 +22,10 @@ const PositionUnderTheGun Position = "UTG"
 const PositionButton Position = "BUTTON"
 
 func Render(board *Board) {
+	if constant.TrainMode {
+		return
+	}
+
 	if constant.Language == constant.ZH_CN {
 		zhCNRender(board)
 	} else {

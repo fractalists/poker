@@ -2,6 +2,7 @@ package process
 
 import (
 	"fmt"
+	"holdem/constant"
 	"holdem/model"
 	"holdem/util"
 	"strconv"
@@ -298,13 +299,15 @@ func showdown(board *model.Board) {
 	game.Round = model.FINISH
 	model.Render(board)
 	// show winner
-	if len(finalPlayerTiers[0]) == 1 {
-		finalPlayer := finalPlayerTiers[0][0]
-		fmt.Printf("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
-	} else {
-		fmt.Printf("Winners are:\n")
-		for _, finalPlayer := range finalPlayerTiers[0] {
-			fmt.Printf("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+	if constant.TrainMode == false {
+		if len(finalPlayerTiers[0]) == 1 {
+			finalPlayer := finalPlayerTiers[0][0]
+			fmt.Printf("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+		} else {
+			fmt.Printf("Winners are:\n")
+			for _, finalPlayer := range finalPlayerTiers[0] {
+				fmt.Printf("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+			}
 		}
 	}
 }
@@ -351,8 +354,11 @@ func settleBecauseOthersAllFold(board *model.Board) {
 
 	board.Game.Round = model.FINISH
 	model.Render(board)
-	// show winner
-	fmt.Printf("Winner is: %s\nScore: No score, all others folded.\n", theLastPlayer.Name)
+
+	if constant.TrainMode == false {
+		// show winner
+		fmt.Printf("Winner is: %s\nScore: No score, all others folded.\n", theLastPlayer.Name)
+	}
 }
 
 func callInteract(board *model.Board, playerIndex int) {
@@ -436,7 +442,9 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 
 	game := board.Game
 	currentPlayer := board.Players[playerIndex]
-	fmt.Printf("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
+	if constant.TrainMode == false {
+		fmt.Printf("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
+	}
 
 	switch action.ActionType {
 	case model.ActionTypeBet:

@@ -1,6 +1,7 @@
 package constant
 
 var DebugMode = false
+var TrainMode = false
 
 var Language = EN_US
 

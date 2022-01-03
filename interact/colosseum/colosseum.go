@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"holdem/constant"
+	"holdem/interact/ai"
+	"holdem/interact/human"
+	"holdem/model"
 	"holdem/process"
 	"os"
 )
@@ -12,13 +15,21 @@ func main() {
 	constant.DebugMode = false
 	constant.Language = constant.ZH_CN
 
-	playerNum := 6
-	playerBankroll := 100
 	smallBlinds := 1
-	board := process.InitBoard(playerNum, playerBankroll)
+	playerBankroll := 100
+	interactList := []model.Interact{
+		&ai.OddsWarriorAI{},
+		&ai.OddsWarriorAI{},
+		&ai.OddsWarriorAI{},
+		&ai.OddsWarriorAI{},
+		&ai.DumbRandomAI{},
+		&human.Human{},
+	}
+	board := &model.Board{}
+	process.InitializePlayers(board, interactList, playerBankroll)
 
 	for cycle := 0; cycle < 2; cycle++ {
-		for match := 0; match < playerNum; match++ {
+		for match := 0; match < len(board.Players); match++ {
 			process.InitGame(board, smallBlinds, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
 			process.PlayGame(board)
 			process.EndGame(board)
@@ -28,8 +39,4 @@ func main() {
 			reader.ReadString('\n')
 		}
 	}
-
-	fmt.Printf("Game Over. Press any key to exit.\n")
-	reader := bufio.NewReader(os.Stdin)
-	reader.ReadString('\n')
 }
