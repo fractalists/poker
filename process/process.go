@@ -41,7 +41,7 @@ func initializePlayers(board *model.Board, playerNum int, playerBankroll int) []
 	return players
 }
 
-func InitGame(board *model.Board, smallBlinds int, sbIndex int, desc string) {
+func InitGame(board *model.Board, smallBlinds int, smallBlindOffset int, desc string) {
 	if len(board.Players) == 0 {
 		panic("board has not been initialized")
 	}
@@ -51,12 +51,12 @@ func InitGame(board *model.Board, smallBlinds int, sbIndex int, desc string) {
 	if smallBlinds < 1 || smallBlinds > board.Players[0].InitialBankroll/2 {
 		panic(fmt.Sprintf("smallBlinds too small: %d", smallBlinds))
 	}
-	if sbIndex < 0 || sbIndex >= len(board.Players) {
-		panic(fmt.Sprintf("invalid sbIndex: %d", sbIndex))
+	if smallBlindOffset < 0 || smallBlindOffset >= len(board.Players) {
+		panic(fmt.Sprintf("invalid smallBlindOffset: %d", smallBlindOffset))
 	}
 
 	board.Game = &model.Game{}
-	board.Game.Init(smallBlinds, sbIndex, desc)
+	board.Game.Init(smallBlinds, smallBlindOffset, desc)
 }
 
 func PlayGame(board *model.Board) {

@@ -13,7 +13,7 @@ type Game struct {
 	CurrentAmount        int
 	LastRaiseAmount      int
 	LastRaisePlayerIndex int
-	SBIndex              int
+	SmallBlindOffset     int
 	Desc                 string
 }
 
@@ -36,7 +36,7 @@ const UTG Position = "UTG"
 const CUTOFF Position = "CUTOFF"
 const BUTTON Position = "BUTTON"
 
-func (game *Game) Init(smallBlinds int, sbIndex int, desc string) {
+func (game *Game) Init(smallBlinds int, smallBlindOffset int, desc string) {
 	game.Round = INIT
 	game.Deck = InitializeDeck()
 	game.Pot = 0
@@ -44,7 +44,7 @@ func (game *Game) Init(smallBlinds int, sbIndex int, desc string) {
 	game.CurrentAmount = 2 * smallBlinds
 	game.LastRaiseAmount = 0
 	game.LastRaisePlayerIndex = -1
-	game.SBIndex = sbIndex
+	game.SmallBlindOffset = smallBlindOffset
 	game.Desc = desc
 }
 

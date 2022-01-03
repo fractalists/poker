@@ -75,13 +75,13 @@ func testSettle(t *testing.T) {
 	board := &model.Board{
 		Players: []*model.Player{player1, player2, player3, player4, player5, player6},
 		Game: &model.Game{
-			Round:         "round_1",
-			Pot:           player1.InPotAmount + player2.InPotAmount + player3.InPotAmount + player4.InPotAmount + player5.InPotAmount + player6.InPotAmount,
-			SmallBlinds:   1,
-			BoardCards:    nil,
-			CurrentAmount: player6.InPotAmount,
-			SBIndex:       0,
-			Desc:          "",
+			Round:            "round_1",
+			Pot:              player1.InPotAmount + player2.InPotAmount + player3.InPotAmount + player4.InPotAmount + player5.InPotAmount + player6.InPotAmount,
+			SmallBlinds:      1,
+			BoardCards:       nil,
+			CurrentAmount:    player6.InPotAmount,
+			SmallBlindOffset: 0,
+			Desc:             "",
 		},
 	}
 
