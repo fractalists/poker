@@ -138,45 +138,29 @@ func EndGame(board *model.Board) {
 
 func interactWithPlayers(board *model.Board) {
 	game := board.Game
-	interactStartIndex := game.SBIndex
+
+	actualSmallBlindIndex := board.PositionIndexMap[model.PositionSmallBlind]
+	actualBigBlindIndex := board.PositionIndexMap[model.PositionBigBlind]
+	actualUnderTheGunIndex := board.PositionIndexMap[model.PositionUnderTheGun]
+
+	interactStartIndex := actualSmallBlindIndex
 
 	if game.Round == model.PREFLOP {
-		actualSbIndex := -1
-		actualBbIndex := -1
-		for i := 0; i < len(board.Players); i++ {
-			actualIndex := (i + game.SBIndex) % len(board.Players)
-			player := board.Players[actualIndex]
-			if player.Status != model.PlayerStatusPlaying {
-				continue
-			}
+		smallBlindPlayer := board.Players[actualSmallBlindIndex]
+		smallBlinds := game.SmallBlinds
+		smallBlindPlayer.Bankroll -= smallBlinds
+		smallBlindPlayer.InPotAmount += smallBlinds
+		game.Pot += smallBlinds
+		game.CurrentAmount = smallBlinds
 
-			if actualSbIndex == -1 {
-				smallBlinds := game.SmallBlinds
-				player.Bankroll -= smallBlinds
-				player.InPotAmount += smallBlinds
-				game.Pot += smallBlinds
-				game.CurrentAmount = smallBlinds
-				actualSbIndex = actualIndex
-				continue
-			}
-			if actualSbIndex != -1 && actualBbIndex == -1 {
-				bigBlinds := 2 * game.SmallBlinds
-				if player.Bankroll < bigBlinds {
-					player.Status = model.PlayerStatusOut
-					fmt.Printf("%s doesn't have enough 1BB, out!", player.Name)
-					continue
-				}
+		bigBlindPlayer := board.Players[actualBigBlindIndex]
+		bigBlinds := 2 * game.SmallBlinds
+		bigBlindPlayer.Bankroll -= bigBlinds
+		bigBlindPlayer.InPotAmount += bigBlinds
+		game.Pot += bigBlinds
+		game.CurrentAmount = bigBlinds
 
-				player.Bankroll -= bigBlinds
-				player.InPotAmount += bigBlinds
-				game.Pot += bigBlinds
-				game.CurrentAmount = bigBlinds
-				actualBbIndex = actualIndex
-
-				interactStartIndex = actualIndex + 1
-				break
-			}
-		}
+		interactStartIndex = actualUnderTheGunIndex
 	}
 
 	model.Render(board)
