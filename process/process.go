@@ -292,9 +292,7 @@ func settleBecauseOthersAllFold(board *model.Board) {
 		if player.InPotAmount != 0 {
 			panic(fmt.Sprintf("InPotAmount != 0, player index: %d", i))
 		}
-		if player.Bankroll >= board.Game.SmallBlinds {
-			player.Status = model.PlayerStatusPlaying
-		} else {
+		if player.Bankroll < board.Game.SmallBlinds {
 			player.Status = model.PlayerStatusOut
 		}
 	}

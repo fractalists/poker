@@ -80,7 +80,6 @@ func testSettle(t *testing.T) {
 			SmallBlinds:      1,
 			BoardCards:       nil,
 			CurrentAmount:    player6.InPotAmount,
-			SmallBlindOffset: 0,
 			Desc:             "",
 		},
 	}
