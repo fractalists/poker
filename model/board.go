@@ -9,8 +9,9 @@ import (
 )
 
 type Board struct {
-	Players []*Player
-	Game    *Game
+	Players          []*Player
+	PositionIndexMap map[Position]int
+	Game             *Game
 }
 
 func Render(board *Board) {
@@ -56,7 +57,7 @@ func enUSRender(board *Board) {
 	game := board.Game
 	fmt.Printf("---------------------------------------------------------------\n")
 	if game == nil {
-		fmt.Printf("# The game hasn't started yet\n")
+		fmt.Printf("# The game hasn't started yet.\n")
 	} else {
 		fmt.Printf("# Desc: %s | SmallBlinds: %d\n"+
 			"# Round: %s, Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
@@ -105,6 +106,11 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 		}
 	}
 
+	positionIndexMap := make(map[Position]int)
+	for position, index := range board.PositionIndexMap {
+		positionIndexMap[position] = index
+	}
+
 	game := board.Game
 	var deepCopyGame *Game
 	if game != nil {
@@ -139,8 +145,9 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 	}
 
 	deepCopyBoard := &Board{
-		Players: deepCopyPlayers,
-		Game:    deepCopyGame,
+		Players:          deepCopyPlayers,
+		PositionIndexMap: positionIndexMap,
+		Game:             deepCopyGame,
 	}
 	return deepCopyBoard
 }
