@@ -1,9 +1,5 @@
 package model
 
-import (
-	"fmt"
-)
-
 type Player struct {
 	Name            string
 	Index           int
@@ -42,7 +38,3 @@ const ActionTypeCall ActionType = "CALL"
 const ActionTypeFold ActionType = "FOLD"
 const ActionTypeAllIn ActionType = "ALLIN"
 const ActionTypeKeepWatching ActionType = "KEEPWATCHING"
-
-func (player *Player) String() string {
-	return fmt.Sprintf("[%s] hands: %v, inPot: %d, bankroll: %d, status: %s", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
-}

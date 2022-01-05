@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"holdem/constant"
 	"holdem/interact/ai"
+	"holdem/interact/human"
 	"holdem/model"
 	"holdem/process"
 	"os"
@@ -24,46 +25,45 @@ func (c *count32) get() int32 {
 func main() {
 	constant.DebugMode = false
 	constant.Language = constant.ZH_CN
+	constant.TrainMode = false
 
-	train()
+	if constant.TrainMode {
+		train()
+		return
+	}
 
-	//smallBlinds := 1
-	//playerBankroll := 100
-	//interactList := []model.Interact{
-	//	&ai.OddsWarriorAI{},
-	//	&ai.OddsWarriorAI{},
-	//	&ai.OddsWarriorAI{},
-	//	&ai.OddsWarriorAI{},
-	//	&ai.DumbRandomAI{},
-	//	&human.Human{},
-	//}
-	//board := &model.Board{}
-	//process.InitializePlayers(board, interactList, playerBankroll)
-	//
-	//for cycle := 0; cycle < 2; cycle++ {
-	//	for match := 0; match < len(board.Players); match++ {
-	//		process.InitGame(board, smallBlinds, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
-	//		process.PlayGame(board)
-	//		process.EndGame(board)
-	//
-	//		fmt.Printf("Match finish. Press any key to begin next match.\n")
-	//		reader := bufio.NewReader(os.Stdin)
-	//		reader.ReadString('\n')
-	//	}
-	//}
+	smallBlinds := 1
+	playerBankroll := 100
+	interactList := []model.Interact{
+		&ai.OddsWarriorAI{},
+		&ai.OddsWarriorAI{},
+		&ai.OddsWarriorAI{},
+		&ai.OddsWarriorAI{},
+		&ai.DumbRandomAI{},
+		&human.Human{},
+	}
+	board := &model.Board{}
+	process.InitializePlayers(board, interactList, playerBankroll)
+
+	for cycle := 0; cycle < 2; cycle++ {
+		for match := 0; match < len(board.Players); match++ {
+			process.InitGame(board, smallBlinds, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
+			process.PlayGame(board)
+			process.EndGame(board)
+
+			fmt.Printf("Match finish. Press any key to begin next match.\n")
+			reader := bufio.NewReader(os.Stdin)
+			reader.ReadString('\n')
+		}
+	}
 }
 
 func train() {
-	constant.DebugMode = false
-	constant.TrainMode = true
-
 	memory := map[int]count32{}
 
 	for i := 0; i < 10; i++ {
 		goroutine(&memory)
 	}
-
-	fmt.Printf("%v\n", memory)
 
 	fmt.Printf("Waiting final result\n")
 	reader := bufio.NewReader(os.Stdin)
@@ -72,7 +72,7 @@ func train() {
 
 func goroutine(memory *map[int]count32) {
 	go func() {
-		for cycle := 0; cycle < 10; cycle++ {
+		for cycle := 0; cycle < 2; cycle++ {
 			match := 0
 			finalWinnerIndex := -1
 
