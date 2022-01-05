@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"fyne.io/fyne/v2"
 	"holdem/constant"
 	"holdem/interact/ai"
 	"holdem/interact/human"
@@ -10,6 +11,10 @@ import (
 	"holdem/process"
 	"os"
 	"sync/atomic"
+	"time"
+
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/widget"
 )
 
 type count32 int32
@@ -22,7 +27,28 @@ func (c *count32) get() int32 {
 	return atomic.LoadInt32((*int32)(c))
 }
 
+
+
+func showAnother(a fyne.App) {
+	time.Sleep(time.Second * 5)
+
+	win := a.NewWindow("Shown later")
+	win.SetContent(widget.NewLabel("5 seconds later"))
+	win.Resize(fyne.NewSize(200, 200))
+	win.Show()
+
+	time.Sleep(time.Second * 2)
+	win.Close()
+}
 func main() {
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Hello")
+	myWindow.SetContent(widget.NewLabel("Hello"))
+
+	go showAnother(myApp)
+	myWindow.ShowAndRun()
+	return
+
 	constant.DebugMode = false
 	constant.Language = constant.ZH_CN
 	constant.TrainMode = false
