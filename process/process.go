@@ -43,9 +43,9 @@ func InitGame(board *model.Board, smallBlinds int, desc string) {
 	if board.Game != nil && board.Game.Round != model.FINISH {
 		panic("previous game is continuing")
 	}
-	if smallBlinds < 1 || smallBlinds > board.Players[0].InitialBankroll/2 {
-		panic(fmt.Sprintf("invalid smallBlinds: %d", smallBlinds))
-	}
+	//if smallBlinds < 1 || smallBlinds > board.Players[0].InitialBankroll/2 {
+	//	panic(fmt.Sprintf("invalid smallBlinds: %d", smallBlinds))
+	//}
 
 	board.PositionIndexMap = genPositionIndexMap(board)
 	board.Game = &model.Game{}
@@ -219,18 +219,18 @@ func interactWithPlayers(board *model.Board) {
 
 	if game.Round == model.PREFLOP {
 		smallBlindPlayer := board.Players[actualSmallBlindIndex]
-		smallBlinds := game.SmallBlinds
+		smallBlinds := util.Min(game.SmallBlinds, smallBlindPlayer.Bankroll)
 		smallBlindPlayer.Bankroll -= smallBlinds
 		smallBlindPlayer.InPotAmount += smallBlinds
 		game.Pot += smallBlinds
-		game.CurrentAmount = smallBlinds
+		game.CurrentAmount = game.SmallBlinds
 
 		bigBlindPlayer := board.Players[actualBigBlindIndex]
-		bigBlinds := 2 * game.SmallBlinds
+		bigBlinds := util.Min(2 * game.SmallBlinds, bigBlindPlayer.Bankroll)
 		bigBlindPlayer.Bankroll -= bigBlinds
 		bigBlindPlayer.InPotAmount += bigBlinds
 		game.Pot += bigBlinds
-		game.CurrentAmount = bigBlinds
+		game.CurrentAmount = 2 * game.SmallBlinds
 
 		interactStartIndex = actualUnderTheGunIndex
 	}
@@ -439,7 +439,7 @@ func checkAction(board *model.Board, playerIndex int, action model.Action) error
 	case model.ActionTypeFold:
 
 	case model.ActionTypeAllIn:
-		if action.Amount == 0 || action.Amount != bankroll {
+		if action.Amount != bankroll {
 			return fmt.Errorf("allIn with an invalid amount: %d", action.Amount)
 		}
 

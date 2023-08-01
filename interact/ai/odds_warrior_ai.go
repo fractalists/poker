@@ -22,7 +22,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 	oddsWarriorAI.selfIndex = selfIndex
 	oddsWarriorAI.getBoardInfoFunc = getBoardInfoFunc
 	if oddsWarriorAI.mentoCarloTimes == 0 {
-		oddsWarriorAI.mentoCarloTimes = 600000
+		oddsWarriorAI.mentoCarloTimes = 300000
 	}
 
 	return func(board *model.Board, interactType model.InteractType) model.Action {
@@ -42,8 +42,8 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		currentPot := game.Pot
 		smallBlinds := game.SmallBlinds
 		bankroll := board.Players[selfIndex].Bankroll
-		minRequiredAmount := game.CurrentAmount - board.Players[selfIndex].InPotAmount
-		betMinRequiredAmount := minRequiredAmount + util.Max(game.LastRaiseAmount, 2*game.SmallBlinds)
+		minRequiredAmount := util.Min(bankroll, game.CurrentAmount - board.Players[selfIndex].InPotAmount)
+		betMinRequiredAmount := game.CurrentAmount - board.Players[selfIndex].InPotAmount + util.Max(game.LastRaiseAmount, 2*game.SmallBlinds)
 
 		opponentCount := 0
 		for i := 0; i < len(board.Players); i++ {
@@ -58,7 +58,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		if config.DebugMode {
 			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
 		}
-		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate {
+		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate && minRequiredAmount > 0 {
 			return model.Action{
 				ActionType: model.ActionTypeFold,
 				Amount:     0,

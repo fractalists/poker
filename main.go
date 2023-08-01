@@ -31,10 +31,7 @@ func main() {
 	config.GoroutineLimit = runtime.NumCPU()
 
 	if p, err := ants.NewPool(config.GoroutineLimit); err != nil || p == nil {
-		fmt.Printf("new goroutine pool failed. press enter to exit. error: %v\n", err)
-		reader := bufio.NewReader(os.Stdin)
-		reader.ReadString('\n')
-		return
+		panic(fmt.Sprintf("new goroutine pool failed. press enter to exit. error: %v\n", err))
 	} else {
 		defer p.Release()
 		config.Pool = p
@@ -45,7 +42,7 @@ func main() {
 		return
 	}
 
-	smallBlinds := 1
+	smallBlinds := 5
 	playerBankroll := 100
 	interactList := []model.Interact{
 		&ai.OddsWarriorAI{},
@@ -58,9 +55,9 @@ func main() {
 	board := &model.Board{}
 	process.InitializePlayers(board, interactList, playerBankroll)
 
-	for cycle := 0; cycle < 2000; cycle++ {
-		for match := 0; match < len(board.Players); match++ {
-			process.InitGame(board, smallBlinds, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
+	for cycle := 1; true; cycle++ {
+		for match := 1; match <= len(board.Players); match++ {
+			process.InitGame(board, smallBlinds * cycle, fmt.Sprintf("cycle%d_match%d", cycle, match))
 			process.PlayGame(board)
 			process.EndGame(board)
 
