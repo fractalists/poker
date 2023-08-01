@@ -6,6 +6,7 @@
 
 
 # low priority
+- the accurate calc for game cycle (e.g. count loop times)
 - logging
 - saving log to file
 - testing
