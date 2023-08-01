@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"holdem/constant"
+	"github.com/panjf2000/ants/v2"
+	"holdem/config"
 	"holdem/interact/ai"
 	"holdem/interact/human"
 	"holdem/model"
 	"holdem/process"
 	"os"
+	"runtime"
 	"sync/atomic"
 )
 
@@ -23,11 +25,22 @@ func (c *count32) get() int32 {
 }
 
 func main() {
-	constant.DebugMode = false
-	constant.Language = constant.ZH_CN
-	constant.TrainMode = false
+	config.DebugMode = false
+	config.Language = config.ZH_CN
+	config.TrainMode = false
+	config.GoroutineLimit = runtime.NumCPU()
 
-	if constant.TrainMode {
+	if p, err := ants.NewPool(config.GoroutineLimit); err != nil || p == nil {
+		fmt.Printf("new goroutine pool failed. press enter to exit. error: %v\n", err)
+		reader := bufio.NewReader(os.Stdin)
+		reader.ReadString('\n')
+		return
+	} else {
+		defer p.Release()
+		config.Pool = p
+	}
+
+	if config.TrainMode {
 		train()
 		return
 	}
@@ -45,13 +58,18 @@ func main() {
 	board := &model.Board{}
 	process.InitializePlayers(board, interactList, playerBankroll)
 
-	for cycle := 0; cycle < 2; cycle++ {
+	for cycle := 0; cycle < 2000; cycle++ {
 		for match := 0; match < len(board.Players); match++ {
 			process.InitGame(board, smallBlinds, fmt.Sprintf("cycle%d_match%d", cycle+1, match+1))
 			process.PlayGame(board)
 			process.EndGame(board)
 
-			fmt.Printf("Match finish. Press any key to begin next match.\n")
+			if winner := process.HasWinner(board); winner != nil {
+				fmt.Printf("Congrats! The final winner is %s. Press enter to begin next match.\n", winner.Name)
+				return
+			}
+
+			fmt.Printf("Match finish. Press enter to begin next match.\n")
 			reader := bufio.NewReader(os.Stdin)
 			reader.ReadString('\n')
 		}

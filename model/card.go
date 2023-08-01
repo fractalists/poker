@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"holdem/constant"
+	"holdem/config"
 	"math/rand"
 	"time"
 )
@@ -94,7 +94,7 @@ var deck = Cards{
 }
 
 func (card Card) String() string {
-	if card.Revealed || constant.DebugMode {
+	if card.Revealed || config.DebugMode {
 		return fmt.Sprintf("%s%s", card.Suit, card.Rank)
 	}
 	return "**"

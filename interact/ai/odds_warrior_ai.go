@@ -2,10 +2,12 @@ package ai
 
 import (
 	"fmt"
-	"holdem/constant"
+	"holdem/config"
 	"holdem/model"
 	"holdem/util"
 	"math/rand"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -20,7 +22,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 	oddsWarriorAI.selfIndex = selfIndex
 	oddsWarriorAI.getBoardInfoFunc = getBoardInfoFunc
 	if oddsWarriorAI.mentoCarloTimes == 0 {
-		oddsWarriorAI.mentoCarloTimes = 30000
+		oddsWarriorAI.mentoCarloTimes = 600000
 	}
 
 	return func(board *model.Board, interactType model.InteractType) model.Action {
@@ -53,7 +55,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		}
 
 		winRate := oddsWarriorAI.calcWinRate(board, selfIndex)
-		if constant.DebugMode {
+		if config.DebugMode {
 			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
 		}
 		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate {
@@ -182,62 +184,90 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unrevealedCards model.Cards, opponentCount int) float32 {
 	boardUnrevealedCount := 5 - len(boardRevealCards)
 	randomCardNeededCount := boardUnrevealedCount + (2 * opponentCount)
+	times := oddsWarriorAI.mentoCarloTimes / config.GoroutineLimit
 
-	boardCards := boardRevealCards
-	for i := 0; i < boardUnrevealedCount; i++ {
-		boardCards = append(model.Cards{model.Card{}}, boardCards...)
-	}
+	totalWinCount := int32(0)
+	totalLossCount := int32(0)
+	totalTieCount := int32(0)
+	var wg sync.WaitGroup
 
-	var opponentHandsList []model.Cards
-	for i := 0; i < opponentCount; i++ {
-		opponentHandsList = append(opponentHandsList, model.Cards{model.Card{}, model.Card{}})
-	}
+	subTask := func () {
+		winCount := int32(0)
+		lossCount := int32(0)
+		tieCount := int32(0)
 
-	winCount := 0
-	lossCount := 0
-	tieCount := 0
-	for i := 0; i < oddsWarriorAI.mentoCarloTimes; i++ {
-		randomCards := getRandomNCards(&unrevealedCards, randomCardNeededCount)
+		boardCards := make(model.Cards, len(boardRevealCards))
+		copy(boardCards, boardRevealCards)
 
-		index := 0
-		for j := 0; j < boardUnrevealedCount; j++ {
-			boardCards[j].Suit = (*randomCards)[index].Suit
-			boardCards[j].Rank = (*randomCards)[index].Rank
-			index++
-		}
-		for j := 0; j < opponentCount; j++ {
-			opponentHandsList[j][0].Suit = (*randomCards)[index].Suit
-			opponentHandsList[j][0].Rank = (*randomCards)[index].Rank
-			index++
-			opponentHandsList[j][1].Suit = (*randomCards)[index].Suit
-			opponentHandsList[j][1].Rank = (*randomCards)[index].Rank
-			index++
+		tmpUnrevealedCards := make(model.Cards, len(unrevealedCards))
+		copy(tmpUnrevealedCards, unrevealedCards)
+
+		for i := 0; i < boardUnrevealedCount; i++ {
+			boardCards = append(model.Cards{model.Card{}}, boardCards...)
 		}
 
-		selfScoreResult := util.Score(append(hands, boardCards...))
-		selfScore := selfScoreResult.Score
+		var opponentHandsList []model.Cards
+		for i := 0; i < opponentCount; i++ {
+			opponentHandsList = append(opponentHandsList, model.Cards{model.Card{}, model.Card{}})
+		}
 
-		opponentHighestScore := 0
+		for i := 0; i < times; i++ {
+			randomCards := getRandomNCards(&tmpUnrevealedCards, randomCardNeededCount)
 
-		for j := 0; j < opponentCount; j++ {
-			opponentScoreResult := util.Score(append(opponentHandsList[j], boardCards...))
-			opponentScore := opponentScoreResult.Score
+			index := 0
+			for j := 0; j < boardUnrevealedCount; j++ {
+				boardCards[j].Suit = (*randomCards)[index].Suit
+				boardCards[j].Rank = (*randomCards)[index].Rank
+				index++
+			}
+			for j := 0; j < opponentCount; j++ {
+				opponentHandsList[j][0].Suit = (*randomCards)[index].Suit
+				opponentHandsList[j][0].Rank = (*randomCards)[index].Rank
+				index++
+				opponentHandsList[j][1].Suit = (*randomCards)[index].Suit
+				opponentHandsList[j][1].Rank = (*randomCards)[index].Rank
+				index++
+			}
 
-			if opponentScore > opponentHighestScore {
-				opponentHighestScore = opponentScore
+			selfScoreResult := util.Score(append(hands, boardCards...))
+			selfScore := selfScoreResult.Score
+
+			opponentHighestScore := 0
+
+			for j := 0; j < opponentCount; j++ {
+				opponentScoreResult := util.Score(append(opponentHandsList[j], boardCards...))
+				opponentScore := opponentScoreResult.Score
+
+				if opponentScore > opponentHighestScore {
+					opponentHighestScore = opponentScore
+				}
+			}
+
+			if selfScore < opponentHighestScore {
+				lossCount++
+			} else if selfScore > opponentHighestScore {
+				winCount++
+			} else {
+				tieCount++
 			}
 		}
 
-		if selfScore < opponentHighestScore {
-			lossCount++
-		} else if selfScore > opponentHighestScore {
-			winCount++
-		} else {
-			tieCount++
-		}
+		atomic.AddInt32(&totalWinCount, winCount)
+		atomic.AddInt32(&totalLossCount, lossCount)
+		atomic.AddInt32(&totalTieCount, tieCount)
+		wg.Done()
 	}
 
-	return (float32(winCount) + (0.5 * float32(tieCount))) / float32(winCount+tieCount+lossCount)
+	for i := 0; i < config.GoroutineLimit; i++ {
+		wg.Add(1)
+		if err := config.Pool.Submit(subTask); err != nil {
+			fmt.Printf("submit task failed. error: %v\n", err)
+			wg.Done()
+		}
+	}
+	wg.Wait()
+
+	return (float32(totalWinCount) + (0.5 * float32(totalTieCount))) / float32(totalWinCount+totalTieCount+totalLossCount)
 }
 
 func getRandomNCards(cards *model.Cards, n int) *model.Cards {

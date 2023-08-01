@@ -5,6 +5,7 @@
 
 # low priority
 - logging
+- saving log to file
 - testing
 - gui
 - i18n

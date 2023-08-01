@@ -3,17 +3,31 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"holdem/constant"
+	"github.com/panjf2000/ants/v2"
+	"holdem/config"
 	"holdem/interact/ai"
 	"holdem/interact/human"
 	"holdem/model"
 	"holdem/process"
 	"os"
+	"runtime"
 )
 
 func main() {
-	constant.DebugMode = false
-	constant.Language = constant.ZH_CN
+	config.DebugMode = false
+	config.Language = config.ZH_CN
+	config.TrainMode = false
+	config.GoroutineLimit = runtime.NumCPU()
+
+	if p, err := ants.NewPool(config.GoroutineLimit); err != nil || p == nil {
+		fmt.Printf("new goroutine pool failed. press enter to exit. error: %v", err)
+		reader := bufio.NewReader(os.Stdin)
+		reader.ReadString('\n')
+		return
+	} else {
+		defer p.Release()
+		config.Pool = p
+	}
 
 	smallBlinds := 1
 	playerBankroll := 100
@@ -34,7 +48,7 @@ func main() {
 			process.PlayGame(board)
 			process.EndGame(board)
 
-			fmt.Printf("Match finish. Press any key to begin next match.\n")
+			fmt.Printf("Match finish. Press enter to begin next match.\n")
 			reader := bufio.NewReader(os.Stdin)
 			reader.ReadString('\n')
 		}

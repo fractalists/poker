@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"holdem/constant"
+	"holdem/config"
 	"os"
 	"os/exec"
 	"runtime"
@@ -22,11 +22,11 @@ const PositionUnderTheGun Position = "UTG"
 const PositionButton Position = "BUTTON"
 
 func Render(board *Board) {
-	if constant.TrainMode {
+	if config.TrainMode {
 		return
 	}
 
-	if constant.Language == constant.ZH_CN {
+	if config.Language == config.ZH_CN {
 		zhCNRender(board)
 	} else {
 		enUSRender(board)
@@ -84,7 +84,7 @@ func enUSRender(board *Board) {
 }
 
 func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Board {
-	if constant.DebugMode {
+	if config.DebugMode {
 		return board
 	}
 

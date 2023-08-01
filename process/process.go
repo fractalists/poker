@@ -2,7 +2,7 @@ package process
 
 import (
 	"fmt"
-	"holdem/constant"
+	"holdem/config"
 	"holdem/model"
 	"holdem/util"
 	"strconv"
@@ -189,6 +189,25 @@ func EndGame(board *model.Board) {
 	board.Game = nil
 }
 
+func HasWinner(board *model.Board) *model.Player {
+	playerWithBankrollCount := 0
+	var winner *model.Player
+
+	for i := 0; i < len(board.Players); i++ {
+		player := board.Players[i]
+		if player.Bankroll > 0 {
+			winner = player
+			playerWithBankrollCount++
+		}
+	}
+
+	if playerWithBankrollCount == 1 {
+		return winner
+	} else {
+		return nil
+	}
+}
+
 func interactWithPlayers(board *model.Board) {
 	game := board.Game
 
@@ -299,7 +318,7 @@ func showdown(board *model.Board) {
 	game.Round = model.FINISH
 	model.Render(board)
 	// show winner
-	if constant.TrainMode == false {
+	if config.TrainMode == false {
 		if len(finalPlayerTiers[0]) == 1 {
 			finalPlayer := finalPlayerTiers[0][0]
 			fmt.Printf("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
@@ -355,7 +374,7 @@ func settleBecauseOthersAllFold(board *model.Board) {
 	board.Game.Round = model.FINISH
 	model.Render(board)
 
-	if constant.TrainMode == false {
+	if config.TrainMode == false {
 		// show winner
 		fmt.Printf("Winner is: %s\nScore: No score, all others folded.\n", theLastPlayer.Name)
 	}
@@ -442,7 +461,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 
 	game := board.Game
 	currentPlayer := board.Players[playerIndex]
-	if constant.TrainMode == false {
+	if config.TrainMode == false {
 		fmt.Printf("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
 	}
 
