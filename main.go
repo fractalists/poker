@@ -56,13 +56,15 @@ func main() {
 	process.InitializePlayers(board, interactList, playerBankroll)
 
 	for cycle := 1; true; cycle++ {
-		for match := 1; match <= len(board.Players); match++ {
+		for match := 1; match <= len(process.GetStillHasBankrollPlayerList(board)); match++ {
 			process.InitGame(board, smallBlinds * cycle, fmt.Sprintf("cycle%d_match%d", cycle, match))
 			process.PlayGame(board)
 			process.EndGame(board)
 
 			if winner := process.HasWinner(board); winner != nil {
 				fmt.Printf("Congrats! The final winner is %s. Press enter to begin next match.\n", winner.Name)
+				reader := bufio.NewReader(os.Stdin)
+				reader.ReadString('\n')
 				return
 			}
 

@@ -190,22 +190,26 @@ func EndGame(board *model.Board) {
 }
 
 func HasWinner(board *model.Board) *model.Player {
-	playerWithBankrollCount := 0
-	var winner *model.Player
+	playerList := GetStillHasBankrollPlayerList(board)
+
+	if len(playerList) == 1 {
+		return playerList[0]
+	} else {
+		return nil
+	}
+}
+
+func GetStillHasBankrollPlayerList(board *model.Board) []*model.Player {
+	result := make([]*model.Player, 0)
 
 	for i := 0; i < len(board.Players); i++ {
 		player := board.Players[i]
 		if player.Bankroll > 0 {
-			winner = player
-			playerWithBankrollCount++
+			result = append(result, player)
 		}
 	}
 
-	if playerWithBankrollCount == 1 {
-		return winner
-	} else {
-		return nil
-	}
+	return result
 }
 
 func interactWithPlayers(board *model.Board) {
