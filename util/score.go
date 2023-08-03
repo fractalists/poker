@@ -109,14 +109,8 @@ func getHandType(cards model.Cards) (HandType, model.Cards) {
 }
 
 func getCardPoint(cards model.Cards) int {
-	deepCopy := model.Cards{}
-	for _, card := range cards {
-		deepCopy = append(deepCopy, card)
-	}
-
-	sort.Sort(deepCopy)
 	cardPoint := 0
-	for _, card := range deepCopy {
+	for _, card := range cards {
 		cardPoint *= 16
 		cardPoint += card.RankToInt()
 	}
@@ -137,7 +131,7 @@ func hasFourOfAKind(cards model.Cards) model.Cards {
 			needHighCardCount := 1
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(model.Cards{card}, result...)
+					result = append(result, card)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
@@ -227,19 +221,31 @@ func hasFullHouse(cards model.Cards) model.Cards {
 	}
 
 	for i := 14; i >= 2; i-- {
-		if rankMemory[i] == 3 {
+		if rankMemory[i] >= 3 {
 			result := model.Cards{}
+			// take 3 highest card
+			count := 0
 			for _, card := range cards {
+				if count == 3 {
+					break
+				}
 				if card.RankToInt() == i {
 					result = append(result, card)
+					count++
 				}
 			}
 
 			for j := 14; j >= 2; j-- {
-				if rankMemory[j] == 2 {
+				if rankMemory[j] >= 2 && j != i {
+					// take 2 second highest card
+					count := 0
 					for _, card := range cards {
+						if count == 2 {
+							break
+						}
 						if card.RankToInt() == j {
 							result = append(result, card)
+							count++
 						}
 					}
 					break
@@ -271,8 +277,11 @@ func hasThreeOfAKind(cards model.Cards) model.Cards {
 			needHighCardCount := 2
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(model.Cards{card}, result...)
-				} else if needHighCardCount > 0 {
+					result = append(result, card)
+				}
+			}
+			for _, card := range cards {
+				if card.RankToInt() != i && needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
 				}
@@ -333,8 +342,11 @@ func hasOnePair(cards model.Cards) model.Cards {
 			needHighCardCount := 3
 			for _, card := range cards {
 				if card.RankToInt() == i {
-					result = append(model.Cards{card}, result...)
-				} else if needHighCardCount > 0 {
+					result = append(result, card)
+				}
+			}
+			for _, card := range cards {
+				if card.RankToInt() != i && needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
 				}

@@ -39,7 +39,7 @@ func main() {
 	config.DebugMode = false
 	config.TrainMode = false
 	config.Language = config.ZhCn
-	config.GoroutineLimit = runtime.NumCPU()
+	config.GoroutineLimit = 10 * runtime.NumCPU()
 	p, err := ants.NewPool(config.GoroutineLimit)
 	if err != nil || p == nil {
 		panic(fmt.Sprintf("new goroutine pool failed. press enter to exit. error: %v\n", err))
@@ -48,12 +48,12 @@ func main() {
 		config.Pool = p
 	}
 
-	if true {
+	if false {
 		train()
 		return
 	}
 
-	smallBlinds := 5
+	smallBlinds := 1
 	playerBankroll := 100
 	interactList := []model.Interact{
 		ai.NewOddsWarriorAI(),
