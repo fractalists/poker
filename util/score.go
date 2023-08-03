@@ -181,11 +181,11 @@ func hasStraight(cards model.Cards) model.Cards {
 	rankMemory := make([]model.Card, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankInt] = model.NewCustomCard(card.Suit, card.Rank, card.Revealed)
+		rankMemory[card.RankInt] = card
 
 		if card.Rank == model.ACE {
 			// ACE also works as 1
-			rankMemory[1] = model.NewCustomCard(card.Suit, card.Rank, card.Revealed)
+			rankMemory[1] = card
 		}
 	}
 

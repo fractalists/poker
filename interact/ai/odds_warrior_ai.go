@@ -155,13 +155,14 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 	var boardRevealCards model.Cards
 	for _, card := range board.Game.BoardCards {
 		if card.Revealed {
-			boardRevealCards = append(boardRevealCards, model.NewCard(card.Suit, card.Rank))
+			boardRevealCards = append(boardRevealCards, card)
 		}
 	}
 
 	var unrevealedCards model.Cards
 	for _, card := range process.InitializeDeck(util.NewRng()) {
 		revealed := false
+		// todo can be improved by map searching
 		for _, revealCard := range hands {
 			if revealCard.Suit == card.Suit && revealCard.Rank == card.Rank {
 				revealed = true
@@ -182,7 +183,7 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 			continue
 		}
 
-		unrevealedCards = append(unrevealedCards, model.NewCard(card.Suit, card.Rank))
+		unrevealedCards = append(unrevealedCards, card)
 	}
 
 	return oddsWarriorAI.mentoCarlo(hands, boardRevealCards, unrevealedCards, opponentCount)
@@ -224,6 +225,7 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 			randomCards := getRandomNCards(ctx, tmpUnrevealedCards, randomCardNeededCount)
 
 			index := 0
+			// todo can be improved by using pointer instead of malloc
 			for j := 0; j < boardUnrevealedCount; j++ {
 				(*boardCards[j]).UpdateSuit(randomCards[index].Suit)
 				(*boardCards[j]).UpdateRank(randomCards[index].Rank)

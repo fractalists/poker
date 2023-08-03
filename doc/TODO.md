@@ -13,3 +13,4 @@
 - gui
 - i18n
 - support different rules
+- solve all todos
