@@ -112,7 +112,7 @@ func getCardPoint(cards model.Cards) int {
 	cardPoint := 0
 	for _, card := range cards {
 		cardPoint *= 16
-		cardPoint += card.RankToInt()
+		cardPoint += card.RankInt
 	}
 	return cardPoint
 }
@@ -122,7 +122,7 @@ func hasFourOfAKind(cards model.Cards) model.Cards {
 	rankMemory := make([]int, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] += 1
+		rankMemory[card.RankInt] += 1
 	}
 
 	for i := 14; i >= 2; i-- {
@@ -130,7 +130,7 @@ func hasFourOfAKind(cards model.Cards) model.Cards {
 			result := model.Cards{}
 			needHighCardCount := 1
 			for _, card := range cards {
-				if card.RankToInt() == i {
+				if card.RankInt == i {
 					result = append(result, card)
 				} else if needHighCardCount > 0 {
 					result = append(result, card)
@@ -149,14 +149,14 @@ func hasFlush(cards model.Cards) model.Cards {
 	suitMemory := make([]int, 5)
 
 	for _, card := range cards {
-		suitMemory[card.SuitToInt()] += 1
+		suitMemory[card.SuitInt] += 1
 	}
 
 	for i := 4; i >= 1; i-- {
 		if suitMemory[i] >= 5 {
 			result := model.Cards{}
 			for _, card := range cards {
-				if card.SuitToInt() == i {
+				if card.SuitInt == i {
 					result = append(result, card)
 				}
 			}
@@ -178,14 +178,14 @@ func isRoyalFlush(cards model.Cards) bool {
 
 func hasStraight(cards model.Cards) model.Cards {
 	sort.Sort(cards)
-	rankMemory := make([]*model.Card, 15)
+	rankMemory := make([]model.Card, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] = &model.Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
+		rankMemory[card.RankInt] = model.NewCustomCard(card.Suit, card.Rank, card.Revealed)
 
 		if card.Rank == model.ACE {
 			// ACE also works as 1
-			rankMemory[1] = &model.Card{Suit: card.Suit, Rank: card.Rank, Revealed: card.Revealed}
+			rankMemory[1] = model.NewCustomCard(card.Suit, card.Rank, card.Revealed)
 		}
 	}
 
@@ -199,7 +199,7 @@ func hasStraight(cards model.Cards) model.Cards {
 			} else if start-i == 4 {
 				var result []model.Card
 				for j := start; j >= i; j-- {
-					result = append(result, *rankMemory[j])
+					result = append(result, rankMemory[j])
 				}
 				return result
 			}
@@ -217,7 +217,7 @@ func hasFullHouse(cards model.Cards) model.Cards {
 	rankMemory := make([]int, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] += 1
+		rankMemory[card.RankInt] += 1
 	}
 
 	for i := 14; i >= 2; i-- {
@@ -229,7 +229,7 @@ func hasFullHouse(cards model.Cards) model.Cards {
 				if count == 3 {
 					break
 				}
-				if card.RankToInt() == i {
+				if card.RankInt == i {
 					result = append(result, card)
 					count++
 				}
@@ -243,7 +243,7 @@ func hasFullHouse(cards model.Cards) model.Cards {
 						if count == 2 {
 							break
 						}
-						if card.RankToInt() == j {
+						if card.RankInt == j {
 							result = append(result, card)
 							count++
 						}
@@ -268,7 +268,7 @@ func hasThreeOfAKind(cards model.Cards) model.Cards {
 	rankMemory := make([]int, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] += 1
+		rankMemory[card.RankInt] += 1
 	}
 
 	for i := 14; i >= 2; i-- {
@@ -276,12 +276,12 @@ func hasThreeOfAKind(cards model.Cards) model.Cards {
 			result := model.Cards{}
 			needHighCardCount := 2
 			for _, card := range cards {
-				if card.RankToInt() == i {
+				if card.RankInt == i {
 					result = append(result, card)
 				}
 			}
 			for _, card := range cards {
-				if card.RankToInt() != i && needHighCardCount > 0 {
+				if card.RankInt != i && needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
 				}
@@ -298,7 +298,7 @@ func hasTwoPair(cards model.Cards) model.Cards {
 	rankMemory := make([]int, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] += 1
+		rankMemory[card.RankInt] += 1
 	}
 
 	var pairRanks []int
@@ -313,13 +313,13 @@ func hasTwoPair(cards model.Cards) model.Cards {
 
 	result := model.Cards{}
 	for _, card := range cards {
-		if card.RankToInt() == pairRanks[0] || card.RankToInt() == pairRanks[1] {
+		if card.RankInt == pairRanks[0] || card.RankInt == pairRanks[1] {
 			result = append(result, card)
 		}
 	}
 
 	for _, card := range cards {
-		if card.RankToInt() != pairRanks[0] && card.RankToInt() != pairRanks[1] {
+		if card.RankInt != pairRanks[0] && card.RankInt != pairRanks[1] {
 			result = append(result, card)
 			break
 		}
@@ -333,7 +333,7 @@ func hasOnePair(cards model.Cards) model.Cards {
 	rankMemory := make([]int, 15)
 
 	for _, card := range cards {
-		rankMemory[card.RankToInt()] += 1
+		rankMemory[card.RankInt] += 1
 	}
 
 	for i := 14; i >= 2; i-- {
@@ -341,12 +341,12 @@ func hasOnePair(cards model.Cards) model.Cards {
 			result := model.Cards{}
 			needHighCardCount := 3
 			for _, card := range cards {
-				if card.RankToInt() == i {
+				if card.RankInt == i {
 					result = append(result, card)
 				}
 			}
 			for _, card := range cards {
-				if card.RankToInt() != i && needHighCardCount > 0 {
+				if card.RankInt != i && needHighCardCount > 0 {
 					result = append(result, card)
 					needHighCardCount--
 				}

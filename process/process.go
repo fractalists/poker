@@ -154,9 +154,9 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 
 	// Flop
 	game.Round = model.FLOP
-	game.BoardCards[0].Revealed = true
-	game.BoardCards[1].Revealed = true
-	game.BoardCards[2].Revealed = true
+	(*game.BoardCards[0]).UpdateRevealed(true)
+	(*game.BoardCards[1]).UpdateRevealed(true)
+	(*game.BoardCards[2]).UpdateRevealed(true)
 	interactWithPlayers(board)
 	if game.Round == model.FINISH {
 		return
@@ -167,7 +167,7 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 
 	// Turn
 	game.Round = model.TURN
-	game.BoardCards[3].Revealed = true
+	(*game.BoardCards[3]).UpdateRevealed(true)
 	interactWithPlayers(board)
 	if game.Round == model.FINISH {
 		return
@@ -178,7 +178,7 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 
 	// River
 	game.Round = model.RIVER
-	game.BoardCards[4].Revealed = true
+	(*game.BoardCards[4]).UpdateRevealed(true)
 	interactWithPlayers(board)
 	if game.Round == model.FINISH {
 		return
@@ -301,13 +301,13 @@ func showdown(board *model.Board) {
 
 	// reveal cards
 	for i := 0; i < len(game.BoardCards); i++ {
-		game.BoardCards[i].Revealed = true
+		(*game.BoardCards[i]).UpdateRevealed(true)
 	}
 	for i := 0; i < len(board.Players); i++ {
 		player := board.Players[i]
 		if player.Status == model.PlayerStatusPlaying || player.Status == model.PlayerStatusAllIn {
 			for j := 0; j < len(player.Hands); j++ {
-				player.Hands[j].Revealed = true
+				(*player.Hands[j]).UpdateRevealed(true)
 			}
 		}
 	}

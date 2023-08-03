@@ -25,13 +25,13 @@ func TestScoreAll(t *testing.T) {
 }
 
 func testScoreWithRoyalFlush(t *testing.T) {
-	card1 := model.Card{Suit: model.HEARTS, Rank: model.TEN, Revealed: true}
-	card2 := model.Card{Suit: model.HEARTS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.QUEEN, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.KING, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.ACE, Revealed: true}
-	card6 := model.Card{Suit: model.HEARTS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.ACE, Revealed: true}
+	card1 := model.NewCustomCard(model.HEARTS, model.TEN, true)
+	card2 := model.NewCustomCard(model.HEARTS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.QUEEN, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.KING, true)
+	card5 := model.NewCustomCard(model.SPADES, model.ACE, true)
+	card6 := model.NewCustomCard(model.HEARTS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.ACE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -48,13 +48,13 @@ func testScoreWithRoyalFlush(t *testing.T) {
 }
 
 func testScoreWithStraightFlush(t *testing.T) {
-	card1 := model.Card{Suit: model.HEARTS, Rank: model.NINE, Revealed: true}
-	card2 := model.Card{Suit: model.HEARTS, Rank: model.TEN, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.JACK, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.QUEEN, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.KING, Revealed: true}
-	card6 := model.Card{Suit: model.HEARTS, Rank: model.KING, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.KING, Revealed: true}
+	card1 := model.NewCustomCard(model.HEARTS, model.NINE, true)
+	card2 := model.NewCustomCard(model.HEARTS, model.TEN, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.JACK, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.QUEEN, true)
+	card5 := model.NewCustomCard(model.SPADES, model.KING, true)
+	card6 := model.NewCustomCard(model.HEARTS, model.KING, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.KING, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -71,13 +71,13 @@ func testScoreWithStraightFlush(t *testing.T) {
 }
 
 func testScoreWithFourOfAKind(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.JACK, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.KING, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.ACE, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.ACE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.ACE, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.JACK, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.KING, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.ACE, true)
+	card5 := model.NewCustomCard(model.SPADES, model.ACE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.ACE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -94,13 +94,13 @@ func testScoreWithFourOfAKind(t *testing.T) {
 }
 
 func testScoreWithFullHouse(t *testing.T) {
-	card1 := model.Card{Suit: model.HEARTS, Rank: model.NINE, Revealed: true}
-	card2 := model.Card{Suit: model.HEARTS, Rank: model.TEN, Revealed: true}
-	card3 := model.Card{Suit: model.CLUBS, Rank: model.QUEEN, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.QUEEN, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.KING, Revealed: true}
-	card6 := model.Card{Suit: model.HEARTS, Rank: model.KING, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.KING, Revealed: true}
+	card1 := model.NewCustomCard(model.HEARTS, model.NINE, true)
+	card2 := model.NewCustomCard(model.HEARTS, model.TEN, true)
+	card3 := model.NewCustomCard(model.CLUBS, model.QUEEN, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.QUEEN, true)
+	card5 := model.NewCustomCard(model.SPADES, model.KING, true)
+	card6 := model.NewCustomCard(model.HEARTS, model.KING, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.KING, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -117,13 +117,13 @@ func testScoreWithFullHouse(t *testing.T) {
 }
 
 func testScoreWithFlush(t *testing.T) {
-	card1 := model.Card{Suit: model.HEARTS, Rank: model.NINE, Revealed: true}
-	card2 := model.Card{Suit: model.HEARTS, Rank: model.TEN, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.JACK, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.QUEEN, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.FIVE, Revealed: true}
-	card6 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.KING, Revealed: true}
+	card1 := model.NewCustomCard(model.HEARTS, model.NINE, true)
+	card2 := model.NewCustomCard(model.HEARTS, model.TEN, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.JACK, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.QUEEN, true)
+	card5 := model.NewCustomCard(model.SPADES, model.FIVE, true)
+	card6 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.KING, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -140,13 +140,13 @@ func testScoreWithFlush(t *testing.T) {
 }
 
 func testScoreWithStraight(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.TEN, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.QUEEN, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.KING, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.ACE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.ACE, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.TEN, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.QUEEN, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.KING, true)
+	card5 := model.NewCustomCard(model.SPADES, model.ACE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.ACE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -162,13 +162,13 @@ func testScoreWithStraight(t *testing.T) {
 }
 
 func testScoreWithStraight2(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.FIVE, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.FOUR, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.THREE, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.ACE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.ACE, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.FIVE, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.FOUR, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.THREE, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card5 := model.NewCustomCard(model.SPADES, model.ACE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.ACE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -184,13 +184,13 @@ func testScoreWithStraight2(t *testing.T) {
 }
 
 func testScoreWithThreeOfAKind(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.TEN, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.KING, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.ACE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.ACE, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.TEN, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.KING, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card5 := model.NewCustomCard(model.SPADES, model.ACE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.ACE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -206,13 +206,13 @@ func testScoreWithThreeOfAKind(t *testing.T) {
 }
 
 func testScoreWithTwoPair(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.TEN, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.FIVE, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.FIVE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.EIGHT, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.EIGHT, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.TEN, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.FIVE, true)
+	card5 := model.NewCustomCard(model.SPADES, model.FIVE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.EIGHT, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.EIGHT, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -229,13 +229,13 @@ func testScoreWithTwoPair(t *testing.T) {
 }
 
 func testScoreWithTwoPair2(t *testing.T) {
-	card1 := model.Card{Suit: model.HEARTS, Rank: model.SIX, Revealed: true}
-	card2 := model.Card{Suit: model.DIAMONDS, Rank: model.QUEEN, Revealed: true}
-	card3 := model.Card{Suit: model.DIAMONDS, Rank: model.TWO, Revealed: true}
-	card4 := model.Card{Suit: model.SPADES, Rank: model.TEN, Revealed: true}
-	card5 := model.Card{Suit: model.CLUBS, Rank: model.TEN, Revealed: true}
-	card6 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card7 := model.Card{Suit: model.HEARTS, Rank: model.THREE, Revealed: true}
+	card1 := model.NewCustomCard(model.HEARTS, model.SIX, true)
+	card2 := model.NewCustomCard(model.DIAMONDS, model.QUEEN, true)
+	card3 := model.NewCustomCard(model.DIAMONDS, model.TWO, true)
+	card4 := model.NewCustomCard(model.SPADES, model.TEN, true)
+	card5 := model.NewCustomCard(model.CLUBS, model.TEN, true)
+	card6 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card7 := model.NewCustomCard(model.HEARTS, model.THREE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -252,13 +252,13 @@ func testScoreWithTwoPair2(t *testing.T) {
 }
 
 func testScoreWithTwoPair3(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.EIGHT, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.EIGHT, Revealed: true}
-	card3 := model.Card{Suit: model.DIAMONDS, Rank: model.TWO, Revealed: true}
-	card4 := model.Card{Suit: model.SPADES, Rank: model.TEN, Revealed: true}
-	card5 := model.Card{Suit: model.CLUBS, Rank: model.TEN, Revealed: true}
-	card6 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card7 := model.Card{Suit: model.HEARTS, Rank: model.THREE, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.EIGHT, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.EIGHT, true)
+	card3 := model.NewCustomCard(model.DIAMONDS, model.TWO, true)
+	card4 := model.NewCustomCard(model.SPADES, model.TEN, true)
+	card5 := model.NewCustomCard(model.CLUBS, model.TEN, true)
+	card6 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card7 := model.NewCustomCard(model.HEARTS, model.THREE, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -275,13 +275,13 @@ func testScoreWithTwoPair3(t *testing.T) {
 }
 
 func testScoreWithOnePair(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.TEN, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.FIVE, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.FIVE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.EIGHT, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.TEN, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.FIVE, true)
+	card5 := model.NewCustomCard(model.SPADES, model.FIVE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.EIGHT, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)
@@ -298,13 +298,13 @@ func testScoreWithOnePair(t *testing.T) {
 }
 
 func testScoreWithHighCard(t *testing.T) {
-	card1 := model.Card{Suit: model.DIAMONDS, Rank: model.TEN, Revealed: true}
-	card2 := model.Card{Suit: model.CLUBS, Rank: model.JACK, Revealed: true}
-	card3 := model.Card{Suit: model.HEARTS, Rank: model.TWO, Revealed: true}
-	card4 := model.Card{Suit: model.HEARTS, Rank: model.THREE, Revealed: true}
-	card5 := model.Card{Suit: model.SPADES, Rank: model.FIVE, Revealed: true}
-	card6 := model.Card{Suit: model.DIAMONDS, Rank: model.ACE, Revealed: true}
-	card7 := model.Card{Suit: model.CLUBS, Rank: model.EIGHT, Revealed: true}
+	card1 := model.NewCustomCard(model.DIAMONDS, model.TEN, true)
+	card2 := model.NewCustomCard(model.CLUBS, model.JACK, true)
+	card3 := model.NewCustomCard(model.HEARTS, model.TWO, true)
+	card4 := model.NewCustomCard(model.HEARTS, model.THREE, true)
+	card5 := model.NewCustomCard(model.SPADES, model.FIVE, true)
+	card6 := model.NewCustomCard(model.DIAMONDS, model.ACE, true)
+	card7 := model.NewCustomCard(model.CLUBS, model.EIGHT, true)
 	cards := model.Cards{card1, card2, card3, card4, card5, card6, card7}
 
 	scoreResult := Score(cards)

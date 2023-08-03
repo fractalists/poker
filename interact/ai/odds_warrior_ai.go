@@ -155,7 +155,7 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 	var boardRevealCards model.Cards
 	for _, card := range board.Game.BoardCards {
 		if card.Revealed {
-			boardRevealCards = append(boardRevealCards, model.Card{Suit: card.Suit, Rank: card.Rank})
+			boardRevealCards = append(boardRevealCards, model.NewCard(card.Suit, card.Rank))
 		}
 	}
 
@@ -182,7 +182,7 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 			continue
 		}
 
-		unrevealedCards = append(unrevealedCards, model.Card{Suit: card.Suit, Rank: card.Rank})
+		unrevealedCards = append(unrevealedCards, model.NewCard(card.Suit, card.Rank))
 	}
 
 	return oddsWarriorAI.mentoCarlo(hands, boardRevealCards, unrevealedCards, opponentCount)
@@ -212,29 +212,29 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 		copy(tmpUnrevealedCards, unrevealedCards)
 
 		for i := 0; i < boardUnrevealedCount; i++ {
-			boardCards = append(model.Cards{model.Card{}}, boardCards...)
+			boardCards = append(model.Cards{model.NewUnknownCard()}, boardCards...)
 		}
 
 		var opponentHandsList []model.Cards
 		for i := 0; i < opponentCount; i++ {
-			opponentHandsList = append(opponentHandsList, model.Cards{model.Card{}, model.Card{}})
+			opponentHandsList = append(opponentHandsList, model.Cards{model.NewUnknownCard(), model.NewUnknownCard()})
 		}
 
 		for i := 0; i < times; i++ {
-			randomCards := getRandomNCards(ctx, &tmpUnrevealedCards, randomCardNeededCount)
+			randomCards := getRandomNCards(ctx, tmpUnrevealedCards, randomCardNeededCount)
 
 			index := 0
 			for j := 0; j < boardUnrevealedCount; j++ {
-				boardCards[j].Suit = (*randomCards)[index].Suit
-				boardCards[j].Rank = (*randomCards)[index].Rank
+				(*boardCards[j]).UpdateSuit(randomCards[index].Suit)
+				(*boardCards[j]).UpdateRank(randomCards[index].Rank)
 				index++
 			}
 			for j := 0; j < opponentCount; j++ {
-				opponentHandsList[j][0].Suit = (*randomCards)[index].Suit
-				opponentHandsList[j][0].Rank = (*randomCards)[index].Rank
+				(*opponentHandsList[j][0]).UpdateSuit(randomCards[index].Suit)
+				(*opponentHandsList[j][0]).UpdateRank(randomCards[index].Rank)
 				index++
-				opponentHandsList[j][1].Suit = (*randomCards)[index].Suit
-				opponentHandsList[j][1].Rank = (*randomCards)[index].Rank
+				(*opponentHandsList[j][1]).UpdateSuit(randomCards[index].Suit)
+				(*opponentHandsList[j][1]).UpdateRank(randomCards[index].Rank)
 				index++
 			}
 
@@ -279,17 +279,17 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 	return (float32(totalWinCount) + (float32(totalTieCount)) / (1.0+float32(opponentCount))) / float32(totalWinCount+totalTieCount+totalLossCount)
 }
 
-func getRandomNCards(ctx *model.Context, cards *model.Cards, n int) *model.Cards {
-	length := len(*cards)
+func getRandomNCards(ctx *model.Context, cards model.Cards, n int) model.Cards {
+	length := len(cards)
 	if n > length {
 		panic("getRandomNCards n > length")
 	}
 
-	util.Shuffle(len(*cards), ctx.Rng, func(i, j int) {
-		(*cards)[i], (*cards)[j] = (*cards)[j], (*cards)[i]
+	util.Shuffle(len(cards), ctx.Rng, func(i, j int) {
+		(cards)[i], (cards)[j] = (cards)[j], (cards)[i]
 	})
 
-	result := (*cards)[:n]
+	result := (cards)[:n]
 
-	return &result
+	return result
 }

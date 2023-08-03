@@ -116,9 +116,9 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 			var hands Cards
 			for handsIndex := 0; handsIndex < len(player.Hands); handsIndex++ {
 				if i == playerIndex {
-					hands = append(hands, Card{Suit: player.Hands[handsIndex].Suit, Rank: player.Hands[handsIndex].Rank, Revealed: true})
+					hands = append(hands, NewCustomCard(player.Hands[handsIndex].Suit, player.Hands[handsIndex].Rank, true))
 				} else {
-					hands = append(hands, Card{Revealed: false})
+					hands = append(hands, NewUnknownCard())
 				}
 			}
 
@@ -159,17 +159,9 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 
 		for _, card := range game.BoardCards {
 			if card.Revealed {
-				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, Card{
-					Suit:     card.Suit,
-					Rank:     card.Rank,
-					Revealed: card.Revealed,
-				})
+				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewCustomCard(card.Suit, card.Rank, card.Revealed))
 			} else {
-				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, Card{
-					Suit:     "*",
-					Rank:     "*",
-					Revealed: card.Revealed,
-				})
+				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewUnknownCard())
 			}
 		}
 	}
