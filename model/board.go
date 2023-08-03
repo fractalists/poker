@@ -19,7 +19,7 @@ type Position string
 const PositionSmallBlind Position = "SB"
 const PositionBigBlind Position = "BB"
 const PositionUnderTheGun Position = "UTG"
-const PositionButton Position = "BUTTON"
+const PositionButton Position = "BTN"
 
 func Render(board *Board) {
 	if config.TrainMode {
@@ -54,7 +54,17 @@ func zhCNRender(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		fmt.Printf("[%s] 手牌:%v, 已下注:%d, 剩余资金:%d, 状态:%s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
+		position := ""
+		for k, v := range board.PositionIndexMap {
+			if v == player.Index {
+				position = "@" + string(k)
+			}
+		}
+
+		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
+		secondPart := fmt.Sprintf("手牌:%v", player.Hands)
+		thirdPart := fmt.Sprintf("已下注:%d, 剩余资金:%d, 状态:%s", player.InPotAmount, player.Bankroll, player.Status)
+		fmt.Printf("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
 	}
 }
 
@@ -79,7 +89,17 @@ func enUSRender(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		fmt.Printf("[%s] hands:%v, inPot:%d, bankroll:%d, status:%s\n", player.Name, player.Hands, player.InPotAmount, player.Bankroll, player.Status)
+		position := ""
+		for k, v := range board.PositionIndexMap {
+			if v == player.Index {
+				position = "@" + string(k)
+			}
+		}
+
+		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
+		secondPart := fmt.Sprintf("hands:%v", player.Hands)
+		thirdPart := fmt.Sprintf("inPot:%d, bankroll:%d, status:%s", player.InPotAmount, player.Bankroll, player.Status)
+		fmt.Printf("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
 	}
 }
 

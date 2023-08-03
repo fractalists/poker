@@ -48,7 +48,7 @@ func main() {
 		config.Pool = p
 	}
 
-	if false {
+	if config.TrainMode {
 		train()
 		return
 	}
