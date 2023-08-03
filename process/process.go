@@ -5,10 +5,11 @@ import (
 	"holdem/config"
 	"holdem/model"
 	"holdem/util"
+	"math/rand"
 	"strconv"
 )
 
-func InitializePlayers(board *model.Board, interactList []model.Interact, playerBankroll int) {
+func InitializePlayers(ctx *model.Context, board *model.Board, interactList []model.Interact, playerBankroll int) {
 	if board == nil {
 		panic("InitializePlayers board is nil")
 	}
@@ -36,7 +37,7 @@ func InitializePlayers(board *model.Board, interactList []model.Interact, player
 	board.Players = players
 }
 
-func InitGame(board *model.Board, smallBlinds int, desc string) {
+func InitGame(ctx *model.Context, board *model.Board, smallBlinds int, desc string) {
 	if len(board.Players) < 2 {
 		panic("insufficient players")
 	}
@@ -51,13 +52,28 @@ func InitGame(board *model.Board, smallBlinds int, desc string) {
 	board.Game = &model.Game{}
 	game := board.Game
 	game.Round = model.INIT
-	game.Deck = model.InitializeDeck()
+	game.Deck = InitializeDeck(ctx.Rng)
 	game.Pot = 0
 	game.SmallBlinds = smallBlinds
 	game.CurrentAmount = 2 * smallBlinds
 	game.LastRaiseAmount = 0
 	game.LastRaisePlayerIndex = -1
 	game.Desc = desc
+}
+
+func InitializeDeck(rng *rand.Rand) model.Cards {
+	newDeck := make(model.Cards, model.Deck.Len())
+	copy(newDeck, model.Deck)
+	util.Shuffle(len(newDeck), rng, func(i, j int) {
+		newDeck[i], newDeck[j] = newDeck[j], newDeck[i]
+	})
+	return newDeck
+}
+
+func NewContext() *model.Context {
+	return &model.Context{
+		Rng: util.NewRng(),
+	}
 }
 
 func genPositionIndexMap(board *model.Board) map[model.Position]int {
@@ -110,7 +126,7 @@ func genPositionIndexMap(board *model.Board) map[model.Position]int {
 	}
 }
 
-func PlayGame(board *model.Board) {
+func PlayGame(ctx *model.Context, board *model.Board) {
 	game := board.Game
 
 	// PreFlop
@@ -175,7 +191,7 @@ func PlayGame(board *model.Board) {
 	showdown(board)
 }
 
-func EndGame(board *model.Board) {
+func EndGame(ctx *model.Context, board *model.Board) {
 	for i := 0; i < len(board.Players); i++ {
 		player := board.Players[i]
 		player.InPotAmount = 0

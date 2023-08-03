@@ -3,8 +3,6 @@ package model
 import (
 	"fmt"
 	"holdem/config"
-	"math/rand"
-	"time"
 )
 
 type Card struct {
@@ -38,7 +36,7 @@ const QUEEN Rank = "Q"
 const KING Rank = "K"
 const ACE Rank = "A"
 
-var deck = Cards{
+var Deck = Cards{
 	{Suit: HEARTS, Rank: TWO},
 	{Suit: HEARTS, Rank: THREE},
 	{Suit: HEARTS, Rank: FOUR},
@@ -158,12 +156,4 @@ func (cards Cards) Less(i, j int) bool {
 
 func (cards Cards) Swap(i, j int) {
 	cards[i], cards[j] = cards[j], cards[i]
-}
-
-func InitializeDeck() Cards {
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(deck), func(i, j int) {
-		deck[i], deck[j] = deck[j], deck[i]
-	})
-	return deck
 }

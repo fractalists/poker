@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"holdem/config"
 	"holdem/model"
+	"holdem/process"
 	"holdem/util"
-	"math/rand"
 	"sync"
 	"sync/atomic"
-	"time"
 )
+
+const DefaultMentoCarloTimes = 300000
 
 type OddsWarriorAI struct {
 	board            *model.Board
@@ -18,11 +19,17 @@ type OddsWarriorAI struct {
 	getBoardInfoFunc func() *model.Board
 }
 
+func NewOddsWarriorAI() *OddsWarriorAI {
+	return &OddsWarriorAI{
+		mentoCarloTimes: DefaultMentoCarloTimes,
+	}
+}
+
 func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(board *model.Board, interactType model.InteractType) model.Action {
 	oddsWarriorAI.selfIndex = selfIndex
 	oddsWarriorAI.getBoardInfoFunc = getBoardInfoFunc
-	if oddsWarriorAI.mentoCarloTimes == 0 {
-		oddsWarriorAI.mentoCarloTimes = 300000
+	if oddsWarriorAI.mentoCarloTimes <= 0 {
+		oddsWarriorAI.mentoCarloTimes = DefaultMentoCarloTimes
 	}
 
 	return func(board *model.Board, interactType model.InteractType) model.Action {
@@ -153,7 +160,7 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 	}
 
 	var unrevealedCards model.Cards
-	for _, card := range model.InitializeDeck() {
+	for _, card := range process.InitializeDeck(util.NewRng()) {
 		revealed := false
 		for _, revealCard := range hands {
 			if revealCard.Suit == card.Suit && revealCard.Rank == card.Rank {
@@ -192,6 +199,8 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 	var wg sync.WaitGroup
 
 	subTask := func () {
+		ctx := process.NewContext()
+
 		winCount := int32(0)
 		lossCount := int32(0)
 		tieCount := int32(0)
@@ -212,7 +221,7 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 		}
 
 		for i := 0; i < times; i++ {
-			randomCards := getRandomNCards(&tmpUnrevealedCards, randomCardNeededCount)
+			randomCards := getRandomNCards(ctx, &tmpUnrevealedCards, randomCardNeededCount)
 
 			index := 0
 			for j := 0; j < boardUnrevealedCount; j++ {
@@ -267,17 +276,16 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 	}
 	wg.Wait()
 
-	return (float32(totalWinCount) + (0.5 * float32(totalTieCount))) / float32(totalWinCount+totalTieCount+totalLossCount)
+	return (float32(totalWinCount) + (float32(totalTieCount)) / (1.0+float32(opponentCount))) / float32(totalWinCount+totalTieCount+totalLossCount)
 }
 
-func getRandomNCards(cards *model.Cards, n int) *model.Cards {
+func getRandomNCards(ctx *model.Context, cards *model.Cards, n int) *model.Cards {
 	length := len(*cards)
 	if n > length {
 		panic("getRandomNCards n > length")
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(*cards), func(i, j int) {
+	util.Shuffle(len(*cards), ctx.Rng, func(i, j int) {
 		(*cards)[i], (*cards)[j] = (*cards)[j], (*cards)[i]
 	})
 

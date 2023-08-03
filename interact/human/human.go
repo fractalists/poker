@@ -12,6 +12,10 @@ import (
 
 type Human struct{}
 
+func NewHuman() *Human {
+	return &Human{}
+}
+
 func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(board *model.Board, interactType model.InteractType) model.Action {
 	return func(board *model.Board, interactType model.InteractType) model.Action {
 		if board == nil || selfIndex < 0 || len(board.Players) <= selfIndex || board.Game == nil {

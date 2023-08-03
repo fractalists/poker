@@ -26,7 +26,7 @@ func Render(board *Board) {
 		return
 	}
 
-	if config.Language == config.ZH_CN {
+	if config.Language == config.ZhCn {
 		zhCNRender(board)
 	} else {
 		enUSRender(board)

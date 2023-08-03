@@ -4,10 +4,13 @@ import (
 	"holdem/model"
 	"holdem/util"
 	"math/rand"
-	"time"
 )
 
 type DumbRandomAI struct{}
+
+func NewDumbRandomAI() *DumbRandomAI {
+	return &DumbRandomAI{}
+}
 
 func (dumbRandomAI *DumbRandomAI) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(board *model.Board, interactType model.InteractType) model.Action {
 	return func(board *model.Board, interactType model.InteractType) model.Action {
@@ -22,7 +25,6 @@ func (dumbRandomAI *DumbRandomAI) InitInteract(selfIndex int, getBoardInfoFunc f
 			}
 		}
 
-		rand.Seed(time.Now().UnixNano())
 		random := rand.Intn(4)
 
 		bankroll := board.Players[selfIndex].Bankroll
@@ -42,7 +44,7 @@ func (dumbRandomAI *DumbRandomAI) InitInteract(selfIndex int, getBoardInfoFunc f
 				Amount:     betMinRequiredAmount + 1 + rand.Intn(bankroll-betMinRequiredAmount-1),
 			}
 		case 1:
-			if bankroll < minRequiredAmount {
+			if bankroll <= minRequiredAmount {
 				return model.Action{
 					ActionType: model.ActionTypeAllIn,
 					Amount:     bankroll,
