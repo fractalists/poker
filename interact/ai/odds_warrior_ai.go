@@ -227,16 +227,13 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 			index := 0
 			// todo can be improved by using pointer instead of malloc
 			for j := 0; j < boardUnrevealedCount; j++ {
-				(*boardCards[j]).UpdateSuit(randomCards[index].Suit)
-				(*boardCards[j]).UpdateRank(randomCards[index].Rank)
+				boardCards[j] = randomCards[index]
 				index++
 			}
 			for j := 0; j < opponentCount; j++ {
-				(*opponentHandsList[j][0]).UpdateSuit(randomCards[index].Suit)
-				(*opponentHandsList[j][0]).UpdateRank(randomCards[index].Rank)
+				opponentHandsList[j][0] = randomCards[index]
 				index++
-				(*opponentHandsList[j][1]).UpdateSuit(randomCards[index].Suit)
-				(*opponentHandsList[j][1]).UpdateRank(randomCards[index].Rank)
+				opponentHandsList[j][1] = randomCards[index]
 				index++
 			}
 
