@@ -225,7 +225,6 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 			randomCards := getRandomNCards(ctx, tmpUnrevealedCards, randomCardNeededCount)
 
 			index := 0
-			// todo can be improved by using pointer instead of malloc
 			for j := 0; j < boardUnrevealedCount; j++ {
 				boardCards[j] = randomCards[index]
 				index++
