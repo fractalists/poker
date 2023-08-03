@@ -63,7 +63,9 @@ func InitGame(ctx *model.Context, board *model.Board, smallBlinds int, desc stri
 
 func InitializeDeck(rng *rand.Rand) model.Cards {
 	newDeck := make(model.Cards, model.Deck.Len())
-	copy(newDeck, model.Deck)
+	for i := 0; i < model.Deck.Len(); i++ {
+		newDeck[i] = model.NewCard(model.Deck[i].Suit, model.Deck[i].Rank)
+	}
 	util.Shuffle(len(newDeck), rng, func(i, j int) {
 		newDeck[i], newDeck[j] = newDeck[j], newDeck[i]
 	})

@@ -159,7 +159,7 @@ func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Bo
 
 		for _, card := range game.BoardCards {
 			if card.Revealed {
-				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewCustomCard(card.Suit, card.Rank, card.Revealed))
+				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewCustomCard(card.Suit, card.Rank, true))
 			} else {
 				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewUnknownCard())
 			}
