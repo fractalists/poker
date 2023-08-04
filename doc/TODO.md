@@ -2,15 +2,16 @@
 - improve ai
     - odds warrior logic (the correctness of odds calculation)
 - ai vs ai
-- player status all in // why still be called
 
 
 # low priority
+- player status all in // why still be called
 - the accurate calc for game cycle (e.g. count loop times)
+- positioning when there is little player
 - logging
 - saving log to file
-- testing
 - gui
+- testing
 - i18n
 - support different rules
-- solve all todos
+- solve all todos  

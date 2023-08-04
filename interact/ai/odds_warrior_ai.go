@@ -91,7 +91,6 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 					Amount:     minRequiredAmount,
 				}
 			} else {
-				// todo
 				// expectedAmount < minRequiredAmount
 				// this basically won't happen
 				return model.Action{
@@ -126,11 +125,11 @@ func odds(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds f
 
 func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallBlinds float32) float32 {
 	if pot < 4*smallBlinds {
-		pot = 6.0 * pot
+		pot = 1.5 * pot
 	} else if pot < 8*smallBlinds {
-		pot = 3.0 * pot
+		pot = 1.3 * pot
 	} else if pot < 12*smallBlinds {
-		pot = 2 * pot
+		pot = 1.1 * pot
 	}
 	result := (minRequiredAmount - winRate*minRequiredAmount - winRate*pot) / (winRate - 1 + 0.2*opponentCount*winRate)
 
@@ -162,7 +161,8 @@ func (oddsWarriorAI *OddsWarriorAI) calcWinRate(board *model.Board, selfIndex in
 	var unrevealedCards model.Cards
 	for _, card := range process.InitializeDeck(util.NewRng()) {
 		revealed := false
-		// todo can be improved by map searching
+		// todo
+		// can be improved by map searching
 		for _, revealCard := range hands {
 			if revealCard.Suit == card.Suit && revealCard.Rank == card.Rank {
 				revealed = true
