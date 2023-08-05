@@ -46,6 +46,8 @@ func (f *PrettierFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	switch entry.Level {
 	case logrus.DebugLevel, logrus.TraceLevel:
 		levelColor = 31 // gray
+	case logrus.InfoLevel:
+		return []byte(entry.Message), nil
 	case logrus.WarnLevel:
 		levelColor = 33 // yellow
 	case logrus.ErrorLevel, logrus.FatalLevel, logrus.PanicLevel:

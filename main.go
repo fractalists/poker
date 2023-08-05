@@ -28,7 +28,6 @@ func playUnlimited() {
 	process.Start(
 		true,
 		false,
-		false,
 		config.ZhCn,
 		logrus.DebugLevel,
 		fmt.Sprintf("./generated/log/poker_log_%d.log", time.Now().Unix()),
@@ -38,10 +37,9 @@ func playUnlimited() {
 func trainWithProfiler() {
 	process.Start(
 		true,
-		false,
 		true,
 		config.ZhCn,
-		logrus.DebugLevel,
+		logrus.WarnLevel,
 		"",
 		unlimited.Train)
 }
@@ -50,9 +48,8 @@ func playColosseum() {
 	process.Start(
 		false,
 		false,
-		false,
 		config.ZhCn,
-		logrus.DebugLevel,
+		logrus.WarnLevel,
 		"",
 		colosseum.PlayPoker)
 }

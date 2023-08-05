@@ -1,7 +1,7 @@
 package ai
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"poker/config"
 	"poker/model"
 	"poker/process"
@@ -62,9 +62,8 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		}
 
 		winRate := oddsWarriorAI.calcWinRate(board, selfIndex)
-		if config.DebugMode {
-			fmt.Printf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
-		}
+		logrus.Debugf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
+
 		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate && minRequiredAmount > 0 {
 			return model.Action{
 				ActionType: model.ActionTypeFold,
@@ -268,7 +267,7 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 	for i := 0; i < config.GoroutineLimit; i++ {
 		wg.Add(1)
 		if err := config.Pool.Submit(subTask); err != nil {
-			fmt.Printf("submit task failed. error: %v\n", err)
+			logrus.Errorf("submit task failed. error: %v\n", err)
 			wg.Done()
 		}
 	}

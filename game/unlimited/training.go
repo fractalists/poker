@@ -2,6 +2,7 @@ package unlimited
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"poker/config"
 	"poker/interact/ai"
 	"poker/model"
@@ -31,7 +32,7 @@ func Train() {
 		goroutine(&memory, &wg)
 	}
 
-	fmt.Printf("Waiting final result\n")
+	logrus.Infoln("Waiting final result")
 	wg.Wait()
 }
 
@@ -75,7 +76,7 @@ func goroutine(memory *map[int]count32, wg *sync.WaitGroup) {
 			}
 
 			(*memory)[finalWinnerIndex]++
-			fmt.Printf("cycle: %d, %v\n", cycle, memory)
+			logrus.Infof("cycle: %d, %v\n", cycle, memory)
 		}
 
 		wg.Done()

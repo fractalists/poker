@@ -3,6 +3,7 @@ package human
 import (
 	"bufio"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"poker/model"
 	"poker/util"
@@ -69,42 +70,42 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 		wrongInputCount := 0
 		wrongInputLimit := 3
 		for wrongInputCount < wrongInputLimit {
-			fmt.Print(desc)
+			logrus.Info(desc)
 			reader := bufio.NewReader(os.Stdin)
 			actionNumber, err := reader.ReadString('\n')
 			actionNumber = strings.ReplaceAll(actionNumber, "\n", "")
 			actionNumber = strings.ReplaceAll(actionNumber, "\r", "")
 			if err != nil {
-				fmt.Printf("!! input error: %v !!\n", err)
+				logrus.Infof("!! input error: %v !!\n", err)
 				wrongInputCount++
 				continue
 			}
 
 			if actionNumber == "1" {
 				if bankroll < betMinRequiredAmount {
-					fmt.Printf("!! You don't have enough money to bet !!\n")
+					logrus.Infoln("!! You don't have enough money to bet !!")
 					wrongInputCount++
 					continue
 				}
 
-				fmt.Printf("--> How much do you want to bet? [%d, %d]\n", betMinRequiredAmount, bankroll-1)
+				logrus.Infof("--> How much do you want to bet? [%d, %d]\n", betMinRequiredAmount, bankroll-1)
 				reader := bufio.NewReader(os.Stdin)
 				amountStr, err := reader.ReadString('\n')
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
 				amountStr = strings.ReplaceAll(amountStr, "\r", "")
 				if err != nil {
-					fmt.Printf("!! input error: %v !!\n", err)
+					logrus.Infoln("!! input error: %v !!", err)
 					wrongInputCount++
 					continue
 				}
 
 				amount, err := strconv.Atoi(amountStr)
 				if err != nil {
-					fmt.Printf("!! Atoi error: %v !!\n", err)
+					logrus.Infoln("!! Atoi error: %v !!", err)
 					wrongInputCount++
 					continue
 				} else if amount < minRequiredAmount || amount > bankroll {
-					fmt.Printf("!! invalid input amount !!\n")
+					logrus.Infoln("!! invalid input amount !!")
 					wrongInputCount++
 					continue
 				}
@@ -128,7 +129,7 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 
 			} else if actionNumber == "2" {
 				if bankroll < minRequiredAmount {
-					fmt.Printf("!! You don't have enough money to call !!\n")
+					logrus.Infoln("!! You don't have enough money to call !!")
 					wrongInputCount++
 					continue
 				}
@@ -159,7 +160,7 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 
 			} else {
 				wrongInputCount++
-				fmt.Printf("!! invalid action input !!\n")
+				logrus.Infoln("!! invalid action input !!")
 				continue
 			}
 		}

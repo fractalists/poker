@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"poker/config"
@@ -42,11 +43,11 @@ func zhCNRender(board *Board) {
 	clear()
 
 	game := board.Game
-	fmt.Printf("---------------------------------------------------------------\n")
+	logrus.Infoln("---------------------------------------------------------------")
 	if game == nil {
-		fmt.Printf("# 游戏还未开始。\n")
+		logrus.Infoln("# 游戏还未开始。")
 	} else {
-		fmt.Printf("# 描述: %s | 小盲注: %d\n"+
+		logrus.Infof("# 描述: %s | 小盲注: %d\n"+
 			"# 阶段: %s, 底池: %d, 当前金额: %d, 前一次加注金额: %d\n"+
 			"# 公共牌: %v\n",
 			game.Desc, game.SmallBlinds,
@@ -60,7 +61,7 @@ func zhCNRender(board *Board) {
 		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
 		secondPart := fmt.Sprintf("手牌:%v", player.Hands)
 		thirdPart := fmt.Sprintf("已下注:%d, 剩余资金:%d, 状态:%s", player.InPotAmount, player.Bankroll, player.Status)
-		fmt.Printf("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
+		logrus.Infof("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
 	}
 }
 
@@ -72,11 +73,11 @@ func enUSRender(board *Board) {
 	clear()
 
 	game := board.Game
-	fmt.Printf("---------------------------------------------------------------\n")
+	logrus.Infoln("---------------------------------------------------------------")
 	if game == nil {
-		fmt.Printf("# The game hasn't started yet.\n")
+		logrus.Infoln("# The game hasn't started yet.")
 	} else {
-		fmt.Printf("# Desc: %s | SmallBlinds: %d\n"+
+		logrus.Infof("# Desc: %s | SmallBlinds: %d\n"+
 			"# Round: %s, Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+
 			"# BoardCards: %v\n",
 			game.Desc, game.SmallBlinds,
@@ -90,12 +91,12 @@ func enUSRender(board *Board) {
 		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
 		secondPart := fmt.Sprintf("hands:%v", player.Hands)
 		thirdPart := fmt.Sprintf("inPot:%d, bankroll:%d, status:%s", player.InPotAmount, player.Bankroll, player.Status)
-		fmt.Printf("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
+		logrus.Infof("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
 	}
 }
 
 func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Board {
-	if config.DebugMode {
+	if config.TrainMode {
 		return board
 	}
 

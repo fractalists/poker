@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"poker/config"
 )
 
 type rawCard struct {
@@ -122,7 +121,7 @@ var Deck = Cards{
 }
 
 func (card *rawCard) String() string {
-	if card.Revealed || config.DebugMode {
+	if card.Revealed {
 		return fmt.Sprintf("%s%s", card.Suit, card.Rank)
 	}
 	return "**"

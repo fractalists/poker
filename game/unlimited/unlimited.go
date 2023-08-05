@@ -3,6 +3,7 @@ package unlimited
 import (
 	"bufio"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"poker/interact/ai"
 	"poker/interact/human"
@@ -32,13 +33,13 @@ func PlayPoker() {
 			process.EndGame(ctx, board)
 
 			if winner := process.HasWinner(board); winner != nil {
-				fmt.Printf("Congrats! The final winner is %s. Press enter to begin next match.\n", winner.Name)
+				logrus.Infof("Congrats! The final winner is %s. Press enter to begin next match.\n", winner.Name)
 				reader := bufio.NewReader(os.Stdin)
 				reader.ReadString('\n')
 				return
 			}
 
-			fmt.Printf("Match finish. Press enter to begin next match.\n")
+			logrus.Infoln("Match finish. Press enter to begin next match.")
 			reader := bufio.NewReader(os.Stdin)
 			reader.ReadString('\n')
 		}

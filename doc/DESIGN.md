@@ -17,3 +17,8 @@ model.InteractType
 
 # Profile
 `go tool pprof -http=:8000 poker.pprof`
+
+# Log Level
+Debug // for debug
+Info // for gameplay and console UI
+Warn or above // for error and train mode

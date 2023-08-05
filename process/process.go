@@ -349,11 +349,11 @@ func showdown(board *model.Board) {
 	if config.TrainMode == false {
 		if len(finalPlayerTiers[0]) == 1 {
 			finalPlayer := finalPlayerTiers[0][0]
-			fmt.Printf("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+			logrus.Infof("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
 		} else {
-			fmt.Printf("Winners are:\n")
+			logrus.Infoln("Winners are:")
 			for _, finalPlayer := range finalPlayerTiers[0] {
-				fmt.Printf("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
+				logrus.Infof("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
 			}
 		}
 	}
@@ -404,7 +404,7 @@ func settleBecauseOthersAllFold(board *model.Board) {
 
 	if config.TrainMode == false {
 		// show winner
-		fmt.Printf("Winner is: %s\nScore: No score, all others folded.\n", theLastPlayer.Name)
+		logrus.Infof("Winner is: %s\nScore: No score, all others folded.\n", theLastPlayer.Name)
 	}
 }
 
@@ -429,7 +429,7 @@ func callInteract(board *model.Board, playerIndex int) {
 		action = board.Players[playerIndex].Interact(deepCopyBoard, interactType)
 
 		if err := checkAction(board, playerIndex, action); err != nil {
-			fmt.Printf("%s made an invalid action. error: %v\n", board.Players[playerIndex].Name, err)
+			logrus.Warnf("%s made an invalid action. error: %v\n", board.Players[playerIndex].Name, err)
 			wrongInputCount++
 			continue
 		}
@@ -490,7 +490,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 	game := board.Game
 	currentPlayer := board.Players[playerIndex]
 	if config.TrainMode == false {
-		fmt.Printf("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
+		logrus.Infof("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
 	}
 
 	switch action.ActionType {
@@ -549,8 +549,7 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 	return playingPlayerCount <= 1
 }
 
-func Start(withCpuProfile, debugMode, trainMode bool, language string, logLevel logrus.Level, logFilePath string, playPoker func()) {
-	config.DebugMode = debugMode
+func Start(withCpuProfile, trainMode bool, language string, logLevel logrus.Level, logFilePath string, playPoker func()) {
 	config.TrainMode = trainMode
 	config.Language = language
 	// initialize logger

@@ -3,6 +3,7 @@ package colosseum
 import (
 	"bufio"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"poker/interact/ai"
 	"poker/interact/human"
@@ -31,7 +32,7 @@ func PlayPoker() {
 			process.PlayGame(ctx, board)
 			process.EndGame(ctx, board)
 
-			fmt.Printf("Match finish. Press enter to begin next match.\n")
+			logrus.Infoln("Match finish. Press enter to begin next match.")
 			reader := bufio.NewReader(os.Stdin)
 			reader.ReadString('\n')
 		}
