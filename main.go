@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"poker/config"
 	"poker/game/colosseum"
 	"poker/game/unlimited"
 	"poker/process"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -24,11 +26,12 @@ func main() {
 
 func playUnlimited() {
 	process.Start(
-		false,
+		true,
 		false,
 		false,
 		config.ZhCn,
 		logrus.DebugLevel,
+		fmt.Sprintf("./generated/log/poker_log_%d.log", time.Now().Unix()),
 		unlimited.PlayPoker)
 }
 
@@ -39,6 +42,7 @@ func trainWithProfiler() {
 		true,
 		config.ZhCn,
 		logrus.DebugLevel,
+		"",
 		unlimited.Train)
 }
 
@@ -49,5 +53,6 @@ func playColosseum() {
 		false,
 		config.ZhCn,
 		logrus.DebugLevel,
+		"",
 		colosseum.PlayPoker)
 }

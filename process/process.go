@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strconv"
+	"time"
 )
 
 func InitializePlayers(ctx *model.Context, board *model.Board, interactList []model.Interact, playerBankroll int) {
@@ -548,22 +549,24 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 	return playingPlayerCount <= 1
 }
 
-func Start(withCpuProfile, debugMode, trainMode bool, language string, logLevel logrus.Level, playPoker func()) {
+func Start(withCpuProfile, debugMode, trainMode bool, language string, logLevel logrus.Level, logFilePath string, playPoker func()) {
 	config.DebugMode = debugMode
 	config.TrainMode = trainMode
 	config.Language = language
-	logrus.SetLevel(logLevel)
-
+	// initialize logger
+	util.InitLogger(logLevel, logFilePath)
+	// initialize cpu profile
 	if withCpuProfile {
-		f, err := os.Create("poker.pprof")
+		f, err := os.Create(fmt.Sprintf("./generated/pprof/poker_%d.pprof", time.Now().Unix()))
 		if err != nil {
-			fmt.Println(err)
-			return
+			panic(err)
 		}
-		pprof.StartCPUProfile(f)
+		if err := pprof.StartCPUProfile(f); err != nil {
+			panic(err)
+		}
 		defer pprof.StopCPUProfile()
 	}
-
+	// initialize goroutine pool
 	config.GoroutineLimit = 10 * runtime.NumCPU()
 	p, err := ants.NewPool(config.GoroutineLimit)
 	if err != nil || p == nil {
