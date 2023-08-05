@@ -36,5 +36,5 @@ type ActionType string
 const ActionTypeBet ActionType = "BET"
 const ActionTypeCall ActionType = "CALL"
 const ActionTypeFold ActionType = "FOLD"
-const ActionTypeAllIn ActionType = "ALLIN"
-const ActionTypeKeepWatching ActionType = "KEEPWATCHING"
+const ActionTypeAllIn ActionType = "ALL_IN"
+const ActionTypeKeepWatching ActionType = "KEEP_WATCHING"
