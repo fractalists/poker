@@ -1,0 +1,1145 @@
+---------------------------------------------------------------# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 3, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:1, 剩余资金:99, 状态:PLAYING
+[Player2]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player5]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player6]@BTN    手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[2023-08-06 05:02:55] [31mDEBUG[0m - [Player3]: winRate: 0.108956665
+
+
+--> [Player3]'s action: {FOLD 0}
+[2023-08-06 05:02:56] [31mDEBUG[0m - [Player4]: winRate: 0.17398334
+
+
+--> [Player4]'s action: {FOLD 0}
+
+--> [Player5]'s action: {CALL 2}
+---------------------------------------------------------------# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 5, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:1, 剩余资金:99, 状态:PLAYING
+[Player2]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player5]        手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player6]@BTN    手牌:[♥6 ♥8]   已下注:0, 剩余资金:100, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [4, 100]
+[2] Call --> 2
+[3] Fold
+[4] AllIn --> 100
+
+--> [Player6]'s action: {CALL 2}
+[2023-08-06 05:03:01] [31mDEBUG[0m - [Player1]: winRate: 0.1964325
+
+
+--> [Player1]'s action: {CALL 1}
+[2023-08-06 05:03:01] [31mDEBUG[0m - [Player2]: winRate: 0.16556166
+
+
+--> [Player2]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: FLOP, 底池: 8, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [♣3 ♦8 ♣8 ** **]
+[Player1]@SB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player2]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player5]        手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player6]@BTN    手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[2023-08-06 05:03:02] [31mDEBUG[0m - [Player1]: winRate: 0.14790583
+
+
+--> [Player1]'s action: {CALL 0}
+[2023-08-06 05:03:03] [31mDEBUG[0m - [Player2]: winRate: 0.7897875
+
+
+--> [Player2]'s action: {CALL 0}
+
+--> [Player5]'s action: {ALL_IN 98}
+---------------------------------------------------------------# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: FLOP, 底池: 106, 当前金额: 100, 前一次加注金额: 98
+# 公共牌: [♣3 ♦8 ♣8 ** **]
+[Player1]@SB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player2]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player5]        手牌:[** **]   已下注:100, 剩余资金:0, 状态:ALLIN
+[Player6]@BTN    手牌:[♥6 ♥8]   已下注:2, 剩余资金:98, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[!] Bet  <insufficient bankroll>
+[2] Call --> 98
+[3] Fold
+[4] AllIn --> 98
+
+--> [Player6]'s action: {ALL_IN 98}
+[2023-08-06 05:03:08] [31mDEBUG[0m - [Player1]: winRate: 0.12943834
+
+
+--> [Player1]'s action: {FOLD 0}
+[2023-08-06 05:03:08] [31mDEBUG[0m - [Player2]: winRate: 0.8634689
+
+
+--> [Player2]'s action: {ALL_IN 98}
+---------------------------------------------------------------# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: SHOWDOWN, 底池: 302, 当前金额: 100, 前一次加注金额: 0
+# 公共牌: [♣3 ♦8 ♣8 ♣Q ♥2]
+[Player1]@SB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:OUT
+[Player2]@BB     手牌:[♠8 ♥4]   已下注:100, 剩余资金:0, 状态:ALLIN
+[Player3]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player5]        手牌:[♦9 ♠3]   已下注:100, 剩余资金:0, 状态:ALLIN
+[Player6]@BTN    手牌:[♥6 ♥8]   已下注:100, 剩余资金:0, 状态:ALLIN
+---------------------------------------------------------------# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: FINISH, 底池: 0, 当前金额: 100, 前一次加注金额: 0
+# 公共牌: [♣3 ♦8 ♣8 ♣Q ♥2]
+[Player1]@SB     手牌:[** **]   已下注:0, 剩余资金:98, 状态:PLAYING
+[Player2]@BB     手牌:[♠8 ♥4]   已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player5]        手牌:[♦9 ♠3]   已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BTN    手牌:[♥6 ♥8]   已下注:0, 剩余资金:302, 状态:PLAYING
+Winner is: Player6
+Score: {Three of a kind [♥8 ♦8 ♣8 ♣Q ♥6] 3559302} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle1_match2 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 3, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BTN    手牌:[** **]   已下注:0, 剩余资金:98, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:1, 剩余资金:99, 状态:PLAYING
+[Player4]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@UTG    手牌:[** **]   已下注:0, 剩余资金:302, 状态:PLAYING
+---------------------------------------------------------------# 描述: cycle1_match2 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 3, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BTN    手牌:[** **]   已下注:0, 剩余资金:98, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:1, 剩余资金:99, 状态:PLAYING
+[Player4]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@UTG    手牌:[♣8 ♦2]   已下注:0, 剩余资金:302, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [4, 302]
+[2] Call --> 2
+[3] Fold
+[4] AllIn --> 302
+
+--> [Player6]'s action: {FOLD 0}
+[2023-08-06 05:03:13] [31mDEBUG[0m - [Player1]: winRate: 0.3742411
+
+
+--> [Player1]'s action: {CALL 2}
+[2023-08-06 05:03:14] [31mDEBUG[0m - [Player3]: winRate: 0.21932112
+
+
+--> [Player3]'s action: {CALL 1}
+[2023-08-06 05:03:14] [31mDEBUG[0m - [Player4]: winRate: 0.28211555
+
+
+--> [Player4]'s action: {BET 3}
+[2023-08-06 05:03:15] [31mDEBUG[0m - [Player1]: winRate: 0.3712111
+
+
+--> [Player1]'s action: {BET 6}
+[2023-08-06 05:03:15] [31mDEBUG[0m - [Player3]: winRate: 0.21071666
+
+
+--> [Player3]'s action: {FOLD 0}
+[2023-08-06 05:03:16] [31mDEBUG[0m - [Player4]: winRate: 0.40687
+
+
+--> [Player4]'s action: {BET 11}
+[2023-08-06 05:03:16] [31mDEBUG[0m - [Player1]: winRate: 0.57333666
+
+
+--> [Player1]'s action: {BET 44}
+[2023-08-06 05:03:17] [31mDEBUG[0m - [Player4]: winRate: 0.42786
+
+
+--> [Player4]'s action: {CALL 36}
+---------------------------------------------------------------# 描述: cycle1_match2 | 小盲注: 1
+# 阶段: FLOP, 底池: 106, 当前金额: 52, 前一次加注金额: 0
+# 公共牌: [♠2 ♦10 ♠4 ** **]
+[Player1]        手牌:[** **]   已下注:52, 剩余资金:46, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:OUT
+[Player4]@BB     手牌:[** **]   已下注:52, 剩余资金:48, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:302, 状态:OUT
+[2023-08-06 05:03:17] [31mDEBUG[0m - [Player4]: winRate: 0.648885
+
+
+--> [Player4]'s action: {ALL_IN 48}
+[2023-08-06 05:03:17] [31mDEBUG[0m - [Player1]: winRate: 0.58167166
+
+
+--> [Player1]'s action: {ALL_IN 46}
+---------------------------------------------------------------# 描述: cycle1_match2 | 小盲注: 1
+# 阶段: SHOWDOWN, 底池: 200, 当前金额: 100, 前一次加注金额: 0
+# 公共牌: [♠2 ♦10 ♠4 ♣5 ♦8]
+[Player1]        手牌:[♠A ♦5]   已下注:98, 剩余资金:0, 状态:ALLIN
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:OUT
+[Player4]@BB     手牌:[♦4 ♦6]   已下注:100, 剩余资金:0, 状态:ALLIN
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:302, 状态:OUT
+---------------------------------------------------------------# 描述: cycle1_match2 | 小盲注: 1
+# 阶段: FINISH, 底池: 0, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [♠2 ♦10 ♠4 ♣5 ♦8]
+[Player1]@BTN    手牌:[♠A ♦5]   已下注:0, 剩余资金:198, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:0, 剩余资金:98, 状态:PLAYING
+[Player4]@BB     手牌:[♦4 ♦6]   已下注:0, 剩余资金:2, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@UTG    手牌:[** **]   已下注:0, 剩余资金:302, 状态:PLAYING
+Winner is: Player1
+Score: {One pair [♦5 ♣5 ♠A ♦10 ♦8] 1351912} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle1_match3 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 3, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@UTG    手牌:[** **]   已下注:0, 剩余资金:198, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:0, 剩余资金:98, 状态:PLAYING
+[Player4]@SB     手牌:[** **]   已下注:1, 剩余资金:1, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:2, 剩余资金:300, 状态:PLAYING
+[2023-08-06 05:03:21] [31mDEBUG[0m - [Player1]: winRate: 0.32933334
+
+
+--> [Player1]'s action: {CALL 2}
+[2023-08-06 05:03:21] [31mDEBUG[0m - [Player3]: winRate: 0.212355
+
+
+--> [Player3]'s action: {CALL 2}
+[2023-08-06 05:03:22] [31mDEBUG[0m - [Player4]: winRate: 0.1879625
+
+
+--> [Player4]'s action: {ALL_IN 1}
+---------------------------------------------------------------# 描述: cycle1_match3 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 8, 当前金额: 2, 前一次加注金额: 1
+# 公共牌: [** ** ** ** **]
+[Player1]@UTG    手牌:[** **]   已下注:2, 剩余资金:196, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:2, 剩余资金:96, 状态:PLAYING
+[Player4]@SB     手牌:[** **]   已下注:2, 剩余资金:0, 状态:ALLIN
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♥J ♣9]   已下注:2, 剩余资金:300, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [2, 300]
+[2] Check
+[3] Fold
+[4] AllIn --> 300
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle1_match3 | 小盲注: 1
+# 阶段: FLOP, 底池: 8, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [♦8 ♣8 ♣4 ** **]
+[Player1]        手牌:[** **]   已下注:2, 剩余资金:196, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:2, 剩余资金:96, 状态:PLAYING
+[Player4]@SB     手牌:[** **]   已下注:2, 剩余资金:0, 状态:ALLIN
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:2, 剩余资金:300, 状态:OUT
+[2023-08-06 05:03:27] [31mDEBUG[0m - [Player1]: winRate: 0.23340446
+
+
+--> [Player1]'s action: {BET 3}
+[2023-08-06 05:03:28] [31mDEBUG[0m - [Player3]: winRate: 0.112626664
+
+
+--> [Player3]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle1_match3 | 小盲注: 1
+# 阶段: SHOWDOWN, 底池: 11, 当前金额: 5, 前一次加注金额: 0
+# 公共牌: [♦8 ♣8 ♣4 ♠2 ♠K]
+[Player1]        手牌:[♦10 ♥Q]  已下注:5, 剩余资金:193, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[** **]   已下注:2, 剩余资金:96, 状态:OUT
+[Player4]@SB     手牌:[♠8 ♦5]   已下注:2, 剩余资金:0, 状态:ALLIN
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:2, 剩余资金:300, 状态:OUT
+---------------------------------------------------------------# 描述: cycle1_match3 | 小盲注: 1
+# 阶段: FINISH, 底池: 0, 当前金额: 3, 前一次加注金额: 0
+# 公共牌: [♦8 ♣8 ♣4 ♠2 ♠K]
+[Player1]@UTG    手牌:[♦10 ♥Q]  已下注:0, 剩余资金:196, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:0, 剩余资金:96, 状态:PLAYING
+[Player4]@SB     手牌:[♠8 ♦5]   已下注:0, 剩余资金:8, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:0, 剩余资金:300, 状态:PLAYING
+Winner is: Player4
+Score: {Three of a kind [♦8 ♣8 ♠8 ♠K ♦5] 3559317} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle1_match4 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 3, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:2, 剩余资金:194, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:96, 状态:PLAYING
+[Player4]@BTN    手牌:[** **]   已下注:0, 剩余资金:8, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:1, 剩余资金:299, 状态:PLAYING
+[2023-08-06 05:03:31] [31mDEBUG[0m - [Player3]: winRate: 0.35826334
+
+
+--> [Player3]'s action: {CALL 2}
+[2023-08-06 05:03:31] [31mDEBUG[0m - [Player4]: winRate: 0.2208625
+
+
+--> [Player4]'s action: {CALL 2}
+---------------------------------------------------------------# 描述: cycle1_match4 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 7, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:2, 剩余资金:194, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@UTG    手牌:[** **]   已下注:2, 剩余资金:94, 状态:PLAYING
+[Player4]@BTN    手牌:[** **]   已下注:2, 剩余资金:6, 状态:PLAYING
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♠A ♣Q]   已下注:1, 剩余资金:299, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [3, 299]
+[2] Call --> 1
+[3] Fold
+[4] AllIn --> 299
+
+--> [Player6]'s action: {ALL_IN 299}
+[2023-08-06 05:03:35] [31mDEBUG[0m - [Player1]: winRate: 0.17738333
+
+
+--> [Player1]'s action: {FOLD 0}
+[2023-08-06 05:03:36] [31mDEBUG[0m - [Player3]: winRate: 0.43375778
+
+
+--> [Player3]'s action: {ALL_IN 94}
+[2023-08-06 05:03:36] [31mDEBUG[0m - [Player4]: winRate: 0.29557112
+
+
+--> [Player4]'s action: {ALL_IN 6}
+---------------------------------------------------------------# 描述: cycle1_match4 | 小盲注: 1
+# 阶段: SHOWDOWN, 底池: 406, 当前金额: 300, 前一次加注金额: 0
+# 公共牌: [♣K ♣8 ♣A ♥8 ♠8]
+[Player1]@BB     手牌:[** **]   已下注:2, 剩余资金:194, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[♥A ♦J]   已下注:96, 剩余资金:0, 状态:ALLIN
+[Player4]@BTN    手牌:[♣3 ♣10]  已下注:8, 剩余资金:0, 状态:ALLIN
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♠A ♣Q]   已下注:300, 剩余资金:0, 状态:ALLIN
+---------------------------------------------------------------# 描述: cycle1_match4 | 小盲注: 1
+# 阶段: FINISH, 底池: 0, 当前金额: 300, 前一次加注金额: 0
+# 公共牌: [♣K ♣8 ♣A ♥8 ♠8]
+[Player1]@BB     手牌:[** **]   已下注:0, 剩余资金:194, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[♥A ♦J]   已下注:0, 剩余资金:101, 状态:PLAYING
+[Player4]@BTN    手牌:[♣3 ♣10]  已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♠A ♣Q]   已下注:0, 剩余资金:305, 状态:PLAYING
+Winners are:Name: Player3 Score: {Full house [♣8 ♥8 ♠8 ♣A ♥A] 6559342} 
+Name: Player6 Score: {Full house [♣8 ♥8 ♠8 ♣A ♠A] 6559342} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle2_match1 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 6, 当前金额: 4, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:2, 剩余资金:192, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[** **]   已下注:4, 剩余资金:97, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BTN    手牌:[** **]   已下注:0, 剩余资金:305, 状态:PLAYING
+---------------------------------------------------------------# 描述: cycle2_match1 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 6, 当前金额: 4, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:2, 剩余资金:192, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[** **]   已下注:4, 剩余资金:97, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BTN    手牌:[♣6 ♥7]   已下注:0, 剩余资金:305, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [8, 305]
+[2] Call --> 4
+[3] Fold
+[4] AllIn --> 305
+
+--> [Player6]'s action: {FOLD 0}
+[2023-08-06 05:03:48] [31mDEBUG[0m - [Player1]: winRate: 0.6050633
+
+
+--> [Player1]'s action: {BET 18}
+[2023-08-06 05:03:48] [31mDEBUG[0m - [Player3]: winRate: 0.46893334
+
+
+--> [Player3]'s action: {CALL 16}
+---------------------------------------------------------------# 描述: cycle2_match1 | 小盲注: 2
+# 阶段: FLOP, 底池: 40, 当前金额: 20, 前一次加注金额: 0
+# 公共牌: [♥Q ♦9 ♦10 ** **]
+[Player1]@SB     手牌:[** **]   已下注:20, 剩余资金:174, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[** **]   已下注:20, 剩余资金:81, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:305, 状态:OUT
+[2023-08-06 05:03:49] [31mDEBUG[0m - [Player1]: winRate: 0.49930835
+
+
+--> [Player1]'s action: {BET 49}
+[2023-08-06 05:03:49] [31mDEBUG[0m - [Player3]: winRate: 0.678195
+
+
+--> [Player3]'s action: {ALL_IN 81}
+[2023-08-06 05:03:49] [31mDEBUG[0m - [Player1]: winRate: 0.5092267
+
+
+--> [Player1]'s action: {ALL_IN 125}
+---------------------------------------------------------------# 描述: cycle2_match1 | 小盲注: 2
+# 阶段: SHOWDOWN, 底池: 295, 当前金额: 194, 前一次加注金额: 0
+# 公共牌: [♥Q ♦9 ♦10 ♠Q ♥2]
+[Player1]@SB     手牌:[♦8 ♣A]   已下注:194, 剩余资金:0, 状态:ALLIN
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[♠10 ♥8]  已下注:101, 剩余资金:0, 状态:ALLIN
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:305, 状态:OUT
+---------------------------------------------------------------# 描述: cycle2_match1 | 小盲注: 2
+# 阶段: FINISH, 底池: 0, 当前金额: 93, 前一次加注金额: 0
+# 公共牌: [♥Q ♦9 ♦10 ♠Q ♥2]
+[Player1]@SB     手牌:[♦8 ♣A]   已下注:0, 剩余资金:93, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[♠10 ♥8]  已下注:0, 剩余资金:202, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BTN    手牌:[** **]   已下注:0, 剩余资金:305, 状态:PLAYING
+Winner is: Player3
+Score: {Two pair [♥Q ♠Q ♦10 ♠10 ♦9] 2838313} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle2_match2 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 6, 当前金额: 4, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BTN    手牌:[** **]   已下注:0, 剩余资金:93, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:2, 剩余资金:200, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:4, 剩余资金:301, 状态:PLAYING
+[2023-08-06 05:03:51] [31mDEBUG[0m - [Player1]: winRate: 0.3645278
+
+
+--> [Player1]'s action: {CALL 4}
+[2023-08-06 05:03:52] [31mDEBUG[0m - [Player3]: winRate: 0.24769221
+
+
+--> [Player3]'s action: {CALL 2}
+---------------------------------------------------------------# 描述: cycle2_match2 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 12, 当前金额: 4, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BTN    手牌:[** **]   已下注:4, 剩余资金:89, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:4, 剩余资金:198, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♠2 ♣7]   已下注:4, 剩余资金:301, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [4, 301]
+[2] Check
+[3] Fold
+[4] AllIn --> 301
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle2_match2 | 小盲注: 2
+# 阶段: FLOP, 底池: 12, 当前金额: 4, 前一次加注金额: 0
+# 公共牌: [♦4 ♣6 ♥J ** **]
+[Player1]        手牌:[** **]   已下注:4, 剩余资金:89, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:4, 剩余资金:198, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:4, 剩余资金:301, 状态:OUT
+[2023-08-06 05:03:54] [31mDEBUG[0m - [Player3]: winRate: 0.210465
+
+
+--> [Player3]'s action: {BET 4}
+[2023-08-06 05:03:55] [31mDEBUG[0m - [Player1]: winRate: 0.62171835
+
+
+--> [Player1]'s action: {BET 41}
+[2023-08-06 05:03:55] [31mDEBUG[0m - [Player3]: winRate: 0.21914667
+
+
+--> [Player3]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle2_match2 | 小盲注: 2
+# 阶段: FINISH, 底池: 0, 当前金额: 45, 前一次加注金额: 41
+# 公共牌: [♦4 ♣6 ♥J ** **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:105, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:0, 剩余资金:194, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:301, 状态:OUT
+Winner is: Player1
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle2_match3 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 6, 当前金额: 4, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:4, 剩余资金:101, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:0, 剩余资金:194, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:2, 剩余资金:299, 状态:PLAYING
+[2023-08-06 05:03:57] [31mDEBUG[0m - [Player3]: winRate: 0.4347089
+
+
+--> [Player3]'s action: {BET 8}
+---------------------------------------------------------------# 描述: cycle2_match3 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 14, 当前金额: 8, 前一次加注金额: 8
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:4, 剩余资金:101, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:8, 剩余资金:186, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♠3 ♠Q]   已下注:2, 剩余资金:299, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [14, 299]
+[2] Call --> 6
+[3] Fold
+[4] AllIn --> 299
+!! invalid action input !!
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [14, 299]
+[2] Call --> 6
+[3] Fold
+[4] AllIn --> 299
+
+--> [Player6]'s action: {CALL 6}
+[2023-08-06 05:04:12] [31mDEBUG[0m - [Player1]: winRate: 0.48821333
+
+
+--> [Player1]'s action: {BET 31}
+[2023-08-06 05:04:13] [31mDEBUG[0m - [Player3]: winRate: 0.44973776
+
+
+--> [Player3]'s action: {CALL 27}
+---------------------------------------------------------------# 描述: cycle2_match3 | 小盲注: 2
+# 阶段: PREFLOP, 底池: 78, 当前金额: 35, 前一次加注金额: 31
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:35, 剩余资金:70, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:35, 剩余资金:159, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♠3 ♠Q]   已下注:8, 剩余资金:293, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [58, 293]
+[2] Call --> 27
+[3] Fold
+[4] AllIn --> 293
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle2_match3 | 小盲注: 2
+# 阶段: FLOP, 底池: 78, 当前金额: 35, 前一次加注金额: 0
+# 公共牌: [♠2 ♠8 ♦2 ** **]
+[Player1]@BB     手牌:[** **]   已下注:35, 剩余资金:70, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[** **]   已下注:35, 剩余资金:159, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:8, 剩余资金:293, 状态:OUT
+[2023-08-06 05:04:20] [31mDEBUG[0m - [Player1]: winRate: 0.59040666
+
+
+--> [Player1]'s action: {ALL_IN 70}
+[2023-08-06 05:04:20] [31mDEBUG[0m - [Player3]: winRate: 0.49062666
+
+
+--> [Player3]'s action: {ALL_IN 159}
+---------------------------------------------------------------# 描述: cycle2_match3 | 小盲注: 2
+# 阶段: SHOWDOWN, 底池: 307, 当前金额: 194, 前一次加注金额: 0
+# 公共牌: [♠2 ♠8 ♦2 ♣8 ♦3]
+[Player1]@BB     手牌:[♣K ♦A]   已下注:105, 剩余资金:0, 状态:ALLIN
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[♥K ♥10]  已下注:194, 剩余资金:0, 状态:ALLIN
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:8, 剩余资金:293, 状态:OUT
+---------------------------------------------------------------# 描述: cycle2_match3 | 小盲注: 2
+# 阶段: FINISH, 底池: 0, 当前金额: 89, 前一次加注金额: 0
+# 公共牌: [♠2 ♠8 ♦2 ♣8 ♦3]
+[Player1]@BB     手牌:[♣K ♦A]   已下注:0, 剩余资金:218, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[♥K ♥10]  已下注:0, 剩余资金:89, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:0, 剩余资金:293, 状态:PLAYING
+Winner is: Player1
+Score: {Two pair [♠8 ♣8 ♦2 ♠2 ♦A] 2557614} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle3_match1 | 小盲注: 3
+# 阶段: PREFLOP, 底池: 9, 当前金额: 6, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:3, 剩余资金:215, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[** **]   已下注:6, 剩余资金:83, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BTN    手牌:[** **]   已下注:0, 剩余资金:293, 状态:PLAYING
+---------------------------------------------------------------# 描述: cycle3_match1 | 小盲注: 3
+# 阶段: PREFLOP, 底池: 9, 当前金额: 6, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:3, 剩余资金:215, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BB     手牌:[** **]   已下注:6, 剩余资金:83, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BTN    手牌:[♣4 ♦J]   已下注:0, 剩余资金:293, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [12, 293]
+[2] Call --> 6
+[3] Fold
+[4] AllIn --> 293
+!! invalid action input !!
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [12, 293]
+[2] Call --> 6
+[3] Fold
+[4] AllIn --> 293
+
+--> [Player6]'s action: {FOLD 0}
+[2023-08-06 05:04:26] [31mDEBUG[0m - [Player1]: winRate: 0.6277433
+
+
+--> [Player1]'s action: {BET 32}
+[2023-08-06 05:04:26] [31mDEBUG[0m - [Player3]: winRate: 0.40791667
+
+
+--> [Player3]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle3_match1 | 小盲注: 3
+# 阶段: FINISH, 底池: 0, 当前金额: 35, 前一次加注金额: 32
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:0, 剩余资金:224, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[** **]   已下注:0, 剩余资金:83, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:293, 状态:OUT
+Winner is: Player1
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: PREFLOP, 底池: 9, 当前金额: 6, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BTN    手牌:[** **]   已下注:0, 剩余资金:224, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:3, 剩余资金:80, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:6, 剩余资金:287, 状态:PLAYING
+[2023-08-06 05:04:28] [31mDEBUG[0m - [Player1]: winRate: 0.24002667
+
+
+--> [Player1]'s action: {FOLD 0}
+[2023-08-06 05:04:28] [31mDEBUG[0m - [Player3]: winRate: 0.43268
+
+
+--> [Player3]'s action: {BET 11}
+---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: PREFLOP, 底池: 20, 当前金额: 14, 前一次加注金额: 11
+# 公共牌: [** ** ** ** **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:224, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:14, 剩余资金:69, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♥6 ♠K]   已下注:6, 剩余资金:287, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [19, 287]
+[2] Call --> 8
+[3] Fold
+[4] AllIn --> 287
+
+--> [Player6]'s action: {CALL 8}
+---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: FLOP, 底池: 28, 当前金额: 14, 前一次加注金额: 0
+# 公共牌: [♥A ♥8 ♦Q ** **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:224, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:14, 剩余资金:69, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:14, 剩余资金:279, 状态:PLAYING
+[2023-08-06 05:04:31] [31mDEBUG[0m - [Player3]: winRate: 0.24563834
+
+
+--> [Player3]'s action: {BET 10}
+---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: FLOP, 底池: 38, 当前金额: 24, 前一次加注金额: 10
+# 公共牌: [♥A ♥8 ♦Q ** **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:224, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:24, 剩余资金:59, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♥6 ♠K]   已下注:14, 剩余资金:279, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [20, 279]
+[2] Call --> 10
+[3] Fold
+[4] AllIn --> 279
+
+--> [Player6]'s action: {CALL 10}
+---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: TURN, 底池: 48, 当前金额: 24, 前一次加注金额: 0
+# 公共牌: [♥A ♥8 ♦Q ♠3 **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:224, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:24, 剩余资金:59, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:24, 剩余资金:269, 状态:PLAYING
+[2023-08-06 05:04:36] [31mDEBUG[0m - [Player3]: winRate: 0.13405333
+
+
+--> [Player3]'s action: {BET 7}
+---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: TURN, 底池: 55, 当前金额: 31, 前一次加注金额: 7
+# 公共牌: [♥A ♥8 ♦Q ♠3 **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:224, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:31, 剩余资金:52, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♥6 ♠K]   已下注:24, 剩余资金:269, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [14, 269]
+[2] Call --> 7
+[3] Fold
+[4] AllIn --> 269
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle3_match2 | 小盲注: 3
+# 阶段: FINISH, 底池: 0, 当前金额: 31, 前一次加注金额: 7
+# 公共牌: [♥A ♥8 ♦Q ♠3 **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:224, 状态:OUT
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@SB     手牌:[** **]   已下注:0, 剩余资金:107, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:269, 状态:OUT
+Winner is: Player3
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle3_match3 | 小盲注: 3
+# 阶段: PREFLOP, 底池: 9, 当前金额: 6, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:6, 剩余资金:218, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:0, 剩余资金:107, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:3, 剩余资金:266, 状态:PLAYING
+[2023-08-06 05:04:43] [31mDEBUG[0m - [Player3]: winRate: 0.36624333
+
+
+--> [Player3]'s action: {CALL 6}
+---------------------------------------------------------------# 描述: cycle3_match3 | 小盲注: 3
+# 阶段: PREFLOP, 底池: 15, 当前金额: 6, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:6, 剩余资金:218, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]@BTN    手牌:[** **]   已下注:6, 剩余资金:101, 状态:PLAYING
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♣10 ♠5]  已下注:3, 剩余资金:266, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [9, 266]
+[2] Call --> 3
+[3] Fold
+[4] AllIn --> 266
+
+--> [Player6]'s action: {FOLD 0}
+[2023-08-06 05:04:47] [31mDEBUG[0m - [Player1]: winRate: 0.5568333
+
+
+--> [Player1]'s action: {BET 32}
+[2023-08-06 05:04:47] [31mDEBUG[0m - [Player3]: winRate: 0.55463165
+
+
+--> [Player3]'s action: {BET 67}
+[2023-08-06 05:04:48] [31mDEBUG[0m - [Player1]: winRate: 0.53967667
+
+
+--> [Player1]'s action: {BET 163}
+[2023-08-06 05:04:48] [31mDEBUG[0m - [Player3]: winRate: 0.53521836
+
+
+--> [Player3]'s action: {ALL_IN 34}
+---------------------------------------------------------------# 描述: cycle3_match3 | 小盲注: 3
+# 阶段: SHOWDOWN, 底池: 311, 当前金额: 201, 前一次加注金额: 0
+# 公共牌: [♥J ♠A ♣6 ♦7 ♥4]
+[Player1]@BB     手牌:[♣A ♠2]   已下注:201, 剩余资金:23, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[♥7 ♥Q]   已下注:107, 剩余资金:0, 状态:ALLIN
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:3, 剩余资金:266, 状态:OUT
+---------------------------------------------------------------# 描述: cycle3_match3 | 小盲注: 3
+# 阶段: FINISH, 底池: 0, 当前金额: 201, 前一次加注金额: 0
+# 公共牌: [♥J ♠A ♣6 ♦7 ♥4]
+[Player1]@BB     手牌:[♣A ♠2]   已下注:0, 剩余资金:334, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[♥7 ♥Q]   已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:0, 剩余资金:266, 状态:PLAYING
+Winner is: Player1
+Score: {One pair [♠A ♣A ♥J ♦7 ♣6] 1977782} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle4_match1 | 小盲注: 4
+# 阶段: PREFLOP, 底池: 12, 当前金额: 8, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:4, 剩余资金:330, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:8, 剩余资金:258, 状态:PLAYING
+[2023-08-06 05:04:49] [31mDEBUG[0m - [Player1]: winRate: 0.5080133
+
+
+--> [Player1]'s action: {BET 22}
+---------------------------------------------------------------# 描述: cycle4_match1 | 小盲注: 4
+# 阶段: PREFLOP, 底池: 34, 当前金额: 26, 前一次加注金额: 22
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:26, 剩余资金:308, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♣8 ♠J]   已下注:8, 剩余资金:258, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [40, 258]
+[2] Call --> 18
+[3] Fold
+[4] AllIn --> 258
+
+--> [Player6]'s action: {CALL 18}
+---------------------------------------------------------------# 描述: cycle4_match1 | 小盲注: 4
+# 阶段: FLOP, 底池: 52, 当前金额: 26, 前一次加注金额: 0
+# 公共牌: [♥7 ♠5 ♥K ** **]
+[Player1]@SB     手牌:[** **]   已下注:26, 剩余资金:308, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:26, 剩余资金:240, 状态:PLAYING
+[2023-08-06 05:04:55] [31mDEBUG[0m - [Player1]: winRate: 0.405395
+
+
+--> [Player1]'s action: {BET 41}
+---------------------------------------------------------------# 描述: cycle4_match1 | 小盲注: 4
+# 阶段: FLOP, 底池: 93, 当前金额: 67, 前一次加注金额: 41
+# 公共牌: [♥7 ♠5 ♥K ** **]
+[Player1]@SB     手牌:[** **]   已下注:67, 剩余资金:267, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♣8 ♠J]   已下注:26, 剩余资金:240, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [82, 240]
+[2] Call --> 41
+[3] Fold
+[4] AllIn --> 240
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle4_match1 | 小盲注: 4
+# 阶段: FINISH, 底池: 0, 当前金额: 67, 前一次加注金额: 41
+# 公共牌: [♥7 ♠5 ♥K ** **]
+[Player1]@SB     手牌:[** **]   已下注:0, 剩余资金:360, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:240, 状态:OUT
+Winner is: Player1
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle4_match2 | 小盲注: 4
+# 阶段: PREFLOP, 底池: 12, 当前金额: 8, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:8, 剩余资金:352, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:4, 剩余资金:236, 状态:PLAYING
+---------------------------------------------------------------# 描述: cycle4_match2 | 小盲注: 4
+# 阶段: PREFLOP, 底池: 12, 当前金额: 8, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:8, 剩余资金:352, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♠8 ♦3]   已下注:4, 剩余资金:236, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [12, 236]
+[2] Call --> 4
+[3] Fold
+[4] AllIn --> 236
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle4_match2 | 小盲注: 4
+# 阶段: FINISH, 底池: 0, 当前金额: 8, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:364, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:0, 剩余资金:236, 状态:OUT
+Winner is: Player1
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: PREFLOP, 底池: 15, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:5, 剩余资金:359, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:10, 剩余资金:226, 状态:PLAYING
+[2023-08-06 05:05:02] [31mDEBUG[0m - [Player1]: winRate: 0.37113333
+
+
+--> [Player1]'s action: {CALL 5}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: PREFLOP, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♦8 ♥3]   已下注:10, 剩余资金:226, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [10, 226]
+[2] Check
+[3] Fold
+[4] AllIn --> 226
+
+--> [Player6]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: FLOP, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ** **]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:10, 剩余资金:226, 状态:PLAYING
+[2023-08-06 05:05:05] [31mDEBUG[0m - [Player1]: winRate: 0.23221667
+
+
+--> [Player1]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: FLOP, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ** **]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♦8 ♥3]   已下注:10, 剩余资金:226, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [10, 226]
+[2] Check
+[3] Fold
+[4] AllIn --> 226
+
+--> [Player6]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: TURN, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ♠J **]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:10, 剩余资金:226, 状态:PLAYING
+[2023-08-06 05:05:09] [31mDEBUG[0m - [Player1]: winRate: 0.14105834
+
+
+--> [Player1]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: TURN, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ♠J **]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♦8 ♥3]   已下注:10, 剩余资金:226, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [10, 226]
+[2] Check
+[3] Fold
+[4] AllIn --> 226
+
+--> [Player6]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: RIVER, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ♠J ♦6]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:10, 剩余资金:226, 状态:PLAYING
+[2023-08-06 05:05:11] [31mDEBUG[0m - [Player1]: winRate: 0.09974
+
+
+--> [Player1]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: RIVER, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ♠J ♦6]
+[Player1]@SB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♦8 ♥3]   已下注:10, 剩余资金:226, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [10, 226]
+[2] Check
+[3] Fold
+[4] AllIn --> 226
+
+--> [Player6]'s action: {CALL 0}
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: SHOWDOWN, 底池: 20, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ♠J ♦6]
+[Player1]@SB     手牌:[♦7 ♣3]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♦8 ♥3]   已下注:10, 剩余资金:226, 状态:PLAYING
+---------------------------------------------------------------# 描述: cycle5_match1 | 小盲注: 5
+# 阶段: FINISH, 底池: 0, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [♠9 ♣Q ♣6 ♠J ♦6]
+[Player1]@SB     手牌:[♦7 ♣3]   已下注:0, 剩余资金:364, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♦8 ♥3]   已下注:0, 剩余资金:236, 状态:PLAYING
+Winners are:Name: Player1 Score: {One pair [♣6 ♦6 ♣Q ♠J ♠9] 1421049} 
+Name: Player6 Score: {One pair [♣6 ♦6 ♣Q ♠J ♠9] 1421049} 
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle5_match2 | 小盲注: 5
+# 阶段: PREFLOP, 底池: 15, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:5, 剩余资金:231, 状态:PLAYING
+---------------------------------------------------------------# 描述: cycle5_match2 | 小盲注: 5
+# 阶段: PREFLOP, 底池: 15, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@BB     手牌:[** **]   已下注:10, 剩余资金:354, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[♣8 ♥4]   已下注:5, 剩余资金:231, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[1] Bet --> [15, 231]
+[2] Call --> 5
+[3] Fold
+[4] AllIn --> 231
+
+--> [Player6]'s action: {FOLD 0}
+---------------------------------------------------------------# 描述: cycle5_match2 | 小盲注: 5
+# 阶段: FINISH, 底池: 0, 当前金额: 10, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]        手牌:[** **]   已下注:0, 剩余资金:369, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@SB     手牌:[** **]   已下注:0, 剩余资金:231, 状态:OUT
+Winner is: Player1
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.---------------------------------------------------------------# 描述: cycle6_match1 | 小盲注: 6
+# 阶段: PREFLOP, 底池: 18, 当前金额: 12, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:6, 剩余资金:363, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[** **]   已下注:12, 剩余资金:219, 状态:PLAYING
+[2023-08-06 05:05:22] [31mDEBUG[0m - [Player1]: winRate: 0.70573336
+
+
+--> [Player1]'s action: {BET 118}
+---------------------------------------------------------------# 描述: cycle6_match1 | 小盲注: 6
+# 阶段: PREFLOP, 底池: 136, 当前金额: 124, 前一次加注金额: 118
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:124, 剩余资金:245, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♠5 ♥5]   已下注:12, 剩余资金:219, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[!] Bet  <insufficient bankroll>
+[2] Call --> 112
+[3] Fold
+[4] AllIn --> 219
+
+--> [Player6]'s action: {ALL_IN 219}
+[2023-08-06 05:05:26] [31mDEBUG[0m - [Player1]: winRate: 0.69424665
+
+
+--> [Player1]'s action: {ALL_IN 245}
+---------------------------------------------------------------# 描述: cycle6_match1 | 小盲注: 6
+# 阶段: SHOWDOWN, 底池: 600, 当前金额: 369, 前一次加注金额: 0
+# 公共牌: [♠4 ♠10 ♦2 ♥7 ♥4]
+[Player1]@SB     手牌:[♠8 ♦8]   已下注:369, 剩余资金:0, 状态:ALLIN
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]@BB     手牌:[♠5 ♥5]   已下注:231, 剩余资金:0, 状态:ALLIN
+---------------------------------------------------------------# 描述: cycle6_match1 | 小盲注: 6
+# 阶段: FINISH, 底池: 0, 当前金额: 369, 前一次加注金额: 0
+# 公共牌: [♠4 ♠10 ♦2 ♥7 ♥4]
+[Player1]@SB     手牌:[♠8 ♦8]   已下注:0, 剩余资金:600, 状态:PLAYING
+[Player2]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player3]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player4]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player5]        手牌:[]        已下注:0, 剩余资金:0, 状态:OUT
+[Player6]        手牌:[♠5 ♥5]   已下注:0, 剩余资金:0, 状态:OUT
+Winner is: Player1
+Score: {Two pair [♦8 ♠8 ♥4 ♠4 ♠10] 2558154} 
+Congrats! The final winner is Player1. Press enter to begin next match.
