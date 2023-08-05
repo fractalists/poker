@@ -14,3 +14,6 @@ InitInteract(selfIndex int, getBoardInfoFunc func() *Board) func(board *Board, i
 model.InteractType
 - notify
 - ask
+
+# Profile
+`go tool pprof -http=:8000 poker.pprof`
