@@ -35,13 +35,13 @@ func PlayPoker() {
 			if winner := process.HasWinner(board); winner != nil {
 				logrus.Infof("Congrats! The final winner is %s. Press enter to begin next match.\n", winner.Name)
 				reader := bufio.NewReader(os.Stdin)
-				reader.ReadString('\n')
+				_, _ = reader.ReadString('\n')
 				return
 			}
 
 			logrus.Infoln("Match finish. Press enter to begin next match.")
 			reader := bufio.NewReader(os.Stdin)
-			reader.ReadString('\n')
+			_, _ = reader.ReadString('\n')
 		}
 	}
 }

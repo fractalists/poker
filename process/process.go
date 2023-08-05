@@ -1,6 +1,7 @@
 package process
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
@@ -550,6 +551,15 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 }
 
 func Start(withCpuProfile, trainMode bool, language string, logLevel logrus.Level, logFilePath string, playPoker func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Recovered from %v\n", r)
+			logrus.Infoln("Match finish. Press enter to exit.")
+			reader := bufio.NewReader(os.Stdin)
+			_, _ = reader.ReadString('\n')
+		}
+	}()
+
 	config.TrainMode = trainMode
 	config.Language = language
 	// initialize logger

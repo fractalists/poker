@@ -34,7 +34,7 @@ func PlayPoker() {
 
 			logrus.Infoln("Match finish. Press enter to begin next match.")
 			reader := bufio.NewReader(os.Stdin)
-			reader.ReadString('\n')
+			_, _ = reader.ReadString('\n')
 		}
 	}
 }

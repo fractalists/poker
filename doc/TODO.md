@@ -1,10 +1,12 @@
 # high priority
 - improve ai
     - odds warrior logic (the correctness of odds calculation)
+- add little randomness for odds warrior
 - ai vs ai
 
 
 # low priority
+- improve performance
 - gui
 - testing
 - solve "Player2 made an invalid action. error: you have already bet in this round" bug

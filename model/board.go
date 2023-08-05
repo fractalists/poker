@@ -176,17 +176,17 @@ var systemClearFuncMap = map[string]func(){
 	"linux": func() {
 		cmd := exec.Command("clear") //Linux example, its tested
 		cmd.Stdout = os.Stdout
-		cmd.Run()
+		_ = cmd.Run()
 	},
 	"windows": func() {
 		cmd := exec.Command("cmd", "/c", "cls") //Windows example, its tested
 		cmd.Stdout = os.Stdout
-		cmd.Run()
+		_ = cmd.Run()
 	},
 	"darwin": func() {
 		cmd := exec.Command("clear") //Linux example, its tested
 		cmd.Stdout = os.Stdout
-		cmd.Run()
+		_ = cmd.Run()
 	},
 }
 
