@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 	"holdem/config"
-	"holdem/process"
+	"holdem/util"
 	"os"
 	"os/exec"
 	"runtime"
@@ -55,7 +55,7 @@ func zhCNRender(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		position := process.GetPositionDesc(board, player.Index)
+		position := getPositionDesc(board, player.Index)
 
 		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
 		secondPart := fmt.Sprintf("手牌:%v", player.Hands)
@@ -85,7 +85,7 @@ func enUSRender(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		position := process.GetPositionDesc(board, player.Index)
+		position := getPositionDesc(board, player.Index)
 
 		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
 		secondPart := fmt.Sprintf("hands:%v", player.Hands)
@@ -187,6 +187,34 @@ var systemClearFuncMap = map[string]func(){
 		cmd.Stdout = os.Stdout
 		cmd.Run()
 	},
+}
+
+func CheckIfOnlyOneLeft(board *Board) bool {
+	return getParticipatedPlayerCount(board) == 1
+}
+
+func getParticipatedPlayerCount(board *Board) int {
+	playingOrAllInCount := 0
+	for _, player := range board.Players {
+		if player.Status == PlayerStatusPlaying || player.Status == PlayerStatusAllIn {
+			playingOrAllInCount++
+		}
+	}
+
+	return playingOrAllInCount
+}
+
+var positionDescList = []Position{PositionSmallBlind, PositionBigBlind, PositionButton, PositionUnderTheGun}
+func getPositionDesc(board *Board, playerIndex int) string {
+	currentPositionDescList := positionDescList[:util.Min(len(positionDescList), getParticipatedPlayerCount(board))]
+
+	for _, positionDesc := range currentPositionDescList {
+		if board.PositionIndexMap[positionDesc] == playerIndex {
+			return "@" + string(positionDesc)
+		}
+	}
+
+	return ""
 }
 
 func clear() {

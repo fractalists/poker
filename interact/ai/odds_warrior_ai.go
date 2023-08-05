@@ -236,13 +236,13 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 				index++
 			}
 
-			selfScoreResult := util.Score(append(hands, boardCards...))
+			selfScoreResult := process.Score(append(hands, boardCards...))
 			selfScore := selfScoreResult.Score
 
 			opponentHighestScore := 0
 
 			for j := 0; j < opponentCount; j++ {
-				opponentScoreResult := util.Score(append(opponentHandsList[j], boardCards...))
+				opponentScoreResult := process.Score(append(opponentHandsList[j], boardCards...))
 				opponentScore := opponentScoreResult.Score
 
 				if opponentScore > opponentHighestScore {

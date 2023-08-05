@@ -1,8 +1,9 @@
-package util
+package process
 
 import (
 	"fmt"
 	"holdem/model"
+	"holdem/util"
 	"sort"
 )
 
@@ -76,7 +77,7 @@ func Settle(board *model.Board, finalPlayerTiers FinalPlayerTiers) {
 
 		sidePot := 0
 		for _, player := range board.Players {
-			amountChange := Min(player.InPotAmount, finalPlayerInPotAmount)
+			amountChange := util.Min(player.InPotAmount, finalPlayerInPotAmount)
 			sidePot += amountChange
 			player.InPotAmount -= amountChange
 		}

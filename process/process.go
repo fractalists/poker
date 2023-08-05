@@ -267,7 +267,7 @@ func interactWithPlayers(board *model.Board) {
 
 			callInteract(board, actualIndex)
 
-			if checkIfOnlyOneLeft(board) {
+			if model.CheckIfOnlyOneLeft(board) {
 				settleBecauseOthersAllFold(board)
 				return
 			}
@@ -317,9 +317,9 @@ func showdown(board *model.Board) {
 	model.Render(board)
 
 	// calc finalPlayerTiers
-	finalPlayerTiers := util.CalcFinalPlayerTiers(board)
+	finalPlayerTiers := CalcFinalPlayerTiers(board)
 
-	util.Settle(board, finalPlayerTiers)
+	Settle(board, finalPlayerTiers)
 
 	// check
 	if game.Pot != 0 {
@@ -376,8 +376,8 @@ func settleBecauseOthersAllFold(board *model.Board) {
 		panic("game.Pot != all player's inPotAmount")
 	}
 
-	finalPlayerTiers := util.FinalPlayerTiers{util.FinalPlayerTier{util.FinalPlayer{Player: theLastPlayer, ScoreResult: util.ScoreResult{}}}}
-	util.Settle(board, finalPlayerTiers)
+	finalPlayerTiers := FinalPlayerTiers{FinalPlayerTier{FinalPlayer{Player: theLastPlayer, ScoreResult: ScoreResult{}}}}
+	Settle(board, finalPlayerTiers)
 
 	// check
 	if board.Game.Pot != 0 {
@@ -541,32 +541,4 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 	}
 
 	return playingPlayerCount <= 1
-}
-
-func getParticipatedPlayerCount(board *model.Board) int {
-	playingOrAllInCount := 0
-	for _, player := range board.Players {
-		if player.Status == model.PlayerStatusPlaying || player.Status == model.PlayerStatusAllIn {
-			playingOrAllInCount++
-		}
-	}
-
-	return playingOrAllInCount
-}
-
-var positionDescList = []model.Position{model.PositionSmallBlind, model.PositionBigBlind, model.PositionButton, model.PositionUnderTheGun}
-func GetPositionDesc(board *model.Board, playerIndex int) string {
-	currentPositionDescList := positionDescList[:getParticipatedPlayerCount(board)]
-
-	for _, positionDesc := range currentPositionDescList {
-		if board.PositionIndexMap[positionDesc] == playerIndex {
-			return "@" + string(positionDesc)
-		}
-	}
-
-	return ""
-}
-
-func checkIfOnlyOneLeft(board *model.Board) bool {
-	return getParticipatedPlayerCount(board) == 1
 }
