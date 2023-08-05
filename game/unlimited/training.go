@@ -76,7 +76,7 @@ func goroutine(memory *map[int]count32, wg *sync.WaitGroup) {
 			}
 
 			(*memory)[finalWinnerIndex]++
-			logrus.Infof("cycle: %d, %v\n", cycle, memory)
+			logrus.Warnf("cycle: %d, %v\n", cycle, memory)
 		}
 
 		wg.Done()
