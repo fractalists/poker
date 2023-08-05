@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"holdem/config"
+	"holdem/process"
 	"os"
 	"os/exec"
 	"runtime"
@@ -54,12 +55,7 @@ func zhCNRender(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		position := ""
-		for k, v := range board.PositionIndexMap {
-			if v == player.Index {
-				position = "@" + string(k)
-			}
-		}
+		position := process.GetPositionDesc(board, player.Index)
 
 		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
 		secondPart := fmt.Sprintf("手牌:%v", player.Hands)
@@ -89,12 +85,7 @@ func enUSRender(board *Board) {
 	}
 
 	for _, player := range board.Players {
-		position := ""
-		for k, v := range board.PositionIndexMap {
-			if v == player.Index {
-				position = "@" + string(k)
-			}
-		}
+		position := process.GetPositionDesc(board, player.Index)
 
 		firstPart := fmt.Sprintf("[%.10s]%s", player.Name, position)
 		secondPart := fmt.Sprintf("hands:%v", player.Hands)

@@ -543,7 +543,7 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 	return playingPlayerCount <= 1
 }
 
-func checkIfOnlyOneLeft(board *model.Board) bool {
+func getParticipatedPlayerCount(board *model.Board) int {
 	playingOrAllInCount := 0
 	for _, player := range board.Players {
 		if player.Status == model.PlayerStatusPlaying || player.Status == model.PlayerStatusAllIn {
@@ -551,5 +551,22 @@ func checkIfOnlyOneLeft(board *model.Board) bool {
 		}
 	}
 
-	return playingOrAllInCount == 1
+	return playingOrAllInCount
+}
+
+var positionDescList = []model.Position{model.PositionSmallBlind, model.PositionBigBlind, model.PositionButton, model.PositionUnderTheGun}
+func GetPositionDesc(board *model.Board, playerIndex int) string {
+	currentPositionDescList := positionDescList[:getParticipatedPlayerCount(board)]
+
+	for _, positionDesc := range currentPositionDescList {
+		if board.PositionIndexMap[positionDesc] == playerIndex {
+			return "@" + string(positionDesc)
+		}
+	}
+
+	return ""
+}
+
+func checkIfOnlyOneLeft(board *model.Board) bool {
+	return getParticipatedPlayerCount(board) == 1
 }

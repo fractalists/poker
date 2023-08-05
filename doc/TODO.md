@@ -6,7 +6,6 @@
 
 # low priority
 - the accurate calc for game cycle (e.g. count loop times)
-- positioning when there is little player
 - logging
 - saving log to file
 - gui
