@@ -42,12 +42,12 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 		} else if selfIndex == game.LastRaisePlayerIndex {
 			betTip = "[!] Bet  <already bet in this round>"
 		} else {
-			betTip = fmt.Sprintf("[1] Bet --> [%d, %d]", betMinRequiredAmount, bankroll-1)
+			betTip = fmt.Sprintf("[1] Bet --> [%d, %d]", betMinRequiredAmount, bankroll)
 		}
 		var callTip string
 		if minRequiredAmount == 0 {
 			callTip = "[2] Check"
-		} else if bankroll <= minRequiredAmount {
+		} else if bankroll < minRequiredAmount {
 			callTip = "[!] Call  <insufficient bankroll>"
 		} else {
 			callTip = fmt.Sprintf("[2] Call --> %d", minRequiredAmount)
@@ -103,26 +103,46 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 					fmt.Printf("!! Atoi error: %v !!\n", err)
 					wrongInputCount++
 					continue
-				} else if amount <= minRequiredAmount || amount >= bankroll {
+				} else if amount < minRequiredAmount || amount > bankroll {
 					fmt.Printf("!! invalid input amount !!\n")
 					wrongInputCount++
 					continue
 				}
 
-				return model.Action{
-					ActionType: model.ActionTypeBet,
-					Amount:     amount,
+				if amount == minRequiredAmount {
+					return model.Action{
+						ActionType: model.ActionTypeCall,
+						Amount:     amount,
+					}
+				} else if amount == bankroll {
+					return model.Action{
+						ActionType: model.ActionTypeAllIn,
+						Amount:     amount,
+					}
+				} else {
+					return model.Action{
+						ActionType: model.ActionTypeBet,
+						Amount:     amount,
+					}
 				}
 
 			} else if actionNumber == "2" {
-				if bankroll <= minRequiredAmount {
+				if bankroll < minRequiredAmount {
 					fmt.Printf("!! You don't have enough money to call !!\n")
 					wrongInputCount++
 					continue
 				}
-				return model.Action{
-					ActionType: model.ActionTypeCall,
-					Amount:     minRequiredAmount,
+
+				if bankroll == minRequiredAmount {
+					return model.Action{
+						ActionType: model.ActionTypeAllIn,
+						Amount:     minRequiredAmount,
+					}
+				} else {
+					return model.Action{
+						ActionType: model.ActionTypeCall,
+						Amount:     minRequiredAmount,
+					}
 				}
 
 			} else if actionNumber == "3" {
