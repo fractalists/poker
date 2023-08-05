@@ -196,13 +196,12 @@ func (cards Cards) String() string {
 		result = result + (*card).String() + " "
 	}
 
-	if result[len(result) - 1] == ' ' {
-		return result[:len(result) - 1] + "]"
+	if result[len(result)-1] == ' ' {
+		return result[:len(result)-1] + "]"
 	} else {
 		return result + "]"
 	}
 }
-
 
 func (cards Cards) Len() int {
 	return len(cards)

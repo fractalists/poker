@@ -2,10 +2,15 @@ package process
 
 import (
 	"fmt"
+	"github.com/panjf2000/ants/v2"
+	"github.com/sirupsen/logrus"
 	"holdem/config"
 	"holdem/model"
 	"holdem/util"
 	"math/rand"
+	"os"
+	"runtime"
+	"runtime/pprof"
 	"strconv"
 )
 
@@ -248,7 +253,7 @@ func interactWithPlayers(board *model.Board) {
 		game.CurrentAmount = game.SmallBlinds
 
 		bigBlindPlayer := board.Players[actualBigBlindIndex]
-		bigBlinds := util.Min(2 * game.SmallBlinds, bigBlindPlayer.Bankroll)
+		bigBlinds := util.Min(2*game.SmallBlinds, bigBlindPlayer.Bankroll)
 		bigBlindPlayer.Bankroll -= bigBlinds
 		bigBlindPlayer.InPotAmount += bigBlinds
 		game.Pot += bigBlinds
@@ -541,4 +546,32 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 	}
 
 	return playingPlayerCount <= 1
+}
+
+func Start(withCpuProfile, debugMode, trainMode bool, language string, logLevel logrus.Level, playPoker func()) {
+	config.DebugMode = debugMode
+	config.TrainMode = trainMode
+	config.Language = language
+	logrus.SetLevel(logLevel)
+
+	if withCpuProfile {
+		f, err := os.Create("holdem.pprof")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	config.GoroutineLimit = 10 * runtime.NumCPU()
+	p, err := ants.NewPool(config.GoroutineLimit)
+	if err != nil || p == nil {
+		panic(fmt.Sprintf("new goroutine pool failed. press enter to exit. error: %v\n", err))
+	} else {
+		defer p.Release()
+		config.Pool = p
+	}
+
+	playPoker()
 }

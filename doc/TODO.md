@@ -5,11 +5,11 @@
 
 
 # low priority
-- the accurate calc for game cycle (e.g. count loop times)
 - logging
 - saving log to file
 - gui
 - testing
+- the accurate calc for game cycle (e.g. count loop times)
 - i18n
 - support different rules
 - solve all todos  

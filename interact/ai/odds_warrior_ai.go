@@ -49,7 +49,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		currentPot := game.Pot
 		smallBlinds := game.SmallBlinds
 		bankroll := board.Players[selfIndex].Bankroll
-		minRequiredAmount := util.Min(bankroll, game.CurrentAmount - board.Players[selfIndex].InPotAmount)
+		minRequiredAmount := util.Min(bankroll, game.CurrentAmount-board.Players[selfIndex].InPotAmount)
 		betMinRequiredAmount := game.CurrentAmount - board.Players[selfIndex].InPotAmount + util.Max(game.LastRaiseAmount, 2*game.SmallBlinds)
 
 		opponentCount := 0
@@ -199,7 +199,7 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 	totalTieCount := int32(0)
 	var wg sync.WaitGroup
 
-	subTask := func () {
+	subTask := func() {
 		ctx := process.NewContext()
 
 		winCount := int32(0)
@@ -274,7 +274,7 @@ func (oddsWarriorAI *OddsWarriorAI) mentoCarlo(hands, boardRevealCards, unreveal
 	}
 	wg.Wait()
 
-	return (float32(totalWinCount) + (float32(totalTieCount)) / (1.0+float32(opponentCount))) / float32(totalWinCount+totalTieCount+totalLossCount)
+	return (float32(totalWinCount) + (float32(totalTieCount))/(1.0+float32(opponentCount))) / float32(totalWinCount+totalTieCount+totalLossCount)
 }
 
 func getRandomNCards(ctx *model.Context, cards model.Cards, n int) model.Cards {

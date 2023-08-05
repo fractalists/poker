@@ -4,6 +4,6 @@ import (
 	"math/rand"
 )
 
-type Context struct{
+type Context struct {
 	Rng *rand.Rand
 }
