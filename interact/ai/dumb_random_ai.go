@@ -1,9 +1,9 @@
 package ai
 
 import (
-	"holdem/model"
-	"holdem/util"
 	"math/rand"
+	"poker/model"
+	"poker/util"
 )
 
 type DumbRandomAI struct{}

@@ -1,7 +1,7 @@
 package process
 
 import (
-	"holdem/model"
+	"poker/model"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

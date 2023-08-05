@@ -3,9 +3,9 @@ package human
 import (
 	"bufio"
 	"fmt"
-	"holdem/model"
-	"holdem/util"
 	"os"
+	"poker/model"
+	"poker/util"
 	"strconv"
 	"strings"
 )

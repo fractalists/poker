@@ -1,4 +1,4 @@
-module holdem
+module poker
 
 go 1.16
 

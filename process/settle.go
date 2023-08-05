@@ -2,8 +2,8 @@ package process
 
 import (
 	"fmt"
-	"holdem/model"
-	"holdem/util"
+	"poker/model"
+	"poker/util"
 	"sort"
 )
 

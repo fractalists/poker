@@ -3,11 +3,11 @@ package unlimited
 import (
 	"bufio"
 	"fmt"
-	"holdem/interact/ai"
-	"holdem/interact/human"
-	"holdem/model"
-	"holdem/process"
 	"os"
+	"poker/interact/ai"
+	"poker/interact/human"
+	"poker/model"
+	"poker/process"
 )
 
 func PlayPoker() {

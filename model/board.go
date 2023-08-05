@@ -2,10 +2,10 @@ package model
 
 import (
 	"fmt"
-	"holdem/config"
-	"holdem/util"
 	"os"
 	"os/exec"
+	"poker/config"
+	"poker/util"
 	"runtime"
 )
 

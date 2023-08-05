@@ -2,10 +2,10 @@ package unlimited
 
 import (
 	"fmt"
-	"holdem/config"
-	"holdem/interact/ai"
-	"holdem/model"
-	"holdem/process"
+	"poker/config"
+	"poker/interact/ai"
+	"poker/model"
+	"poker/process"
 	"sync"
 	"sync/atomic"
 )

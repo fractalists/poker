@@ -2,7 +2,7 @@ package process
 
 import (
 	"fmt"
-	"holdem/model"
+	"poker/model"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"holdem/config"
-	"holdem/game/colosseum"
-	"holdem/game/unlimited"
-	"holdem/process"
+	"poker/config"
+	"poker/game/colosseum"
+	"poker/game/unlimited"
+	"poker/process"
 
 	"github.com/sirupsen/logrus"
 )

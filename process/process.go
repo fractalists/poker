@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
-	"holdem/config"
-	"holdem/model"
-	"holdem/util"
 	"math/rand"
 	"os"
+	"poker/config"
+	"poker/model"
+	"poker/util"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
@@ -555,7 +555,7 @@ func Start(withCpuProfile, debugMode, trainMode bool, language string, logLevel 
 	logrus.SetLevel(logLevel)
 
 	if withCpuProfile {
-		f, err := os.Create("holdem.pprof")
+		f, err := os.Create("poker.pprof")
 		if err != nil {
 			fmt.Println(err)
 			return

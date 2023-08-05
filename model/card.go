@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"holdem/config"
+	"poker/config"
 )
 
 type rawCard struct {

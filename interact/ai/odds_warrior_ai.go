@@ -2,10 +2,10 @@ package ai
 
 import (
 	"fmt"
-	"holdem/config"
-	"holdem/model"
-	"holdem/process"
-	"holdem/util"
+	"poker/config"
+	"poker/model"
+	"poker/process"
+	"poker/util"
 	"sync"
 	"sync/atomic"
 )
