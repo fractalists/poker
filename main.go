@@ -26,7 +26,7 @@ func main() {
 
 func playUnlimited() {
 	process.Start(
-		true,
+		false,
 		false,
 		config.ZhCn,
 		logrus.DebugLevel,

@@ -5,8 +5,6 @@
 
 
 # low priority
-- logging
-- saving log to file
 - gui
 - testing
 - the accurate calc for game cycle (e.g. count loop times)

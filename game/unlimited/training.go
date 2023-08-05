@@ -32,7 +32,7 @@ func Train() {
 		goroutine(&memory, &wg)
 	}
 
-	logrus.Infoln("Waiting final result")
+	logrus.Warnln("Waiting final result")
 	wg.Wait()
 }
 
