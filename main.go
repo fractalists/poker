@@ -27,29 +27,29 @@ func main() {
 func playUnlimited() {
 	process.Start(
 		false,
-		false,
 		config.ZhCn,
 		logrus.DebugLevel,
-		fmt.Sprintf("./generated/log/poker_log_%d.log", time.Now().Unix()),
+		fmt.Sprintf("D:/Git/go/src/poker/generated/log/poker_log_%d.log", time.Now().Unix()), //filepath.Join("generated", "log", fmt.Sprintf("poker_log_%d.log", time.Now().Unix())),
+		"",
 		unlimited.PlayPoker)
 }
 
 func trainWithProfiler() {
 	process.Start(
 		true,
-		true,
 		config.ZhCn,
 		logrus.WarnLevel,
 		"",
+		fmt.Sprintf("D:/Git/go/src/poker/generated/pprof/poker_pprof_%d.pprof", time.Now().Unix()), //filepath.Join("generated", "pprof", fmt.Sprintf("poker_pprof_%d.pprof", time.Now().Unix())),
 		unlimited.Train)
 }
 
 func playColosseum() {
 	process.Start(
 		false,
-		false,
 		config.ZhCn,
 		logrus.WarnLevel,
 		"",
+		fmt.Sprintf("D:/Git/go/src/poker/generated/pprof/poker_pprof_%d.pprof", time.Now().Unix()), //filepath.Join("generated", "pprof", fmt.Sprintf("poker_pprof_%d.pprof", time.Now().Unix())),
 		colosseum.PlayPoker)
 }

@@ -7,13 +7,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"poker/config"
 	"poker/model"
 	"poker/util"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
-	"time"
 )
 
 func InitializePlayers(ctx *model.Context, board *model.Board, interactList []model.Interact, playerBankroll int) {
@@ -550,7 +550,7 @@ func checkIfCanJumpToShowdown(board *model.Board) bool {
 	return playingPlayerCount <= 1
 }
 
-func Start(withCpuProfile, trainMode bool, language string, logLevel logrus.Level, logFilePath string, playPoker func()) {
+func Start(trainMode bool, language string, logLevel logrus.Level, logFilePath, cpuProfilePath string, playPoker func()) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Recovered from %v\n", r)
@@ -559,18 +559,21 @@ func Start(withCpuProfile, trainMode bool, language string, logLevel logrus.Leve
 			_, _ = reader.ReadString('\n')
 		}
 	}()
-
+	// initialize config
 	config.TrainMode = trainMode
 	config.Language = language
 	// initialize logger
-	util.InitLogger(logLevel, logFilePath)
+	var logFile *os.File
+	if logFilePath != "" {
+		logFile = util.OpenOrCreateFileAndNestedFolders(logFilePath)
+		defer logFile.Close()
+	}
+	util.InitLogger(logLevel, logFile)
 	// initialize cpu profile
-	if withCpuProfile {
-		f, err := os.Create(fmt.Sprintf("./generated/pprof/poker_%d.pprof", time.Now().Unix()))
-		if err != nil {
-			panic(err)
-		}
-		if err := pprof.StartCPUProfile(f); err != nil {
+	if cpuProfilePath != "" {
+		pprofFile := util.OpenOrCreateFileAndNestedFolders(cpuProfilePath)
+		defer pprofFile.Close()
+		if err := pprof.StartCPUProfile(pprofFile); err != nil {
 			panic(err)
 		}
 		defer pprof.StopCPUProfile()
@@ -586,4 +589,25 @@ func Start(withCpuProfile, trainMode bool, language string, logLevel logrus.Leve
 	}
 
 	playPoker()
+}
+
+func autoSwitchExecDir() {
+	// auto switch to the folder which the executable lies
+	pwd, _ := os.Getwd()
+	fmt.Println(pwd)
+	execDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	fmt.Println(execDir)
+
+	if err != nil {
+		panic(err)
+	}
+	if pwd == execDir {
+		// no need to switch
+		return
+	}
+	if err := os.Chdir(execDir); err != nil {
+		panic(err)
+	}
+	fmt.Println(execDir)
+	panic("")
 }

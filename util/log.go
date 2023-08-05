@@ -8,17 +8,13 @@ import (
 	"strings"
 )
 
-func InitLogger(logLevel logrus.Level, logFilePath string) {
+func InitLogger(logLevel logrus.Level, logFile *os.File) {
 	// set log level
 	logrus.SetLevel(logLevel)
 	// set log output
 	var output io.Writer
-	if logFilePath != "" {
-		f, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY, 0777)
-		if err != nil {
-			panic(err)
-		}
-		output = io.MultiWriter(os.Stdout, f)
+	if logFile != nil {
+		output = io.MultiWriter(os.Stdout, logFile)
 	} else {
 		output = os.Stdout
 	}
