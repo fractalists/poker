@@ -352,7 +352,7 @@ func showdown(board *model.Board) {
 			finalPlayer := finalPlayerTiers[0][0]
 			logrus.Infof("Winner is: %s\nScore: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
 		} else {
-			logrus.Infoln("Winners are:")
+			logrus.Info("Winners are:\n")
 			for _, finalPlayer := range finalPlayerTiers[0] {
 				logrus.Infof("Name: %s Score: %v \n", finalPlayer.Player.Name, finalPlayer.ScoreResult)
 			}
@@ -491,7 +491,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 	game := board.Game
 	currentPlayer := board.Players[playerIndex]
 	if config.TrainMode == false {
-		logrus.Infof("\n--> [%s]'s action: %v\n", currentPlayer.Name, action)
+		logrus.Infof("--> [%s]'s action: %v\n\n", currentPlayer.Name, action)
 	}
 
 	switch action.ActionType {
@@ -554,7 +554,7 @@ func Start(trainMode bool, language string, logLevel logrus.Level, logFilePath, 
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Recovered from %v\n", r)
-			logrus.Infoln("Match finish. Press enter to exit.")
+			logrus.Info("Match finish. Press enter to exit.\n")
 			reader := bufio.NewReader(os.Stdin)
 			_, _ = reader.ReadString('\n')
 		}

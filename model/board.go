@@ -43,9 +43,9 @@ func zhCNRender(board *Board) {
 	clear()
 
 	game := board.Game
-	logrus.Infoln("---------------------------------------------------------------")
+	logrus.Info("---------------------------------------------------------------\n")
 	if game == nil {
-		logrus.Infoln("# 游戏还未开始。")
+		logrus.Info("# 游戏还未开始。\n")
 	} else {
 		logrus.Infof("# 描述: %s | 小盲注: %d\n"+
 			"# 阶段: %s, 底池: %d, 当前金额: %d, 前一次加注金额: %d\n"+
@@ -73,9 +73,9 @@ func enUSRender(board *Board) {
 	clear()
 
 	game := board.Game
-	logrus.Infoln("---------------------------------------------------------------")
+	logrus.Info("---------------------------------------------------------------\n")
 	if game == nil {
-		logrus.Infoln("# The game hasn't started yet.")
+		logrus.Info("# The game hasn't started yet.\n")
 	} else {
 		logrus.Infof("# Desc: %s | SmallBlinds: %d\n"+
 			"# Round: %s, Pot: %d, CurrentAmount: %d, LastRaiseAmount: %d\n"+

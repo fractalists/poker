@@ -60,7 +60,8 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 			"%s\n"+
 			"%s\n"+
 			"%s\n"+
-			"%s\n",
+			"%s\n"+
+			"\n",
 			board.Players[selfIndex].Name,
 			betTip,
 			callTip,
@@ -83,7 +84,7 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 
 			if actionNumber == "1" {
 				if bankroll < betMinRequiredAmount {
-					logrus.Infoln("!! You don't have enough money to bet !!")
+					logrus.Info("!! You don't have enough money to bet !!\n")
 					wrongInputCount++
 					continue
 				}
@@ -94,18 +95,18 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 				amountStr = strings.ReplaceAll(amountStr, "\n", "")
 				amountStr = strings.ReplaceAll(amountStr, "\r", "")
 				if err != nil {
-					logrus.Infoln("!! input error: %v !!", err)
+					logrus.Infof("!! input error: %v !!\n", err)
 					wrongInputCount++
 					continue
 				}
 
 				amount, err := strconv.Atoi(amountStr)
 				if err != nil {
-					logrus.Infoln("!! Atoi error: %v !!", err)
+					logrus.Infof("!! Atoi error: %v !!\n", err)
 					wrongInputCount++
 					continue
 				} else if amount < minRequiredAmount || amount > bankroll {
-					logrus.Infoln("!! invalid input amount !!")
+					logrus.Info("!! invalid input amount !!\n")
 					wrongInputCount++
 					continue
 				}
@@ -129,7 +130,7 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 
 			} else if actionNumber == "2" {
 				if bankroll < minRequiredAmount {
-					logrus.Infoln("!! You don't have enough money to call !!")
+					logrus.Info("!! You don't have enough money to call !!\n")
 					wrongInputCount++
 					continue
 				}
@@ -160,7 +161,7 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 
 			} else {
 				wrongInputCount++
-				logrus.Infoln("!! invalid action input !!")
+				logrus.Info("!! invalid action input !!\n")
 				continue
 			}
 		}
