@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
+	"github.com/sirupsen/logrus"
 	"poker/config"
 	"poker/game/colosseum"
 	"poker/game/unlimited"
 	"poker/process"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -18,10 +20,27 @@ func main() {
 	case 2:
 		trainWithProfiler()
 	case 3:
+		tryFyne()
+	case 4:
 		playColosseum()
 	default:
 		playUnlimited()
 	}
+}
+
+func tryFyne() {
+	a := app.New()
+	w := a.NewWindow("Hello")
+
+	hello := widget.NewLabel("Hello Fyne!")
+	w.SetContent(container.NewVBox(
+		hello,
+		widget.NewButton("Hi!", func() {
+			hello.SetText("Welcome :)")
+		}),
+	))
+
+	w.ShowAndRun()
 }
 
 func playUnlimited() {
