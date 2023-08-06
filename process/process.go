@@ -532,7 +532,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 
 func checkIfAllInteractIsFinish(board *model.Board) bool {
 	for _, player := range board.Players {
-		if player.Status == model.PlayerStatusPlaying && player.InPotAmount != board.Game.CurrentAmount {
+		if player.Status == model.PlayerStatusPlaying && player.InPotAmount != board.Game.CurrentAmount && player.Bankroll > 0 {
 			return false
 		}
 	}
