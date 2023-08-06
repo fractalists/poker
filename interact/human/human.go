@@ -60,8 +60,7 @@ func (human *Human) InitInteract(selfIndex int, getBoardInfoFunc func() *model.B
 			"%s\n"+
 			"%s\n"+
 			"%s\n"+
-			"%s\n"+
-			"\n",
+			"%s\n",
 			board.Players[selfIndex].Name,
 			betTip,
 			callTip,

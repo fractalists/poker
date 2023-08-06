@@ -63,6 +63,7 @@ func zhCNRender(board *Board) {
 		thirdPart := fmt.Sprintf("已下注:%d, 剩余资金:%d, 状态:%s", player.InPotAmount, player.Bankroll, player.Status)
 		logrus.Infof("%-16.16s %-12.12s %s\n", firstPart, secondPart, thirdPart)
 	}
+	logrus.Info("\n")
 }
 
 func enUSRender(board *Board) {

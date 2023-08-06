@@ -62,9 +62,10 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		}
 
 		winRate := oddsWarriorAI.calcWinRate(board, selfIndex)
-		logrus.Debugf("[%s]: winRate: %v\n", board.Players[selfIndex].Name, winRate)
-
-		if odds(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds)) > winRate && minRequiredAmount > 0 {
+		logrus.Debugf("[%s]: winRate: %v", board.Players[selfIndex].Name, winRate)
+		investRatio := calcInvestRatio(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds))
+		logrus.Debugf("[%s]: investRatio: %v", board.Players[selfIndex].Name, investRatio)
+		if investRatio > winRate && minRequiredAmount > 0 {
 			return model.Action{
 				ActionType: model.ActionTypeFold,
 				Amount:     0,
@@ -77,6 +78,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		} else {
 			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), winRate, float32(smallBlinds)))
 		}
+		logrus.Debugf("[%s]: expectedAmount: %v", board.Players[selfIndex].Name, expectedAmount)
 
 		if expectedAmount < bankroll {
 			if expectedAmount >= betMinRequiredAmount {
@@ -108,10 +110,11 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 	}
 }
 
-func odds(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds float32) float32 {
-	out := pot + 1.2*additionalAmount*opponentCount
+// invest ratio = in / out = 1 / odds
+func calcInvestRatio(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds float32) float32 {
 	in := minRequiredAmount + additionalAmount
-	return out / in
+	out := pot + 1.2*additionalAmount*opponentCount
+	return in / out
 }
 
 func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallBlinds float32) float32 {
