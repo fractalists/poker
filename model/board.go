@@ -208,7 +208,7 @@ func getParticipatedPlayerCount(board *Board) int {
 var positionDescList = []Position{PositionSmallBlind, PositionBigBlind, PositionButton, PositionUnderTheGun}
 
 func getPositionDesc(board *Board, playerIndex int) string {
-	currentPositionDescList := positionDescList[:util.Min(len(positionDescList), getParticipatedPlayerCount(board))]
+	currentPositionDescList := positionDescList[:util.Max(2, util.Min(len(positionDescList), getParticipatedPlayerCount(board)))]
 
 	for _, positionDesc := range currentPositionDescList {
 		if board.PositionIndexMap[positionDesc] == playerIndex {

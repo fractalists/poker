@@ -109,17 +109,9 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 }
 
 func odds(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds float32) float32 {
-	if pot < 4*smallBlinds {
-		pot = 2 * pot
-	} else if pot < 6*smallBlinds {
-		pot = 1.5 * pot
-	} else if pot < 8*smallBlinds {
-		pot = 1.2 * pot
-	}
-
+	out := pot + 1.2*additionalAmount*opponentCount
 	in := minRequiredAmount + additionalAmount
-	out := minRequiredAmount + additionalAmount + pot + 0.3*additionalAmount*opponentCount
-	return in / out
+	return out / in
 }
 
 func calcAdditionalAmount(minRequiredAmount, pot, opponentCount, winRate, smallBlinds float32) float32 {
