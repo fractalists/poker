@@ -1,7 +1,6 @@
 # high priority
 - improve ai
     - odds warrior logic (the correctness of odds calculation)
-- add little randomness for odds warrior
 - ai vs ai
 
 
@@ -13,4 +12,5 @@
 - the accurate calc for game cycle (e.g. count loop times)
 - i18n
 - support different rules
-- solve all todos  
+- solve all todo
+- a brand new mode in which everyone gets 3 private cards and share 4 common cards

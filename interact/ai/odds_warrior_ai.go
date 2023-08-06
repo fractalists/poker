@@ -2,6 +2,7 @@ package ai
 
 import (
 	"github.com/sirupsen/logrus"
+	"math"
 	"poker/config"
 	"poker/model"
 	"poker/process"
@@ -61,11 +62,14 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 			}
 		}
 
-		winRate := oddsWarriorAI.calcWinRate(board, selfIndex)
-		logrus.Debugf("[%s]: winRate: %v", board.Players[selfIndex].Name, winRate)
 		investRatio := calcInvestRatio(float32(minRequiredAmount), 0.0, float32(currentPot), float32(opponentCount), float32(smallBlinds))
 		logrus.Debugf("[%s]: investRatio: %v", board.Players[selfIndex].Name, investRatio)
-		if investRatio > winRate && minRequiredAmount > 0 {
+		winRate := oddsWarriorAI.calcWinRate(board, selfIndex)
+		logrus.Debugf("[%s]: winRate: %v", board.Players[selfIndex].Name, winRate)
+		temperature := float32(math.Max(0.1, util.NewRng().NormFloat64() * 0.3 + 1.1))
+		adjustedWinRate := temperature * winRate
+
+		if investRatio > adjustedWinRate && minRequiredAmount > 0 {
 			return model.Action{
 				ActionType: model.ActionTypeFold,
 				Amount:     0,
@@ -73,10 +77,10 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 		}
 
 		var expectedAmount int
-		if 1.0-winRate < 0.000001 {
+		if 1.0-adjustedWinRate < 0.000001 {
 			expectedAmount = 2147483647
 		} else {
-			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), winRate, float32(smallBlinds)))
+			expectedAmount = minRequiredAmount + int(calcAdditionalAmount(float32(minRequiredAmount), float32(currentPot), float32(opponentCount), adjustedWinRate, float32(smallBlinds)))
 		}
 		logrus.Debugf("[%s]: expectedAmount: %v", board.Players[selfIndex].Name, expectedAmount)
 
@@ -113,7 +117,7 @@ func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc
 // invest ratio = in / out = 1 / odds
 func calcInvestRatio(minRequiredAmount, additionalAmount, pot, opponentCount, smallBlinds float32) float32 {
 	in := minRequiredAmount + additionalAmount
-	out := pot + 1.2*additionalAmount*opponentCount
+	out := pot + additionalAmount*opponentCount
 	return in / out
 }
 
