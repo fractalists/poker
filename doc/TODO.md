@@ -1,6 +1,5 @@
 # high priority
 - improve ai
-    - odds warrior logic (the correctness of odds calculation)
 - ai vs ai
 
 
