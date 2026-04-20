@@ -1,0 +1,53 @@
+---------------------------------------------------------------
+# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 3, 当前金额: 2, 前一次加注金额: 0
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:1, 剩余资金:99, 状态:PLAYING
+[Player2]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player5]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+[Player6]@BTN    手牌:[** **]   已下注:0, 剩余资金:100, 状态:PLAYING
+
+--> [Player3]'s action: {FOLD 0}
+
+--> [Player4]'s action: {FOLD 0}
+
+--> [Player5]'s action: {ALL_IN 100}
+
+---------------------------------------------------------------
+# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: PREFLOP, 底池: 103, 当前金额: 100, 前一次加注金额: 98
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:1, 剩余资金:99, 状态:PLAYING
+[Player2]@BB     手牌:[** **]   已下注:2, 剩余资金:98, 状态:PLAYING
+[Player3]@UTG    手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player5]        手牌:[** **]   已下注:100, 剩余资金:0, 状态:ALLIN
+[Player6]@BTN    手牌:[♥3 ♣10]  已下注:0, 剩余资金:100, 状态:PLAYING
+
+--> You are Player6, please choose (enter number): 
+[!] Bet  <insufficient bankroll>
+[2] Call --> 100
+[3] Fold
+[4] AllIn --> 100
+--> [Player6]'s action: {FOLD 0}
+
+--> [Player1]'s action: {FOLD 0}
+
+--> [Player2]'s action: {FOLD 0}
+
+---------------------------------------------------------------
+# 描述: cycle1_match1 | 小盲注: 1
+# 阶段: FINISH, 底池: 0, 当前金额: 100, 前一次加注金额: 98
+# 公共牌: [** ** ** ** **]
+[Player1]@SB     手牌:[** **]   已下注:0, 剩余资金:99, 状态:OUT
+[Player2]@BB     手牌:[** **]   已下注:0, 剩余资金:98, 状态:OUT
+[Player3]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player4]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+[Player5]        手牌:[** **]   已下注:0, 剩余资金:103, 状态:ALLIN
+[Player6]        手牌:[** **]   已下注:0, 剩余资金:100, 状态:OUT
+
+Winner is: Player5
+Score: No score, all others folded.
+Match finish. Press enter to begin next match.

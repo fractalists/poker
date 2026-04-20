@@ -1,0 +1,944 @@
+# Poker Audit Fixes Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 修复审计中确认的高优先级正确性问题，让训练结果可信、流程规则正确、入口配置可移植，并为这些路径补上回归测试。
+
+**Architecture:** 保持现有包边界不变，优先在 `model/`、`process/`、`game/unlimited/` 和 `main` 包内做小范围修复。每个修复先补失败测试，再做最小实现，最后用仓库内 `GOCACHE` 运行针对性回归和全量验证。
+
+**Tech Stack:** Go 1.20, Go test, testify, PowerShell
+
+---
+
+## Scope Notes
+
+- 审计里最需要优先处理的是会改变对局结果或让训练结果失真的问题：
+  - `TrainMode` 泄露隐藏信息
+  - 双人局 post-flop 行动顺序错误
+  - `LastRaiseAmount` 计算错误
+  - 三次非法动作后 panic
+  - 训练统计共享 map 并发写
+- `main.go` 的硬编码模式和绝对路径也在范围内，但放在规则与训练修完后处理。
+- 所有验证命令都使用仓库内缓存，避免再次踩到宿主机 `GOCACHE` 权限问题。
+
+### Shared Verification Command
+
+后续所有 `go test` / `go build` 命令都用这个 PowerShell 前缀：
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+```
+
+---
+
+### Task 1: Stop Hidden-Card Leakage In Training Mode
+
+**Files:**
+- Modify: `model/board.go`
+- Create: `model/board_test.go`
+- Verify: `go test ./model`
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+package model
+
+import (
+	"poker/config"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDeepCopyBoardToSpecificPlayerWithoutLeakStillHidesCardsInTrainMode(t *testing.T) {
+	originalTrainMode := config.TrainMode
+	config.TrainMode = true
+	t.Cleanup(func() {
+		config.TrainMode = originalTrainMode
+	})
+
+	board := &Board{
+		Players: []*Player{
+			{
+				Index: 0,
+				Hands: Cards{
+					NewCustomCard(HEARTS, ACE, true),
+					NewCustomCard(SPADES, KING, true),
+				},
+			},
+			{
+				Index: 1,
+				Hands: Cards{
+					NewCustomCard(CLUBS, TWO, true),
+					NewCustomCard(DIAMONDS, THREE, true),
+				},
+			},
+		},
+		PositionIndexMap: map[Position]int{
+			PositionSmallBlind:  0,
+			PositionBigBlind:    1,
+			PositionButton:      0,
+			PositionUnderTheGun: 1,
+		},
+		Game: &Game{
+			BoardCards: Cards{
+				NewCustomCard(HEARTS, QUEEN, true),
+				NewCustomCard(CLUBS, JACK, false),
+			},
+		},
+	}
+
+	got := DeepCopyBoardToSpecificPlayerWithoutLeak(board, 0)
+
+	require.NotSame(t, board, got)
+	assert.True(t, got.Players[0].Hands[0].Revealed)
+	assert.False(t, got.Players[1].Hands[0].Revealed)
+	assert.Equal(t, Rank(""), got.Players[1].Hands[0].Rank)
+	assert.True(t, got.Game.BoardCards[0].Revealed)
+	assert.False(t, got.Game.BoardCards[1].Revealed)
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./model -run TestDeepCopyBoardToSpecificPlayerWithoutLeakStillHidesCardsInTrainMode -v
+```
+
+Expected: FAIL because `DeepCopyBoardToSpecificPlayerWithoutLeak` currently returns the original board when `config.TrainMode == true`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Update `model/board.go` so `DeepCopyBoardToSpecificPlayerWithoutLeak` always produces a redacted copy; only `Render` should special-case `TrainMode`.
+
+```go
+func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Board {
+	var deepCopyPlayers []*Player
+	if board.Players != nil {
+		for i := 0; i < len(board.Players); i++ {
+			player := board.Players[i]
+
+			var hands Cards
+			for handsIndex := 0; handsIndex < len(player.Hands); handsIndex++ {
+				if i == playerIndex {
+					hands = append(hands, NewCustomCard(player.Hands[handsIndex].Suit, player.Hands[handsIndex].Rank, true))
+				} else {
+					hands = append(hands, NewUnknownCard())
+				}
+			}
+
+			deepCopyPlayers = append(deepCopyPlayers, &Player{
+				Name:            player.Name,
+				Index:           player.Index,
+				Status:          player.Status,
+				Interact:        nil,
+				Hands:           hands,
+				InitialBankroll: player.InitialBankroll,
+				Bankroll:        player.Bankroll,
+				InPotAmount:     player.InPotAmount,
+			})
+		}
+	}
+
+	positionIndexMap := make(map[Position]int)
+	for position, index := range board.PositionIndexMap {
+		positionIndexMap[position] = index
+	}
+
+	var deepCopyGame *Game
+	if board.Game != nil {
+		deepCopyGame = &Game{
+			Round:                board.Game.Round,
+			Pot:                  board.Game.Pot,
+			SmallBlinds:          board.Game.SmallBlinds,
+			CurrentAmount:        board.Game.CurrentAmount,
+			LastRaiseAmount:      board.Game.LastRaiseAmount,
+			LastRaisePlayerIndex: board.Game.LastRaisePlayerIndex,
+			Desc:                 board.Game.Desc,
+		}
+
+		for _, card := range board.Game.BoardCards {
+			if card.Revealed {
+				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewCustomCard(card.Suit, card.Rank, true))
+			} else {
+				deepCopyGame.BoardCards = append(deepCopyGame.BoardCards, NewUnknownCard())
+			}
+		}
+	}
+
+	return &Board{
+		Players:          deepCopyPlayers,
+		PositionIndexMap: positionIndexMap,
+		Game:             deepCopyGame,
+	}
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./model -run TestDeepCopyBoardToSpecificPlayerWithoutLeakStillHidesCardsInTrainMode -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add model/board.go model/board_test.go
+git commit -m "fix: keep hidden cards redacted in train mode"
+```
+
+---
+
+### Task 2: Fix Heads-Up Action Order And Raise Delta Bookkeeping
+
+**Files:**
+- Modify: `process/process.go`
+- Create: `process/process_state_test.go`
+- Verify: `go test ./process`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package process
+
+import (
+	"poker/model"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestInteractWithPlayersHeadsUpPostFlopStartsFromBigBlind(t *testing.T) {
+	order := make([]int, 0, 2)
+
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Index:    0,
+				Status:   model.PlayerStatusPlaying,
+				Bankroll: 100,
+				Interact: func(*model.Board, model.InteractType) model.Action {
+					order = append(order, 0)
+					return model.Action{ActionType: model.ActionTypeCall, Amount: 0}
+				},
+			},
+			{
+				Index:    1,
+				Status:   model.PlayerStatusPlaying,
+				Bankroll: 100,
+				Interact: func(*model.Board, model.InteractType) model.Action {
+					order = append(order, 1)
+					return model.Action{ActionType: model.ActionTypeCall, Amount: 0}
+				},
+			},
+		},
+		PositionIndexMap: map[model.Position]int{
+			model.PositionSmallBlind:  0,
+			model.PositionBigBlind:    1,
+			model.PositionButton:      0,
+			model.PositionUnderTheGun: 0,
+		},
+		Game: &model.Game{
+			Round:       model.FLOP,
+			SmallBlinds: 1,
+		},
+	}
+
+	interactWithPlayers(board)
+
+	assert.Equal(t, []int{1, 0}, order[:2])
+}
+
+func TestPerformActionBetTracksRaiseDeltaInsteadOfTotalContribution(t *testing.T) {
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Index:       0,
+				Status:      model.PlayerStatusPlaying,
+				Bankroll:    100,
+				InPotAmount: 2,
+			},
+		},
+		Game: &model.Game{
+			CurrentAmount:   2,
+			LastRaiseAmount: 2,
+			SmallBlinds:     1,
+			Pot:             3,
+		},
+	}
+
+	performAction(board, 0, model.Action{ActionType: model.ActionTypeBet, Amount: 4})
+
+	assert.Equal(t, 6, board.Game.CurrentAmount)
+	assert.Equal(t, 4, board.Game.LastRaiseAmount)
+}
+
+func TestPerformActionAllInTracksRaiseDeltaWhenItBecomesNewHighBet(t *testing.T) {
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Index:       0,
+				Status:      model.PlayerStatusPlaying,
+				Bankroll:    5,
+				InPotAmount: 2,
+			},
+		},
+		Game: &model.Game{
+			CurrentAmount:   4,
+			LastRaiseAmount: 2,
+			SmallBlinds:     1,
+			Pot:             10,
+		},
+	}
+
+	performAction(board, 0, model.Action{ActionType: model.ActionTypeAllIn, Amount: 5})
+
+	assert.Equal(t, 7, board.Game.CurrentAmount)
+	assert.Equal(t, 3, board.Game.LastRaiseAmount)
+	assert.Equal(t, 0, board.Players[0].Bankroll)
+}
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./process -run 'TestInteractWithPlayersHeadsUpPostFlopStartsFromBigBlind|TestPerformActionBetTracksRaiseDeltaInsteadOfTotalContribution|TestPerformActionAllInTracksRaiseDeltaWhenItBecomesNewHighBet' -v
+```
+
+Expected: FAIL with wrong action order and wrong `LastRaiseAmount`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Add a helper to decide the round start index, and capture `oldCurrentAmount` before mutating `game.CurrentAmount`.
+
+```go
+func getInteractStartIndex(board *model.Board) int {
+	game := board.Game
+	if game.Round == model.PREFLOP {
+		return board.PositionIndexMap[model.PositionUnderTheGun]
+	}
+
+	smallBlindIndex := board.PositionIndexMap[model.PositionSmallBlind]
+	bigBlindIndex := board.PositionIndexMap[model.PositionBigBlind]
+	underTheGunIndex := board.PositionIndexMap[model.PositionUnderTheGun]
+
+	if underTheGunIndex == smallBlindIndex {
+		return bigBlindIndex
+	}
+	return smallBlindIndex
+}
+
+func interactWithPlayers(board *model.Board) {
+	game := board.Game
+	actualSmallBlindIndex := board.PositionIndexMap[model.PositionSmallBlind]
+	actualBigBlindIndex := board.PositionIndexMap[model.PositionBigBlind]
+
+	interactStartIndex := getInteractStartIndex(board)
+
+	if game.Round == model.PREFLOP {
+		// existing blinds posting logic unchanged
+	}
+
+	// remaining function unchanged
+}
+
+func performAction(board *model.Board, playerIndex int, action model.Action) {
+	game := board.Game
+	currentPlayer := board.Players[playerIndex]
+
+	switch action.ActionType {
+	case model.ActionTypeBet:
+		oldCurrentAmount := game.CurrentAmount
+		currentPlayer.Bankroll -= action.Amount
+		currentPlayer.InPotAmount += action.Amount
+		game.Pot += action.Amount
+		game.CurrentAmount = currentPlayer.InPotAmount
+		game.LastRaiseAmount = game.CurrentAmount - oldCurrentAmount
+		game.LastRaisePlayerIndex = playerIndex
+
+	case model.ActionTypeAllIn:
+		oldCurrentAmount := game.CurrentAmount
+		currentPlayer.Status = model.PlayerStatusAllIn
+		currentPlayer.Bankroll -= action.Amount
+		currentPlayer.InPotAmount += action.Amount
+		game.Pot += action.Amount
+		if currentPlayer.InPotAmount > game.CurrentAmount {
+			game.CurrentAmount = currentPlayer.InPotAmount
+		}
+		raiseAmount := game.CurrentAmount - oldCurrentAmount
+		if raiseAmount >= game.LastRaiseAmount {
+			game.LastRaiseAmount = raiseAmount
+			game.LastRaisePlayerIndex = playerIndex
+		}
+	}
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./process -run 'TestInteractWithPlayersHeadsUpPostFlopStartsFromBigBlind|TestPerformActionBetTracksRaiseDeltaInsteadOfTotalContribution|TestPerformActionAllInTracksRaiseDeltaWhenItBecomesNewHighBet' -v
+```
+
+Then run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./process -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add process/process.go process/process_state_test.go
+git commit -m "fix: correct heads-up action order and raise tracking"
+```
+
+---
+
+### Task 3: Prevent Invalid Actions From Crashing The Match
+
+**Files:**
+- Modify: `process/process.go`
+- Modify: `process/process_state_test.go`
+- Verify: `go test ./process`
+
+- [ ] **Step 1: Write the failing test**
+
+Append this test to `process/process_state_test.go`:
+
+```go
+func TestCallInteractFallsBackToFoldAfterThreeInvalidActions(t *testing.T) {
+	attempts := 0
+
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Name:      "P1",
+				Index:     0,
+				Status:    model.PlayerStatusPlaying,
+				Bankroll:  100,
+				InPotAmount: 0,
+				Interact: func(*model.Board, model.InteractType) model.Action {
+					attempts++
+					return model.Action{ActionType: model.ActionTypeBet, Amount: 999}
+				},
+			},
+		},
+		Game: &model.Game{
+			CurrentAmount:   0,
+			LastRaiseAmount: 0,
+			SmallBlinds:     1,
+		},
+	}
+
+	assert.NotPanics(t, func() {
+		callInteract(board, 0)
+	})
+	assert.Equal(t, 3, attempts)
+	assert.Equal(t, model.PlayerStatusOut, board.Players[0].Status)
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./process -run TestCallInteractFallsBackToFoldAfterThreeInvalidActions -v
+```
+
+Expected: FAIL because `callInteract` eventually passes a zero-value action into `performAction`, which panics.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Set a safe fallback action after the retry loop.
+
+```go
+func callInteract(board *model.Board, playerIndex int) {
+	wrongInputCount := 0
+	wrongInputLimit := 3
+	var action model.Action
+
+	for wrongInputCount < wrongInputLimit {
+		deepCopyBoard := model.DeepCopyBoardToSpecificPlayerWithoutLeak(board, playerIndex)
+
+		interactType := model.InteractTypeNotify
+		if board.Players[playerIndex].Status == model.PlayerStatusPlaying {
+			interactType = model.InteractTypeAsk
+		}
+
+		action = board.Players[playerIndex].Interact(deepCopyBoard, interactType)
+		if err := checkAction(board, playerIndex, action); err != nil {
+			logrus.Warnf("%s made an invalid action. error: %v\n", board.Players[playerIndex].Name, err)
+			wrongInputCount++
+			continue
+		}
+		break
+	}
+
+	if wrongInputCount == wrongInputLimit {
+		action = model.Action{ActionType: model.ActionTypeFold, Amount: 0}
+	}
+
+	performAction(board, playerIndex, action)
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./process -run TestCallInteractFallsBackToFoldAfterThreeInvalidActions -v
+```
+
+Then run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./process -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add process/process.go process/process_state_test.go
+git commit -m "fix: fold instead of panicking on repeated invalid actions"
+```
+
+---
+
+### Task 4: Replace Shared Training Map Writes With Deterministic Aggregation
+
+**Files:**
+- Modify: `game/unlimited/training.go`
+- Create: `game/unlimited/training_test.go`
+- Verify: `go test ./game/unlimited`
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+package unlimited
+
+import (
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCollectWinnerCountsAggregatesWorkerResults(t *testing.T) {
+	winners := []int{0, 1, 0, 2}
+	var mu sync.Mutex
+	next := 0
+
+	counts := collectWinnerCounts(len(winners), func() int {
+		mu.Lock()
+		defer mu.Unlock()
+		winner := winners[next]
+		next++
+		return winner
+	})
+
+	assert.Equal(t, 2, counts[0])
+	assert.Equal(t, 1, counts[1])
+	assert.Equal(t, 1, counts[2])
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./game/unlimited -run TestCollectWinnerCountsAggregatesWorkerResults -v
+```
+
+Expected: FAIL because `collectWinnerCounts` does not exist.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Extract one training run into `runTrainingCycle`, and aggregate winner indices through a channel so only one goroutine mutates the result map.
+
+```go
+func Train() {
+	config.TrainMode = true
+
+	memory := collectWinnerCounts(10, runTrainingCycle)
+
+	logrus.Warnln("Waiting final result")
+	logrus.Warnf("final result: %v\n", memory)
+}
+
+func collectWinnerCounts(workerCount int, runWorker func() int) map[int]int {
+	results := make(chan int, workerCount)
+	var wg sync.WaitGroup
+
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results <- runWorker()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	memory := map[int]int{}
+	for winnerIndex := range results {
+		memory[winnerIndex]++
+	}
+	return memory
+}
+
+func runTrainingCycle() int {
+	ctx := process.NewContext()
+	match := 0
+	finalWinnerIndex := -1
+
+	board := &model.Board{}
+	smallBlinds := 1
+	playerBankroll := 100
+	interactList := []model.Interact{
+		ai.NewOddsWarriorAI(),
+		ai.NewOddsWarriorAI(),
+		ai.NewOddsWarriorAI(),
+		ai.NewOddsWarriorAI(),
+		ai.NewDumbRandomAI(),
+		ai.NewDumbRandomAI(),
+	}
+
+	process.InitializePlayers(ctx, board, interactList, playerBankroll)
+	for {
+		process.InitGame(ctx, board, smallBlinds, fmt.Sprintf("match%d", match+1))
+		process.PlayGame(ctx, board)
+		process.EndGame(ctx, board)
+		match++
+
+		playingPlayerCount := 0
+		for i := 0; i < len(board.Players); i++ {
+			if board.Players[i].Status == model.PlayerStatusPlaying {
+				playingPlayerCount++
+				finalWinnerIndex = i
+			}
+		}
+
+		if playingPlayerCount == 1 {
+			return finalWinnerIndex
+		}
+	}
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./game/unlimited -run TestCollectWinnerCountsAggregatesWorkerResults -v
+```
+
+Then run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./game/unlimited -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add game/unlimited/training.go game/unlimited/training_test.go
+git commit -m "fix: aggregate training winners without shared map writes"
+```
+
+---
+
+### Task 5: Make Mode Selection And Output Paths Configurable
+
+**Files:**
+- Create: `runtime_options.go`
+- Create: `runtime_options_test.go`
+- Modify: `main.go`
+- Verify: `go test .`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package main
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestParseRuntimeOptionsUsesPortableDefaults(t *testing.T) {
+	now := time.Unix(1710000000, 0)
+
+	opts, err := parseRuntimeOptions([]string{}, now)
+
+	require.NoError(t, err)
+	assert.Equal(t, "unlimited", opts.mode)
+	assert.Equal(t, "generated/log/poker_log_1710000000.log", opts.logPath)
+	assert.Equal(t, "", opts.profilePath)
+}
+
+func TestParseRuntimeOptionsSupportsTrainOverrides(t *testing.T) {
+	now := time.Unix(1710000000, 0)
+
+	opts, err := parseRuntimeOptions([]string{
+		"-mode=train",
+		"-profile-path=tmp/train.pprof",
+		"-log-level=warn",
+	}, now)
+
+	require.NoError(t, err)
+	assert.Equal(t, "train", opts.mode)
+	assert.Equal(t, "tmp/train.pprof", opts.profilePath)
+	assert.Equal(t, "warn", opts.logLevel)
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test . -run 'TestParseRuntimeOptionsUsesPortableDefaults|TestParseRuntimeOptionsSupportsTrainOverrides' -v
+```
+
+Expected: FAIL because `parseRuntimeOptions` does not exist.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Create `runtime_options.go` in package `main` and route `main.go` through it.
+
+```go
+package main
+
+import (
+	"flag"
+	"fmt"
+	"path/filepath"
+	"time"
+)
+
+type runtimeOptions struct {
+	mode        string
+	logPath     string
+	profilePath string
+	logLevel    string
+}
+
+func parseRuntimeOptions(args []string, now time.Time) (runtimeOptions, error) {
+	fs := flag.NewFlagSet("poker", flag.ContinueOnError)
+	mode := fs.String("mode", "unlimited", "unlimited|train|gui|colosseum")
+	logPath := fs.String("log-path", filepath.ToSlash(filepath.Join("generated", "log", fmt.Sprintf("poker_log_%d.log", now.Unix()))), "log output path")
+	profilePath := fs.String("profile-path", "", "cpu profile output path")
+	logLevel := fs.String("log-level", "debug", "debug|warn")
+
+	if err := fs.Parse(args); err != nil {
+		return runtimeOptions{}, err
+	}
+
+	if *mode == "train" && *profilePath == "" {
+		*profilePath = filepath.ToSlash(filepath.Join("generated", "pprof", fmt.Sprintf("poker_pprof_%d.pprof", now.Unix())))
+	}
+
+	return runtimeOptions{
+		mode:        *mode,
+		logPath:     *logPath,
+		profilePath: *profilePath,
+		logLevel:    *logLevel,
+	}, nil
+}
+```
+
+Update `main.go` to use parsed options instead of `switch 1` and `D:/Git/go/src/poker/...`.
+
+```go
+func main() {
+	opts, err := parseRuntimeOptions(os.Args[1:], time.Now())
+	if err != nil {
+		panic(err)
+	}
+
+	switch opts.mode {
+	case "unlimited":
+		playUnlimited(opts)
+	case "train":
+		trainWithProfiler(opts)
+	case "gui":
+		tryFyne()
+	case "colosseum":
+		playColosseum(opts)
+	default:
+		panic(fmt.Sprintf("unknown mode: %s", opts.mode))
+	}
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test . -run 'TestParseRuntimeOptionsUsesPortableDefaults|TestParseRuntimeOptionsSupportsTrainOverrides' -v
+```
+
+Then run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test . -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add main.go runtime_options.go runtime_options_test.go
+git commit -m "fix: make runtime mode and output paths configurable"
+```
+
+---
+
+### Task 6: Full Regression Sweep
+
+**Files:**
+- Verify only: repository-wide
+
+- [ ] **Step 1: Run targeted package tests**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./model ./process ./game/unlimited . -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 2: Run full repository test suite**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./... -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Run coverage check focused on the audited areas**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go test ./... -coverprofile=.audit-work/coverage-audit-fixes.out
+go tool cover '-func=.audit-work/coverage-audit-fixes.out'
+```
+
+Expected: `process/process.go` should no longer show the audited state-machine helpers at `0.0%`.
+
+- [ ] **Step 4: Run build**
+
+Run:
+
+```powershell
+New-Item -ItemType Directory -Force '.audit-work\go-build-cache' | Out-Null
+$env:GOCACHE = (Resolve-Path '.audit-work\go-build-cache').Path
+go build ./...
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add .
+git commit -m "test: verify audited fixes across the repository"
+```
+
+---
+
+## Self-Review
+
+- Spec coverage:
+  - 训练模式泄露信息：Task 1
+  - 双人局 post-flop 行动顺序错误：Task 2
+  - `LastRaiseAmount` 计算错误：Task 2
+  - 连续非法动作导致 panic：Task 3
+  - 训练统计并发 map 写：Task 4
+  - 入口模式与绝对路径硬编码：Task 5
+  - 流程层缺少回归验证：Task 2, Task 3, Task 6
+- Placeholder scan:
+  - 无 `TODO` / `TBD`
+  - 每个任务都给出文件、测试、命令、实现方向
+- Type consistency:
+  - 测试中全部使用现有 `model.Action`, `model.Player`, `model.Game`, `model.Round`
+  - 新增运行时配置集中在 `runtime_options.go`，不与现有 `config` 包职责冲突
+
+## Execution Handoff
+
+Plan complete and saved to `docs/superpowers/plans/2026-04-20-poker-audit-fixes.md`. Two execution options:
+
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+
+**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+
+Which approach?

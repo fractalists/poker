@@ -97,10 +97,6 @@ func enUSRender(board *Board) {
 }
 
 func DeepCopyBoardToSpecificPlayerWithoutLeak(board *Board, playerIndex int) *Board {
-	if config.TrainMode {
-		return board
-	}
-
 	var deepCopyPlayers []*Player
 	if board.Players != nil {
 		for i := 0; i < len(board.Players); i++ {

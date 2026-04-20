@@ -1,30 +1,35 @@
 package main
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/sirupsen/logrus"
+	"fmt"
 	"poker/config"
 	"poker/game/colosseum"
 	"poker/game/unlimited"
 	"poker/process"
+	"os"
 	"time"
 )
 
 func main() {
-	switch 1 {
-	case 1:
-		playUnlimited()
-	case 2:
-		trainWithProfiler()
-	case 3:
+	opts, err := parseRuntimeOptions(os.Args[1:], time.Now())
+	if err != nil {
+		panic(err)
+	}
+
+	switch opts.mode {
+	case "unlimited":
+		playUnlimited(opts)
+	case "train":
+		trainWithProfiler(opts)
+	case "gui":
 		tryFyne()
-	case 4:
-		playColosseum()
+	case "colosseum":
+		playColosseum(opts)
 	default:
-		playUnlimited()
+		panic(fmt.Sprintf("unknown mode: %s", opts.mode))
 	}
 }
 
@@ -43,32 +48,47 @@ func tryFyne() {
 	w.ShowAndRun()
 }
 
-func playUnlimited() {
+func playUnlimited(opts runtimeOptions) {
+	logLevel, err := parseLogLevelValue(opts.logLevel)
+	if err != nil {
+		panic(err)
+	}
+
 	process.Start(
 		false,
 		config.ZhCn,
-		logrus.DebugLevel,
-		fmt.Sprintf("D:/Git/go/src/poker/generated/log/poker_log_%d.log", time.Now().Unix()), //filepath.Join("generated", "log", fmt.Sprintf("poker_log_%d.log", time.Now().Unix())),
-		"",
+		logLevel,
+		opts.logPath,
+		opts.profilePath,
 		unlimited.PlayPoker)
 }
 
-func trainWithProfiler() {
+func trainWithProfiler(opts runtimeOptions) {
+	logLevel, err := parseLogLevelValue(opts.logLevel)
+	if err != nil {
+		panic(err)
+	}
+
 	process.Start(
 		true,
 		config.ZhCn,
-		logrus.WarnLevel,
-		"",
-		fmt.Sprintf("D:/Git/go/src/poker/generated/pprof/poker_pprof_%d.pprof", time.Now().Unix()), //filepath.Join("generated", "pprof", fmt.Sprintf("poker_pprof_%d.pprof", time.Now().Unix())),
+		logLevel,
+		opts.logPath,
+		opts.profilePath,
 		unlimited.Train)
 }
 
-func playColosseum() {
+func playColosseum(opts runtimeOptions) {
+	logLevel, err := parseLogLevelValue(opts.logLevel)
+	if err != nil {
+		panic(err)
+	}
+
 	process.Start(
 		false,
 		config.ZhCn,
-		logrus.WarnLevel,
-		"",
-		fmt.Sprintf("D:/Git/go/src/poker/generated/pprof/poker_pprof_%d.pprof", time.Now().Unix()), //filepath.Join("generated", "pprof", fmt.Sprintf("poker_pprof_%d.pprof", time.Now().Unix())),
+		logLevel,
+		opts.logPath,
+		opts.profilePath,
 		colosseum.PlayPoker)
 }

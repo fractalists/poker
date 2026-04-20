@@ -237,6 +237,22 @@ func GetStillHasBankrollPlayerList(board *model.Board) []*model.Player {
 	return result
 }
 
+func getInteractStartIndex(board *model.Board) int {
+	if board.Game.Round == model.PREFLOP {
+		return board.PositionIndexMap[model.PositionUnderTheGun]
+	}
+
+	smallBlindIndex := board.PositionIndexMap[model.PositionSmallBlind]
+	bigBlindIndex := board.PositionIndexMap[model.PositionBigBlind]
+	underTheGunIndex := board.PositionIndexMap[model.PositionUnderTheGun]
+
+	if underTheGunIndex == smallBlindIndex {
+		return bigBlindIndex
+	}
+
+	return smallBlindIndex
+}
+
 func interactWithPlayers(board *model.Board) {
 	game := board.Game
 
@@ -244,7 +260,7 @@ func interactWithPlayers(board *model.Board) {
 	actualBigBlindIndex := board.PositionIndexMap[model.PositionBigBlind]
 	actualUnderTheGunIndex := board.PositionIndexMap[model.PositionUnderTheGun]
 
-	interactStartIndex := actualSmallBlindIndex
+	interactStartIndex := getInteractStartIndex(board)
 
 	if game.Round == model.PREFLOP {
 		smallBlindPlayer := board.Players[actualSmallBlindIndex]
@@ -437,6 +453,10 @@ func callInteract(board *model.Board, playerIndex int) {
 		break
 	}
 
+	if wrongInputCount == wrongInputLimit {
+		action = model.Action{ActionType: model.ActionTypeFold, Amount: 0}
+	}
+
 	performAction(board, playerIndex, action)
 }
 
@@ -496,11 +516,12 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 
 	switch action.ActionType {
 	case model.ActionTypeBet:
+		oldCurrentAmount := game.CurrentAmount
 		currentPlayer.Bankroll -= action.Amount
 		currentPlayer.InPotAmount += action.Amount
 		game.Pot += action.Amount
 		game.CurrentAmount = currentPlayer.InPotAmount
-		game.LastRaiseAmount = action.Amount + currentPlayer.InPotAmount - game.CurrentAmount
+		game.LastRaiseAmount = game.CurrentAmount - oldCurrentAmount
 		game.LastRaisePlayerIndex = playerIndex
 
 	case model.ActionTypeCall:
@@ -512,6 +533,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 		currentPlayer.Status = model.PlayerStatusOut
 
 	case model.ActionTypeAllIn:
+		oldCurrentAmount := game.CurrentAmount
 		currentPlayer.Status = model.PlayerStatusAllIn
 		currentPlayer.Bankroll -= action.Amount
 		currentPlayer.InPotAmount += action.Amount
@@ -519,7 +541,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 		if currentPlayer.InPotAmount > game.CurrentAmount {
 			game.CurrentAmount = currentPlayer.InPotAmount
 		}
-		raiseAmount := action.Amount + currentPlayer.InPotAmount - game.CurrentAmount
+		raiseAmount := game.CurrentAmount - oldCurrentAmount
 		if raiseAmount >= game.LastRaiseAmount {
 			game.LastRaiseAmount = raiseAmount
 			game.LastRaisePlayerIndex = playerIndex
