@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	fyne.io/fyne/v2 v2.3.5
+	github.com/gorilla/websocket v1.5.3
 	github.com/panjf2000/ants/v2 v2.8.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4

@@ -1,0 +1,2207 @@
+# Poker Web Console Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 在当前仓库内落地一个长期运行的扑克服务、仓库内 `web/` 浏览器前端，以及接入同一协议的 `cmd/pokerctl/` 终端前端，支持单真人座位、AI 补位、观战和实时牌桌交互。
+
+**Architecture:** 新增 `internal/table` 作为现有引擎的服务适配层，把阻塞式人类输入改造成服务等待点；新增 `internal/service` 管理房间和订阅；新增 `internal/api` 提供 HTTP 与 WebSocket；新增 `cmd/pokerd` 和 `cmd/pokerctl` 两个入口；新增 `web/` React 应用。保留现有 `model/`、`process/`、`game/` 逻辑作为牌局核心，不把 Web 逻辑直接塞进旧包。
+
+**Tech Stack:** Go 1.20, `net/http`, `github.com/gorilla/websocket`, React 18, TypeScript, Vite, Vitest, React Testing Library, Playwright, PowerShell
+
+---
+
+## File Structure
+
+### Backend files
+
+- Create: `internal/table/snapshot.go`
+- Create: `internal/table/snapshot_test.go`
+- Create: `internal/table/human_actor.go`
+- Create: `internal/table/runtime.go`
+- Create: `internal/table/runtime_test.go`
+- Create: `internal/service/manager.go`
+- Create: `internal/service/manager_test.go`
+- Create: `internal/api/server.go`
+- Create: `internal/api/server_test.go`
+- Modify: `go.mod`
+- Modify: `go.sum`
+- Create: `cmd/pokerd/main.go`
+- Create: `cmd/pokerd/options.go`
+- Create: `cmd/pokerd/options_test.go`
+- Create: `cmd/pokerctl/main.go`
+- Create: `cmd/pokerctl/client.go`
+- Create: `cmd/pokerctl/render.go`
+- Create: `cmd/pokerctl/render_test.go`
+
+### Frontend files
+
+- Modify: `.gitignore`
+- Create: `web/package.json`
+- Create: `web/tsconfig.json`
+- Create: `web/vite.config.ts`
+- Create: `web/index.html`
+- Create: `web/src/main.tsx`
+- Create: `web/src/App.tsx`
+- Create: `web/src/styles.css`
+- Create: `web/src/lib/types.ts`
+- Create: `web/src/lib/api.ts`
+- Create: `web/src/lib/socket.ts`
+- Create: `web/src/pages/LobbyPage.tsx`
+- Create: `web/src/pages/LobbyPage.test.tsx`
+- Create: `web/src/pages/RoomPage.tsx`
+- Create: `web/src/pages/RoomPage.test.tsx`
+- Create: `web/src/components/TableSeat.tsx`
+- Create: `web/src/components/ActionBar.tsx`
+- Create: `web/src/components/ActionBar.test.tsx`
+- Create: `web/playwright.config.ts`
+- Create: `web/e2e/room-flow.spec.ts`
+
+### Docs files
+
+- Modify: `README.md`
+
+---
+
+### Task 1: Add Snapshot Models And Viewer Redaction In `internal/table`
+
+**Files:**
+- Create: `internal/table/snapshot.go`
+- Create: `internal/table/snapshot_test.go`
+- Read: `model/board.go`
+- Read: `model/player.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package table
+
+import (
+	"poker/model"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestBuildSnapshotForPlayerRedactsOtherHands(t *testing.T) {
+	viewerSeat := 0
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Name:    "Player1",
+				Index:   0,
+				Status:  model.PlayerStatusPlaying,
+				Hands:   model.Cards{model.NewCustomCard(model.HEARTS, model.ACE, true), model.NewCustomCard(model.SPADES, model.KING, true)},
+				Bankroll: 98,
+			},
+			{
+				Name:    "Player2",
+				Index:   1,
+				Status:  model.PlayerStatusPlaying,
+				Hands:   model.Cards{model.NewCustomCard(model.CLUBS, model.TWO, true), model.NewCustomCard(model.DIAMONDS, model.THREE, true)},
+				Bankroll: 97,
+			},
+		},
+		Game: &model.Game{
+			Round:         model.FLOP,
+			Pot:           5,
+			SmallBlinds:   1,
+			CurrentAmount: 2,
+			BoardCards: model.Cards{
+				model.NewCustomCard(model.HEARTS, model.QUEEN, true),
+				model.NewCustomCard(model.CLUBS, model.JACK, false),
+			},
+		},
+	}
+
+	snap := BuildSnapshot(BuildSnapshotInput{
+		RoomID:        "room-1",
+		RoomName:      "Table 1",
+		Status:        StatusAwaitingAction,
+		Board:         board,
+		ViewerSeat:    &viewerSeat,
+		HandNumber:    3,
+		PendingAction: &PendingAction{Token: "turn-1", SeatIndex: 0},
+		Events:        []RoomEvent{{Kind: "blind", Message: "Player1 posts SB"}},
+		Version:       9,
+	})
+
+	require.Len(t, snap.Seats, 2)
+	assert.Equal(t, []string{"♥A", "♠K"}, snap.Seats[0].Cards)
+	assert.Equal(t, []string{"**", "**"}, snap.Seats[1].Cards)
+	assert.Equal(t, []string{"♥Q", "**"}, snap.BoardCards)
+	assert.Equal(t, "turn-1", snap.PendingAction.Token)
+	assert.Equal(t, int64(9), snap.Version)
+}
+
+func TestBuildSnapshotForSpectatorRedactsEveryPrivateHand(t *testing.T) {
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Name:    "Player1",
+				Index:   0,
+				Status:  model.PlayerStatusPlaying,
+				Hands:   model.Cards{model.NewCustomCard(model.HEARTS, model.ACE, true), model.NewCustomCard(model.SPADES, model.KING, true)},
+			},
+		},
+		Game: &model.Game{
+			Round: model.PREFLOP,
+		},
+	}
+
+	snap := BuildSnapshot(BuildSnapshotInput{
+		RoomID:     "room-1",
+		RoomName:   "Table 1",
+		Status:     StatusRunning,
+		Board:      board,
+		ViewerSeat: nil,
+		Version:    1,
+	})
+
+	require.Len(t, snap.Seats, 1)
+	assert.Equal(t, ViewerRoleSpectator, snap.ViewerRole)
+	assert.Equal(t, []string{"**", "**"}, snap.Seats[0].Cards)
+}
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run:
+
+```powershell
+go test ./internal/table -run 'TestBuildSnapshotForPlayerRedactsOtherHands|TestBuildSnapshotForSpectatorRedactsEveryPrivateHand' -v
+```
+
+Expected: FAIL because `internal/table` does not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+```go
+package table
+
+import (
+	"fmt"
+	"poker/model"
+)
+
+type RoomStatus string
+
+const StatusWaiting RoomStatus = "waiting"
+const StatusRunning RoomStatus = "running"
+const StatusAwaitingAction RoomStatus = "awaiting_action"
+const StatusHandFinished RoomStatus = "hand_finished"
+const StatusClosed RoomStatus = "closed"
+
+type ViewerRole string
+
+const ViewerRolePlayer ViewerRole = "player"
+const ViewerRoleSpectator ViewerRole = "spectator"
+
+type RoomEvent struct {
+	Kind    string `json:"kind"`
+	Message string `json:"message"`
+}
+
+type PendingAction struct {
+	Token      string `json:"token"`
+	SeatIndex  int    `json:"seatIndex"`
+	MinAmount  int    `json:"minAmount"`
+	MaxAmount  int    `json:"maxAmount"`
+	CanCheck   bool   `json:"canCheck"`
+	CanCall    bool   `json:"canCall"`
+	CanBet     bool   `json:"canBet"`
+	CanFold    bool   `json:"canFold"`
+	CanAllIn   bool   `json:"canAllIn"`
+}
+
+type SeatSnapshot struct {
+	Index       int      `json:"index"`
+	Name        string   `json:"name"`
+	Status      string   `json:"status"`
+	Bankroll    int      `json:"bankroll"`
+	InPotAmount int      `json:"inPotAmount"`
+	IsTurn      bool     `json:"isTurn"`
+	Cards       []string `json:"cards"`
+}
+
+type Snapshot struct {
+	RoomID        string         `json:"roomId"`
+	RoomName      string         `json:"roomName"`
+	Status        RoomStatus     `json:"status"`
+	ViewerRole    ViewerRole     `json:"viewerRole"`
+	HandNumber    int            `json:"handNumber"`
+	SmallBlind    int            `json:"smallBlind"`
+	Pot           int            `json:"pot"`
+	CurrentAmount int            `json:"currentAmount"`
+	Round         string         `json:"round"`
+	BoardCards    []string       `json:"boardCards"`
+	Seats         []SeatSnapshot `json:"seats"`
+	PendingAction *PendingAction `json:"pendingAction,omitempty"`
+	Events        []RoomEvent    `json:"events"`
+	Version       int64          `json:"version"`
+}
+
+type BuildSnapshotInput struct {
+	RoomID        string
+	RoomName      string
+	Status        RoomStatus
+	Board         *model.Board
+	ViewerSeat    *int
+	HandNumber    int
+	PendingAction *PendingAction
+	Events        []RoomEvent
+	Version       int64
+}
+
+func BuildSnapshot(input BuildSnapshotInput) Snapshot {
+	viewerRole := ViewerRoleSpectator
+	if input.ViewerSeat != nil {
+		viewerRole = ViewerRolePlayer
+	}
+
+	snapshot := Snapshot{
+		RoomID:        input.RoomID,
+		RoomName:      input.RoomName,
+		Status:        input.Status,
+		ViewerRole:    viewerRole,
+		HandNumber:    input.HandNumber,
+		PendingAction: input.PendingAction,
+		Events:        append([]RoomEvent(nil), input.Events...),
+		Version:       input.Version,
+	}
+
+	if input.Board == nil || input.Board.Game == nil {
+		return snapshot
+	}
+
+	snapshot.SmallBlind = input.Board.Game.SmallBlinds
+	snapshot.Pot = input.Board.Game.Pot
+	snapshot.CurrentAmount = input.Board.Game.CurrentAmount
+	snapshot.Round = string(input.Board.Game.Round)
+	for _, card := range input.Board.Game.BoardCards {
+		snapshot.BoardCards = append(snapshot.BoardCards, formatCard(card))
+	}
+
+	for _, player := range input.Board.Players {
+		seat := SeatSnapshot{
+			Index:       player.Index,
+			Name:        player.Name,
+			Status:      string(player.Status),
+			Bankroll:    player.Bankroll,
+			InPotAmount: player.InPotAmount,
+			IsTurn:      input.PendingAction != nil && input.PendingAction.SeatIndex == player.Index,
+		}
+
+		for _, card := range player.Hands {
+			if input.ViewerSeat != nil && *input.ViewerSeat == player.Index {
+				seat.Cards = append(seat.Cards, formatCard(model.NewCustomCard(card.Suit, card.Rank, true)))
+			} else {
+				seat.Cards = append(seat.Cards, "**")
+			}
+		}
+
+		snapshot.Seats = append(snapshot.Seats, seat)
+	}
+
+	return snapshot
+}
+
+func formatCard(card model.Card) string {
+	if card == nil || !card.Revealed {
+		return "**"
+	}
+	return fmt.Sprintf("%s%s", card.Suit, card.Rank)
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run:
+
+```powershell
+go test ./internal/table -run 'TestBuildSnapshotForPlayerRedactsOtherHands|TestBuildSnapshotForSpectatorRedactsEveryPrivateHand' -v
+go test ./internal/table -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add internal/table/snapshot.go internal/table/snapshot_test.go
+git commit -m "feat: add room snapshot models for service frontends"
+```
+
+---
+
+### Task 2: Add Service-Backed Human Actor And Table Runtime
+
+**Files:**
+- Create: `internal/table/human_actor.go`
+- Create: `internal/table/runtime.go`
+- Create: `internal/table/runtime_test.go`
+- Read: `process/process.go`
+- Read: `interact/ai/*.go`
+- Read: `interact/human/human.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package table
+
+import (
+	"poker/model"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestHumanActorSubmitUnblocksInteract(t *testing.T) {
+	actor := NewHumanActor()
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Name:        "Player6",
+				Index:       5,
+				Status:      model.PlayerStatusPlaying,
+				Bankroll:    100,
+				InPotAmount: 1,
+			},
+		},
+		Game: &model.Game{
+			CurrentAmount:   2,
+			LastRaiseAmount: 1,
+			SmallBlinds:     1,
+		},
+	}
+
+	interact := actor.InitInteract(5, model.GenGetBoardInfoFunc(board, 5))
+	done := make(chan model.Action, 1)
+	go func() {
+		done <- interact(board, model.InteractTypeAsk)
+	}()
+
+	var pending HumanTurnRequest
+	select {
+	case pending = <-actor.Pending():
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected pending human turn")
+	}
+
+	require.NotEmpty(t, pending.Token)
+	assert.Equal(t, 5, pending.SeatIndex)
+	assert.Equal(t, 1, pending.MinAmount)
+
+	err := actor.Submit(pending.Token, model.Action{ActionType: model.ActionTypeCall, Amount: 1})
+	require.NoError(t, err)
+	assert.Equal(t, model.ActionTypeCall, (<-done).ActionType)
+}
+
+func TestRuntimeStartNextHandPublishesPendingAction(t *testing.T) {
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "Table 1",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        5,
+	})
+
+	require.NoError(t, runtime.StartNextHand())
+
+	var pending HumanTurnRequest
+	select {
+	case pending = <-runtime.PendingTurns():
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected human turn request")
+	}
+
+	snap := runtime.SnapshotForViewer(nil)
+	assert.Equal(t, StatusAwaitingAction, snap.Status)
+	assert.Equal(t, pending.Token, snap.PendingAction.Token)
+	assert.Equal(t, 5, snap.PendingAction.SeatIndex)
+}
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run:
+
+```powershell
+go test ./internal/table -run 'TestHumanActorSubmitUnblocksInteract|TestRuntimeStartNextHandPublishesPendingAction' -v
+```
+
+Expected: FAIL because `NewHumanActor`, `RuntimeConfig`, and `NewRuntime` do not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+```go
+package table
+
+import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"poker/interact/ai"
+	"poker/model"
+	"poker/process"
+	"sync"
+)
+
+type HumanTurnRequest struct {
+	Token      string
+	SeatIndex  int
+	MinAmount  int
+	MaxAmount  int
+	CanCheck   bool
+	CanCall    bool
+	CanBet     bool
+	CanFold    bool
+	CanAllIn   bool
+}
+
+type HumanActor struct {
+	mu        sync.Mutex
+	pendingCh chan HumanTurnRequest
+	waiters   map[string]chan model.Action
+}
+
+func NewHumanActor() *HumanActor {
+	return &HumanActor{
+		pendingCh: make(chan HumanTurnRequest, 8),
+		waiters:   map[string]chan model.Action{},
+	}
+}
+
+func (actor *HumanActor) Pending() <-chan HumanTurnRequest {
+	return actor.pendingCh
+}
+
+func (actor *HumanActor) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(*model.Board, model.InteractType) model.Action {
+	return func(board *model.Board, interactType model.InteractType) model.Action {
+		if interactType == model.InteractTypeNotify || board.Players[selfIndex].Status != model.PlayerStatusPlaying {
+			return model.Action{ActionType: model.ActionTypeKeepWatching}
+		}
+
+		minAmount := board.Game.CurrentAmount - board.Players[selfIndex].InPotAmount
+		token := newToken()
+		resultCh := make(chan model.Action, 1)
+
+		actor.mu.Lock()
+		actor.waiters[token] = resultCh
+		actor.mu.Unlock()
+
+		actor.pendingCh <- HumanTurnRequest{
+			Token:     token,
+			SeatIndex: selfIndex,
+			MinAmount: minAmount,
+			MaxAmount: board.Players[selfIndex].Bankroll,
+			CanCheck:  minAmount == 0,
+			CanCall:   minAmount > 0,
+			CanBet:    board.Players[selfIndex].Bankroll > minAmount,
+			CanFold:   true,
+			CanAllIn:  true,
+		}
+
+		return <-resultCh
+	}
+}
+
+func (actor *HumanActor) Submit(token string, action model.Action) error {
+	actor.mu.Lock()
+	ch, ok := actor.waiters[token]
+	if ok {
+		delete(actor.waiters, token)
+	}
+	actor.mu.Unlock()
+
+	if !ok {
+		return fmt.Errorf("unknown action token: %s", token)
+	}
+	ch <- action
+	return nil
+}
+
+type RuntimeConfig struct {
+	RoomID           string
+	RoomName         string
+	SmallBlind       int
+	StartingBankroll int
+	HumanSeat        int
+}
+
+type Runtime struct {
+	cfg          RuntimeConfig
+	ctx          *model.Context
+	board        *model.Board
+	human        *HumanActor
+	pendingTurns chan HumanTurnRequest
+	currentPending *HumanTurnRequest
+	status       RoomStatus
+	handNumber   int
+	events       []RoomEvent
+	version      int64
+	mu           sync.RWMutex
+}
+
+func NewRuntime(cfg RuntimeConfig) *Runtime {
+	human := NewHumanActor()
+	return &Runtime{
+		cfg:          cfg,
+		ctx:          process.NewContext(),
+		board:        &model.Board{},
+		human:        human,
+		pendingTurns: make(chan HumanTurnRequest, 8),
+		status:       StatusWaiting,
+	}
+}
+
+func (runtime *Runtime) PendingTurns() <-chan HumanTurnRequest {
+	return runtime.pendingTurns
+}
+
+func (runtime *Runtime) StartNextHand() error {
+	runtime.mu.Lock()
+	defer runtime.mu.Unlock()
+
+	if len(runtime.board.Players) == 0 {
+		interactList := []model.Interact{
+			ai.NewOddsWarriorAI(),
+			ai.NewOddsWarriorAI(),
+			ai.NewOddsWarriorAI(),
+			ai.NewOddsWarriorAI(),
+			ai.NewDumbRandomAI(),
+			runtime.human,
+		}
+		process.InitializePlayers(runtime.ctx, runtime.board, interactList, runtime.cfg.StartingBankroll)
+	}
+
+	runtime.handNumber++
+	runtime.status = StatusRunning
+	runtime.version++
+	process.InitGame(runtime.ctx, runtime.board, runtime.cfg.SmallBlind, fmt.Sprintf("room=%s hand=%d", runtime.cfg.RoomID, runtime.handNumber))
+
+	go func() {
+		for req := range runtime.human.Pending() {
+			runtime.mu.Lock()
+			reqCopy := req
+			runtime.currentPending = &reqCopy
+			runtime.status = StatusAwaitingAction
+			runtime.version++
+			runtime.events = append(runtime.events, RoomEvent{Kind: "turn", Message: fmt.Sprintf("seat %d to act", req.SeatIndex)})
+			runtime.mu.Unlock()
+			runtime.pendingTurns <- req
+		}
+	}()
+
+	go func() {
+		process.PlayGame(runtime.ctx, runtime.board)
+		process.EndGame(runtime.ctx, runtime.board)
+		runtime.mu.Lock()
+		runtime.currentPending = nil
+		runtime.status = StatusHandFinished
+		runtime.version++
+		runtime.mu.Unlock()
+	}()
+
+	return nil
+}
+
+func (runtime *Runtime) SubmitAction(token string, action model.Action) error {
+	if err := runtime.human.Submit(token, action); err != nil {
+		return err
+	}
+	runtime.mu.Lock()
+	runtime.currentPending = nil
+	runtime.status = StatusRunning
+	runtime.version++
+	runtime.mu.Unlock()
+	return nil
+}
+
+func (runtime *Runtime) SnapshotForViewer(viewerSeat *int) Snapshot {
+	runtime.mu.RLock()
+	defer runtime.mu.RUnlock()
+
+	var pending *PendingAction
+	if runtime.currentPending != nil {
+		req := runtime.currentPending
+		pending = &PendingAction{
+			Token:     req.Token,
+			SeatIndex: req.SeatIndex,
+			MinAmount: req.MinAmount,
+			MaxAmount: req.MaxAmount,
+			CanCheck:  req.CanCheck,
+			CanCall:   req.CanCall,
+			CanBet:    req.CanBet,
+			CanFold:   req.CanFold,
+			CanAllIn:  req.CanAllIn,
+		}
+	}
+
+	return BuildSnapshot(BuildSnapshotInput{
+		RoomID:        runtime.cfg.RoomID,
+		RoomName:      runtime.cfg.RoomName,
+		Status:        runtime.status,
+		Board:         runtime.board,
+		ViewerSeat:    viewerSeat,
+		HandNumber:    runtime.handNumber,
+		PendingAction: pending,
+		Events:        runtime.events,
+		Version:       runtime.version,
+	})
+}
+
+func newToken() string {
+	raw := make([]byte, 8)
+	_, _ = rand.Read(raw)
+	return hex.EncodeToString(raw)
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run:
+
+```powershell
+go test ./internal/table -run 'TestHumanActorSubmitUnblocksInteract|TestRuntimeStartNextHandPublishesPendingAction' -v
+go test ./internal/table -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add internal/table/human_actor.go internal/table/runtime.go internal/table/runtime_test.go
+git commit -m "feat: add service-backed human actor runtime"
+```
+
+---
+
+### Task 3: Add Room Manager And Subscription Hooks
+
+**Files:**
+- Create: `internal/service/manager.go`
+- Create: `internal/service/manager_test.go`
+- Read: `internal/table/runtime.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package service
+
+import (
+	"poker/model"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCreateRoomAppearsInList(t *testing.T) {
+	manager := NewManager()
+
+	room, err := manager.CreateRoom(CreateRoomRequest{
+		Name:             "Table 1",
+		SmallBlind:       1,
+		StartingBankroll: 100,
+		HumanSeat:        5,
+	})
+
+	require.NoError(t, err)
+	list := manager.ListRooms()
+	require.Len(t, list, 1)
+	assert.Equal(t, room.ID, list[0].RoomID)
+	assert.Equal(t, "Table 1", list[0].RoomName)
+}
+
+func TestTakeSeatRejectsSecondHumanViewer(t *testing.T) {
+	manager := NewManager()
+	room, err := manager.CreateRoom(CreateRoomRequest{
+		Name:             "Table 1",
+		SmallBlind:       1,
+		StartingBankroll: 100,
+		HumanSeat:        5,
+	})
+	require.NoError(t, err)
+
+	firstSeat, err := manager.TakeSeat(room.ID, 5)
+	require.NoError(t, err)
+	assert.Equal(t, 5, *firstSeat.ViewerSeat)
+
+	_, err = manager.TakeSeat(room.ID, 5)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already occupied")
+}
+
+func TestSubmitActionRoutesToRoomRuntime(t *testing.T) {
+	manager := NewManager()
+	room, err := manager.CreateRoom(CreateRoomRequest{
+		Name:             "Table 1",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        5,
+	})
+	require.NoError(t, err)
+
+	viewer, err := manager.TakeSeat(room.ID, 5)
+	require.NoError(t, err)
+	require.NoError(t, manager.StartHand(room.ID))
+
+	sub := manager.SubscribeRoom(room.ID, viewer.ViewerSeat)
+	defer sub.Close()
+
+	var pendingToken string
+	select {
+	case snap := <-sub.C:
+		if snap.PendingAction != nil {
+			pendingToken = snap.PendingAction.Token
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("expected room snapshot")
+	}
+
+	require.NotEmpty(t, pendingToken)
+	require.NoError(t, manager.SubmitAction(room.ID, pendingToken, model.Action{ActionType: model.ActionTypeFold}))
+}
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run:
+
+```powershell
+go test ./internal/service -run 'TestCreateRoomAppearsInList|TestTakeSeatRejectsSecondHumanViewer|TestSubmitActionRoutesToRoomRuntime' -v
+```
+
+Expected: FAIL because the package does not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+```go
+package service
+
+import (
+	"fmt"
+	"poker/internal/table"
+	"poker/model"
+	"sync"
+)
+
+type CreateRoomRequest struct {
+	Name             string
+	SmallBlind       int
+	StartingBankroll int
+	HumanSeat        int
+}
+
+type ViewerSession struct {
+	RoomID     string
+	ViewerSeat *int
+}
+
+type Subscription struct {
+	C chan table.Snapshot
+	close func()
+}
+
+func (subscription *Subscription) Close() {
+	if subscription.close != nil {
+		subscription.close()
+	}
+}
+
+type Room struct {
+	ID            string
+	runtime       *table.Runtime
+	humanSeat     int
+	humanOccupied bool
+	subscribers   map[chan table.Snapshot]struct{}
+}
+
+type Manager struct {
+	mu    sync.RWMutex
+	rooms map[string]*Room
+	next  int
+}
+
+func NewManager() *Manager {
+	return &Manager{rooms: map[string]*Room{}}
+}
+
+func (manager *Manager) CreateRoom(req CreateRoomRequest) (*Room, error) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	manager.next++
+	roomID := fmt.Sprintf("room-%03d", manager.next)
+	room := &Room{
+		ID:        roomID,
+		runtime:   table.NewRuntime(table.RuntimeConfig{RoomID: roomID, RoomName: req.Name, SmallBlind: req.SmallBlind, StartingBankroll: req.StartingBankroll, HumanSeat: req.HumanSeat}),
+		humanSeat: req.HumanSeat,
+		subscribers: map[chan table.Snapshot]struct{}{},
+	}
+	manager.rooms[roomID] = room
+	return room, nil
+}
+
+func (manager *Manager) ListRooms() []table.Snapshot {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	result := make([]table.Snapshot, 0, len(manager.rooms))
+	for _, room := range manager.rooms {
+		result = append(result, room.runtime.SnapshotForViewer(nil))
+	}
+	return result
+}
+
+func (manager *Manager) TakeSeat(roomID string, seatIndex int) (*ViewerSession, error) {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	room, ok := manager.rooms[roomID]
+	if !ok {
+		return nil, fmt.Errorf("room not found: %s", roomID)
+	}
+	if seatIndex != room.humanSeat {
+		return nil, fmt.Errorf("seat %d is not the human seat", seatIndex)
+	}
+	if room.humanOccupied {
+		return nil, fmt.Errorf("seat %d already occupied", seatIndex)
+	}
+	room.humanOccupied = true
+	return &ViewerSession{RoomID: roomID, ViewerSeat: &seatIndex}, nil
+}
+
+func (manager *Manager) StartHand(roomID string) error {
+	room, err := manager.getRoom(roomID)
+	if err != nil {
+		return err
+	}
+	if err := room.runtime.StartNextHand(); err != nil {
+		return err
+	}
+	manager.broadcastRoom(room, nil)
+	return nil
+}
+
+func (manager *Manager) GetSnapshot(roomID string, viewerSeat *int) (table.Snapshot, error) {
+	room, err := manager.getRoom(roomID)
+	if err != nil {
+		return table.Snapshot{}, err
+	}
+	return room.runtime.SnapshotForViewer(viewerSeat), nil
+}
+
+func (manager *Manager) SubmitAction(roomID, token string, action model.Action) error {
+	room, err := manager.getRoom(roomID)
+	if err != nil {
+		return err
+	}
+	if err := room.runtime.SubmitAction(token, action); err != nil {
+		return err
+	}
+	manager.broadcastRoom(room, nil)
+	return nil
+}
+
+func (manager *Manager) SubscribeRoom(roomID string, viewerSeat *int) *Subscription {
+	room, _ := manager.getRoom(roomID)
+	ch := make(chan table.Snapshot, 8)
+
+	manager.mu.Lock()
+	room.subscribers[ch] = struct{}{}
+	manager.mu.Unlock()
+
+	ch <- room.runtime.SnapshotForViewer(viewerSeat)
+	return &Subscription{
+		C: ch,
+		close: func() {
+			manager.mu.Lock()
+			delete(room.subscribers, ch)
+			close(ch)
+			manager.mu.Unlock()
+		},
+	}
+}
+
+func (manager *Manager) getRoom(roomID string) (*Room, error) {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	room, ok := manager.rooms[roomID]
+	if !ok {
+		return nil, fmt.Errorf("room not found: %s", roomID)
+	}
+	return room, nil
+}
+
+func (manager *Manager) broadcastRoom(room *Room, viewerSeat *int) {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+	for ch := range room.subscribers {
+		ch <- room.runtime.SnapshotForViewer(viewerSeat)
+	}
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run:
+
+```powershell
+go test ./internal/service -run 'TestCreateRoomAppearsInList|TestTakeSeatRejectsSecondHumanViewer|TestSubmitActionRoutesToRoomRuntime' -v
+go test ./internal/service -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add internal/service/manager.go internal/service/manager_test.go
+git commit -m "feat: add room manager for poker service"
+```
+
+---
+
+### Task 4: Add HTTP And WebSocket API Surface
+
+**Files:**
+- Modify: `go.mod`
+- Modify: `go.sum`
+- Create: `internal/api/server.go`
+- Create: `internal/api/server_test.go`
+- Read: `internal/service/manager.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package api
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"poker/internal/service"
+)
+
+func TestCreateRoomEndpoint(t *testing.T) {
+	manager := service.NewManager()
+	server := httptest.NewServer(NewServer(manager))
+	defer server.Close()
+
+	resp, err := http.Post(server.URL+"/api/rooms", "application/json", strings.NewReader(`{"name":"Table 1","smallBlind":1,"startingBankroll":100,"humanSeat":5}`))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	var got map[string]any
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&got))
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, "Table 1", got["roomName"])
+}
+
+func TestActionEndpointRejectsWrongToken(t *testing.T) {
+	manager := service.NewManager()
+	room, err := manager.CreateRoom(service.CreateRoomRequest{Name: "Table 1", SmallBlind: 1, StartingBankroll: 20, HumanSeat: 5})
+	require.NoError(t, err)
+	_, err = manager.TakeSeat(room.ID, 5)
+	require.NoError(t, err)
+	require.NoError(t, manager.StartHand(room.ID))
+
+	server := httptest.NewServer(NewServer(manager))
+	defer server.Close()
+
+	reqBody := `{"token":"wrong-token","actionType":"FOLD","amount":0}`
+	resp, err := http.Post(server.URL+"/api/rooms/"+room.ID+"/actions", "application/json", strings.NewReader(reqBody))
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestRoomSocketStreamsSnapshot(t *testing.T) {
+	manager := service.NewManager()
+	room, err := manager.CreateRoom(service.CreateRoomRequest{Name: "Table 1", SmallBlind: 1, StartingBankroll: 100, HumanSeat: 5})
+	require.NoError(t, err)
+
+	server := httptest.NewServer(NewServer(manager))
+	defer server.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws/rooms/" + room.ID
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+	defer conn.Close()
+
+	var payload map[string]any
+	require.NoError(t, conn.ReadJSON(&payload))
+	assert.Equal(t, room.ID, payload["roomId"])
+}
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run:
+
+```powershell
+go test ./internal/api -run 'TestCreateRoomEndpoint|TestActionEndpointRejectsWrongToken|TestRoomSocketStreamsSnapshot' -v
+```
+
+Expected: FAIL because `internal/api` does not exist and `github.com/gorilla/websocket` is not in `go.mod`.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+```go
+package api
+
+import (
+	"encoding/json"
+	"net/http"
+	"strings"
+
+	"github.com/gorilla/websocket"
+
+	"poker/internal/service"
+	"poker/model"
+)
+
+type Server struct {
+	manager  *service.Manager
+	upgrader websocket.Upgrader
+}
+
+func NewServer(manager *service.Manager) http.Handler {
+	server := &Server{
+		manager: manager,
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool { return true },
+		},
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/rooms", server.handleRooms)
+	mux.HandleFunc("/api/rooms/", server.handleRoomRoutes)
+	mux.HandleFunc("/ws/rooms/", server.handleRoomSocket)
+	return mux
+}
+
+func (server *Server) handleRooms(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, server.manager.ListRooms())
+	case http.MethodPost:
+		var req struct {
+			Name             string `json:"name"`
+			SmallBlind       int    `json:"smallBlind"`
+			StartingBankroll int    `json:"startingBankroll"`
+			HumanSeat        int    `json:"humanSeat"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		room, err := server.manager.CreateRoom(service.CreateRoomRequest{
+			Name:             req.Name,
+			SmallBlind:       req.SmallBlind,
+			StartingBankroll: req.StartingBankroll,
+			HumanSeat:        req.HumanSeat,
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		snapshot, err := server.manager.GetSnapshot(room.ID, nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, http.StatusCreated, snapshot)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (server *Server) handleRoomRoutes(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/rooms/")
+	parts := strings.Split(path, "/")
+	if len(parts) == 0 {
+		http.NotFound(w, r)
+		return
+	}
+
+	roomID := parts[0]
+	if len(parts) == 1 && r.Method == http.MethodGet {
+		sub := server.manager.SubscribeRoom(roomID, nil)
+		defer sub.Close()
+		writeJSON(w, http.StatusOK, <-sub.C)
+		return
+	}
+
+	if len(parts) != 2 {
+		http.NotFound(w, r)
+		return
+	}
+
+	switch parts[1] {
+	case "seat":
+		var req struct{ SeatIndex int `json:"seatIndex"` }
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		viewer, err := server.manager.TakeSeat(roomID, req.SeatIndex)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, http.StatusOK, viewer)
+	case "start":
+		if err := server.manager.StartHand(roomID); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	case "actions":
+		var req struct {
+			Token      string `json:"token"`
+			ActionType string `json:"actionType"`
+			Amount     int    `json:"amount"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err := server.manager.SubmitAction(roomID, req.Token, model.Action{
+			ActionType: model.ActionType(req.ActionType),
+			Amount:     req.Amount,
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (server *Server) handleRoomSocket(w http.ResponseWriter, r *http.Request) {
+	roomID := strings.TrimPrefix(r.URL.Path, "/ws/rooms/")
+	conn, err := server.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	sub := server.manager.SubscribeRoom(roomID, nil)
+	defer sub.Close()
+	for snapshot := range sub.C {
+		if err := conn.WriteJSON(snapshot); err != nil {
+			return
+		}
+	}
+}
+
+func writeJSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(value)
+}
+```
+
+Add the dependency:
+
+```bash
+go get github.com/gorilla/websocket@v1.5.3
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run:
+
+```powershell
+go test ./internal/api -run 'TestCreateRoomEndpoint|TestActionEndpointRejectsWrongToken|TestRoomSocketStreamsSnapshot' -v
+go test ./internal/api -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add go.mod go.sum internal/api/server.go internal/api/server_test.go
+git commit -m "feat: add poker service http and websocket api"
+```
+
+---
+
+### Task 5: Add `cmd/pokerd` Service Entry Point
+
+**Files:**
+- Create: `cmd/pokerd/options.go`
+- Create: `cmd/pokerd/options_test.go`
+- Create: `cmd/pokerd/main.go`
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+package main
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestParseOptionsUsesPortableDefaults(t *testing.T) {
+	opts, err := parseOptions([]string{})
+
+	require.NoError(t, err)
+	assert.Equal(t, "127.0.0.1:8080", opts.addr)
+	assert.Equal(t, "info", opts.logLevel)
+	assert.Equal(t, "web/dist", opts.webDist)
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+go test ./cmd/pokerd -run TestParseOptionsUsesPortableDefaults -v
+```
+
+Expected: FAIL because `cmd/pokerd` does not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+```go
+package main
+
+import (
+	"flag"
+	"net/http"
+
+	"github.com/sirupsen/logrus"
+
+	"poker/internal/api"
+	"poker/internal/service"
+)
+
+type options struct {
+	addr     string
+	logLevel string
+	webDist  string
+}
+
+func parseOptions(args []string) (options, error) {
+	fs := flag.NewFlagSet("pokerd", flag.ContinueOnError)
+	addr := fs.String("addr", "127.0.0.1:8080", "http listen address")
+	logLevel := fs.String("log-level", "info", "debug|info|warn|error")
+	webDist := fs.String("web-dist", "web/dist", "compiled web app directory")
+	if err := fs.Parse(args); err != nil {
+		return options{}, err
+	}
+	return options{addr: *addr, logLevel: *logLevel, webDist: *webDist}, nil
+}
+
+func main() {
+	opts, err := parseOptions(os.Args[1:])
+	if err != nil {
+		panic(err)
+	}
+
+	level, err := logrus.ParseLevel(opts.logLevel)
+	if err != nil {
+		panic(err)
+	}
+	logrus.SetLevel(level)
+
+	manager := service.NewManager()
+	handler := api.NewServer(manager)
+	if err := http.ListenAndServe(opts.addr, handler); err != nil {
+		panic(err)
+	}
+}
+```
+
+- [ ] **Step 4: Run tests and build to verify they pass**
+
+Run:
+
+```powershell
+go test ./cmd/pokerd -run TestParseOptionsUsesPortableDefaults -v
+go test ./cmd/pokerd -v
+go build ./cmd/pokerd
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add cmd/pokerd/main.go cmd/pokerd/options.go cmd/pokerd/options_test.go
+git commit -m "feat: add pokerd service entry point"
+```
+
+---
+
+### Task 6: Scaffold `web/` And Ship The Lobby Page
+
+**Files:**
+- Modify: `.gitignore`
+- Create: `web/package.json`
+- Create: `web/tsconfig.json`
+- Create: `web/vite.config.ts`
+- Create: `web/index.html`
+- Create: `web/src/main.tsx`
+- Create: `web/src/App.tsx`
+- Create: `web/src/styles.css`
+- Create: `web/src/lib/types.ts`
+- Create: `web/src/lib/api.ts`
+- Create: `web/src/pages/LobbyPage.tsx`
+- Create: `web/src/pages/LobbyPage.test.tsx`
+
+- [ ] **Step 1: Create the toolchain files and a failing lobby test**
+
+```tsx
+import { render, screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+
+import { LobbyPage } from "./LobbyPage";
+
+describe("LobbyPage", () => {
+  it("renders rooms from the service and exposes create-room controls", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          { roomId: "room-001", roomName: "Table 1", status: "waiting", handNumber: 0, smallBlind: 1, seats: [] },
+        ],
+      }),
+    );
+
+    render(<LobbyPage />);
+
+    await waitFor(() => expect(screen.getByText("Table 1")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: /create room/i })).toBeInTheDocument();
+  });
+});
+```
+
+Use this `package.json`:
+
+```json
+{
+  "name": "poker-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.5"
+  }
+}
+```
+
+Also update `.gitignore`:
+
+```gitignore
+.audit-work/
+web/node_modules/
+web/dist/
+```
+
+- [ ] **Step 2: Install dependencies and run the test to verify it fails**
+
+Run:
+
+```powershell
+cd web
+npm install
+npm test -- --run LobbyPage
+```
+
+Expected: FAIL because `LobbyPage` and the app files do not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+`web/src/lib/types.ts`:
+
+```ts
+export type PendingAction = {
+  token: string;
+  seatIndex: number;
+  minAmount: number;
+  maxAmount: number;
+  canCheck: boolean;
+  canCall: boolean;
+  canBet: boolean;
+  canFold: boolean;
+  canAllIn: boolean;
+};
+
+export type SeatSnapshot = {
+  index: number;
+  name: string;
+  status: string;
+  bankroll: number;
+  inPotAmount: number;
+  isTurn: boolean;
+  cards: string[];
+};
+
+export type RoomSnapshot = {
+  roomId: string;
+  roomName: string;
+  status: string;
+  viewerRole: "player" | "spectator";
+  handNumber: number;
+  smallBlind: number;
+  pot: number;
+  currentAmount: number;
+  round: string;
+  boardCards: string[];
+  seats: SeatSnapshot[];
+  pendingAction?: PendingAction;
+};
+```
+
+`web/src/lib/api.ts`:
+
+```ts
+import type { RoomSnapshot } from "./types";
+
+export async function listRooms(): Promise<RoomSnapshot[]> {
+  const response = await fetch("/api/rooms");
+  if (!response.ok) {
+    throw new Error(`failed to list rooms: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function createRoom(input: {
+  name: string;
+  smallBlind: number;
+  startingBankroll: number;
+  humanSeat: number;
+}): Promise<RoomSnapshot> {
+  const response = await fetch("/api/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) {
+    throw new Error(`failed to create room: ${response.status}`);
+  }
+  return response.json();
+}
+```
+
+`web/src/pages/LobbyPage.tsx`:
+
+```tsx
+import { FormEvent, useEffect, useState } from "react";
+import { createRoom, listRooms } from "../lib/api";
+import type { RoomSnapshot } from "../lib/types";
+
+export function LobbyPage() {
+  const [rooms, setRooms] = useState<RoomSnapshot[]>([]);
+  const [name, setName] = useState("Table 1");
+
+  useEffect(() => {
+    void listRooms().then(setRooms);
+  }, []);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const room = await createRoom({
+      name,
+      smallBlind: 1,
+      startingBankroll: 100,
+      humanSeat: 5,
+    });
+    setRooms((current) => [...current, room]);
+    setName("Table 1");
+  }
+
+  return (
+    <main className="lobby-shell">
+      <section className="lobby-header">
+        <h1>Poker Control Room</h1>
+        <p>Create a room, take the human seat, or spectate a live table.</p>
+      </section>
+
+      <section className="lobby-grid">
+        <form className="room-form" onSubmit={onSubmit}>
+          <label>
+            Room name
+            <input value={name} onChange={(event) => setName(event.target.value)} />
+          </label>
+          <button type="submit">Create Room</button>
+        </form>
+
+        <div className="room-list">
+          {rooms.map((room) => (
+            <article key={room.roomId} className="room-row">
+              <h2>{room.roomName}</h2>
+              <span>{room.status}</span>
+              <span>Blind {room.smallBlind}</span>
+              <span>Hand {room.handNumber}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+```
+
+`web/src/App.tsx`:
+
+```tsx
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { LobbyPage } from "./pages/LobbyPage";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LobbyPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+- [ ] **Step 4: Run tests and build to verify they pass**
+
+Run:
+
+```powershell
+cd web
+npm test -- --run LobbyPage
+npm run build
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add .gitignore web/package.json web/tsconfig.json web/vite.config.ts web/index.html web/src/main.tsx web/src/App.tsx web/src/styles.css web/src/lib/types.ts web/src/lib/api.ts web/src/pages/LobbyPage.tsx web/src/pages/LobbyPage.test.tsx
+git commit -m "feat: add web lobby scaffold"
+```
+
+---
+
+### Task 7: Build The Room Page, Action Bar, And End-To-End Browser Flow
+
+**Files:**
+- Create: `web/src/lib/socket.ts`
+- Create: `web/src/pages/RoomPage.tsx`
+- Create: `web/src/pages/RoomPage.test.tsx`
+- Create: `web/src/components/TableSeat.tsx`
+- Create: `web/src/components/ActionBar.tsx`
+- Create: `web/src/components/ActionBar.test.tsx`
+- Create: `web/playwright.config.ts`
+- Create: `web/e2e/room-flow.spec.ts`
+- Modify: `web/src/App.tsx`
+
+- [ ] **Step 1: Write the failing tests and the Playwright spec**
+
+`web/src/components/ActionBar.test.tsx`:
+
+```tsx
+import { fireEvent, render, screen } from "@testing-library/react";
+import { vi } from "vitest";
+
+import { ActionBar } from "./ActionBar";
+
+describe("ActionBar", () => {
+  it("submits a fold action for the current token", () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <ActionBar
+        roomId="room-001"
+        pendingAction={{
+          token: "turn-1",
+          seatIndex: 5,
+          minAmount: 1,
+          maxAmount: 20,
+          canCheck: false,
+          canCall: true,
+          canBet: true,
+          canFold: true,
+          canAllIn: true,
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /fold/i }));
+    expect(onSubmit).toHaveBeenCalledWith({ token: "turn-1", actionType: "FOLD", amount: 0 });
+  });
+});
+```
+
+`web/src/pages/RoomPage.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+
+import { RoomPage } from "./RoomPage";
+
+describe("RoomPage", () => {
+  it("renders the live table, board cards, and seat states", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          viewerRole: "player",
+          handNumber: 3,
+          smallBlind: 1,
+          pot: 6,
+          currentAmount: 2,
+          round: "FLOP",
+          boardCards: ["♥Q", "**", "**"],
+          seats: [
+            { index: 0, name: "Player1", status: "PLAYING", bankroll: 98, inPotAmount: 2, isTurn: false, cards: ["**", "**"] },
+            { index: 5, name: "Player6", status: "PLAYING", bankroll: 99, inPotAmount: 1, isTurn: true, cards: ["♣A", "♣K"] },
+          ],
+          pendingAction: {
+            token: "turn-1",
+            seatIndex: 5,
+            minAmount: 1,
+            maxAmount: 99,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+        }}
+        onAction={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Table 1")).toBeInTheDocument();
+    expect(screen.getByText("♥Q")).toBeInTheDocument();
+    expect(screen.getByText("Player6")).toBeInTheDocument();
+  });
+});
+```
+
+`web/e2e/room-flow.spec.ts`:
+
+```ts
+import { expect, test } from "@playwright/test";
+
+test("human seat flow", async ({ page }) => {
+  await page.goto("http://127.0.0.1:4173");
+  await page.getByRole("button", { name: "Create Room" }).click();
+  await page.getByText("Table 1").click();
+  await page.getByRole("button", { name: /take human seat/i }).click();
+  await page.getByRole("button", { name: /start next hand/i }).click();
+  await expect(page.getByRole("button", { name: /fold/i })).toBeVisible();
+  await page.getByRole("button", { name: /fold/i }).click();
+  await expect(page.getByText(/Hand/)).toBeVisible();
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run:
+
+```powershell
+cd web
+npm test -- --run 'ActionBar|RoomPage'
+```
+
+Expected: FAIL because the room page, action bar, and socket wiring do not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+`web/src/lib/socket.ts`:
+
+```ts
+import type { RoomSnapshot } from "./types";
+
+export function connectRoomSocket(roomId: string, onSnapshot: (snapshot: RoomSnapshot) => void): WebSocket {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/rooms/${roomId}`);
+  socket.addEventListener("message", (event) => {
+    onSnapshot(JSON.parse(event.data) as RoomSnapshot);
+  });
+  return socket;
+}
+```
+
+`web/src/components/ActionBar.tsx`:
+
+```tsx
+import { useState } from "react";
+import type { PendingAction } from "../lib/types";
+
+type Props = {
+  roomId: string;
+  pendingAction?: PendingAction;
+  onSubmit: (input: { token: string; actionType: string; amount: number }) => Promise<void> | void;
+};
+
+export function ActionBar({ pendingAction, onSubmit }: Props) {
+  const [betAmount, setBetAmount] = useState("");
+
+  if (!pendingAction) {
+    return <div className="action-bar muted">Waiting for the next human turn.</div>;
+  }
+
+  return (
+    <div className="action-bar">
+      {pendingAction.canCheck && (
+        <button onClick={() => onSubmit({ token: pendingAction.token, actionType: "CALL", amount: 0 })}>Check</button>
+      )}
+      {pendingAction.canCall && (
+        <button onClick={() => onSubmit({ token: pendingAction.token, actionType: "CALL", amount: pendingAction.minAmount })}>Call</button>
+      )}
+      {pendingAction.canFold && (
+        <button onClick={() => onSubmit({ token: pendingAction.token, actionType: "FOLD", amount: 0 })}>Fold</button>
+      )}
+      {pendingAction.canAllIn && (
+        <button onClick={() => onSubmit({ token: pendingAction.token, actionType: "ALL_IN", amount: pendingAction.maxAmount })}>All-in</button>
+      )}
+      {pendingAction.canBet && (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit({ token: pendingAction.token, actionType: "BET", amount: Number(betAmount) });
+          }}
+        >
+          <input value={betAmount} onChange={(event) => setBetAmount(event.target.value)} />
+          <button type="submit">Bet</button>
+        </form>
+      )}
+    </div>
+  );
+}
+```
+
+`web/src/pages/RoomPage.tsx`:
+
+```tsx
+import type { RoomSnapshot } from "../lib/types";
+import { ActionBar } from "../components/ActionBar";
+import { TableSeat } from "../components/TableSeat";
+
+type Props = {
+  snapshot: RoomSnapshot;
+  onAction: (input: { token: string; actionType: string; amount: number }) => Promise<void>;
+};
+
+export function RoomPage({ snapshot, onAction }: Props) {
+  return (
+    <main className="room-shell">
+      <header className="room-header">
+        <h1>{snapshot.roomName}</h1>
+        <div>Status: {snapshot.status}</div>
+        <div>Hand {snapshot.handNumber}</div>
+        <div>Pot {snapshot.pot}</div>
+      </header>
+
+      <section className="table-stage">
+        <div className="board-row">
+          {snapshot.boardCards.map((card) => (
+            <span key={card} className="board-card">{card}</span>
+          ))}
+        </div>
+        <div className="seat-grid">
+          {snapshot.seats.map((seat) => (
+            <TableSeat key={seat.index} seat={seat} />
+          ))}
+        </div>
+      </section>
+
+      <ActionBar roomId={snapshot.roomId} pendingAction={snapshot.pendingAction} onSubmit={onAction} />
+    </main>
+  );
+}
+```
+
+Update `web/src/App.tsx` to add `/rooms/:roomId`, initial room load, and socket subscription.
+
+- [ ] **Step 4: Run tests and the browser flow to verify they pass**
+
+Run component tests:
+
+```powershell
+cd web
+npm test -- --run 'ActionBar|RoomPage'
+```
+
+Run the end-to-end flow:
+
+```powershell
+$server = Start-Process powershell -ArgumentList '-NoLogo','-NoProfile','-Command','cd D:\Git\go\src\poker; go run ./cmd/pokerd -addr 127.0.0.1:8080' -PassThru
+$web = Start-Process powershell -ArgumentList '-NoLogo','-NoProfile','-Command','cd D:\Git\go\src\poker\web; npm run dev -- --host 127.0.0.1 --port 4173' -PassThru
+try {
+  cd D:\Git\go\src\poker\web
+  npx playwright test e2e/room-flow.spec.ts
+} finally {
+  Stop-Process $server.Id, $web.Id
+}
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add web/src/lib/socket.ts web/src/pages/RoomPage.tsx web/src/pages/RoomPage.test.tsx web/src/components/TableSeat.tsx web/src/components/ActionBar.tsx web/src/components/ActionBar.test.tsx web/playwright.config.ts web/e2e/room-flow.spec.ts web/src/App.tsx web/src/styles.css
+git commit -m "feat: add poker room page and browser action flow"
+```
+
+---
+
+### Task 8: Add `cmd/pokerctl` As The Terminal Frontend
+
+**Files:**
+- Create: `cmd/pokerctl/client.go`
+- Create: `cmd/pokerctl/render.go`
+- Create: `cmd/pokerctl/render_test.go`
+- Create: `cmd/pokerctl/main.go`
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+package main
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"poker/internal/table"
+)
+
+func TestRenderSnapshotShowsRoomStateAndPendingAction(t *testing.T) {
+	output := renderSnapshot(table.Snapshot{
+		RoomID:        "room-001",
+		RoomName:      "Table 1",
+		Status:        table.StatusAwaitingAction,
+		HandNumber:    3,
+		BoardCards:    []string{"♥Q", "**", "**"},
+		PendingAction: &table.PendingAction{Token: "turn-1", SeatIndex: 5, MinAmount: 1, MaxAmount: 20},
+	})
+
+	assert.Contains(t, output, "Table 1")
+	assert.Contains(t, output, "awaiting_action")
+	assert.Contains(t, output, "turn-1")
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+go test ./cmd/pokerctl -run TestRenderSnapshotShowsRoomStateAndPendingAction -v
+```
+
+Expected: FAIL because `cmd/pokerctl` does not exist yet.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+`cmd/pokerctl/render.go`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+
+	"poker/internal/table"
+)
+
+func renderSnapshot(snapshot table.Snapshot) string {
+	lines := []string{
+		fmt.Sprintf("%s (%s)", snapshot.RoomName, snapshot.RoomID),
+		fmt.Sprintf("status=%s hand=%d", snapshot.Status, snapshot.HandNumber),
+		fmt.Sprintf("board=%s", strings.Join(snapshot.BoardCards, " ")),
+	}
+	if snapshot.PendingAction != nil {
+		lines = append(lines, fmt.Sprintf("pending token=%s seat=%d min=%d max=%d", snapshot.PendingAction.Token, snapshot.PendingAction.SeatIndex, snapshot.PendingAction.MinAmount, snapshot.PendingAction.MaxAmount))
+	}
+	return strings.Join(lines, "\n")
+}
+```
+
+`cmd/pokerctl/client.go`:
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/gorilla/websocket"
+
+	"poker/internal/table"
+)
+
+type Client struct {
+	baseURL string
+}
+
+func NewClient(baseURL string) *Client {
+	return &Client{baseURL: baseURL}
+}
+
+func (client *Client) ListRooms() ([]table.Snapshot, error) {
+	resp, err := http.Get(client.baseURL + "/api/rooms")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var snapshots []table.Snapshot
+	if err := json.NewDecoder(resp.Body).Decode(&snapshots); err != nil {
+		return nil, err
+	}
+	return snapshots, nil
+}
+
+func (client *Client) WatchRoom(roomID string) (*websocket.Conn, error) {
+	wsURL := "ws" + strings.TrimPrefix(client.baseURL, "http") + "/ws/rooms/" + roomID
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	return conn, err
+}
+```
+
+`cmd/pokerctl/main.go`:
+
+```go
+package main
+
+import (
+	"flag"
+	"fmt"
+
+	"poker/internal/table"
+)
+
+func main() {
+	serverURL := flag.String("server", "http://127.0.0.1:8080", "service base url")
+	roomID := flag.String("room", "", "room id to watch")
+	flag.Parse()
+
+	client := NewClient(*serverURL)
+	if *roomID == "" {
+		rooms, err := client.ListRooms()
+		if err != nil {
+			panic(err)
+		}
+		for _, room := range rooms {
+			fmt.Println(renderSnapshot(room))
+		}
+		return
+	}
+
+	conn, err := client.WatchRoom(*roomID)
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	for {
+		var snapshot table.Snapshot
+		if err := conn.ReadJSON(&snapshot); err != nil {
+			panic(err)
+		}
+		fmt.Println(renderSnapshot(snapshot))
+	}
+}
+```
+
+- [ ] **Step 4: Run tests and build to verify they pass**
+
+Run:
+
+```powershell
+go test ./cmd/pokerctl -run TestRenderSnapshotShowsRoomStateAndPendingAction -v
+go test ./cmd/pokerctl -v
+go build ./cmd/pokerctl
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add cmd/pokerctl/client.go cmd/pokerctl/render.go cmd/pokerctl/render_test.go cmd/pokerctl/main.go
+git commit -m "feat: add pokerctl terminal frontend"
+```
+
+---
+
+### Task 9: Update Docs And Run Full Verification
+
+**Files:**
+- Modify: `README.md`
+- Verify: repository-wide
+
+- [ ] **Step 1: Update `README.md` with the new service and frontend workflows**
+
+Add a short usage section like this:
+
+~~~md
+## Service Frontends
+
+### Start the poker service
+
+```powershell
+go run ./cmd/pokerd -addr 127.0.0.1:8080
+```
+
+### Start the web frontend
+
+```powershell
+cd web
+npm install
+npm run dev
+```
+
+### Use the terminal frontend
+
+```powershell
+go run ./cmd/pokerctl -server http://127.0.0.1:8080
+go run ./cmd/pokerctl -server http://127.0.0.1:8080 -room room-001
+```
+~~~
+
+- [ ] **Step 2: Run targeted backend verification**
+
+Run:
+
+```powershell
+go test ./internal/table ./internal/service ./internal/api ./cmd/pokerd ./cmd/pokerctl -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Run repository-wide Go verification**
+
+Run:
+
+```powershell
+go test ./... -v
+go build ./...
+```
+
+Expected: PASS.
+
+- [ ] **Step 4: Run frontend verification**
+
+Run:
+
+```powershell
+cd web
+npm test
+npm run build
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Re-run the end-to-end browser flow**
+
+Run:
+
+```powershell
+$server = Start-Process powershell -ArgumentList '-NoLogo','-NoProfile','-Command','cd D:\Git\go\src\poker; go run ./cmd/pokerd -addr 127.0.0.1:8080' -PassThru
+$web = Start-Process powershell -ArgumentList '-NoLogo','-NoProfile','-Command','cd D:\Git\go\src\poker\web; npm run dev -- --host 127.0.0.1 --port 4173' -PassThru
+try {
+  cd D:\Git\go\src\poker\web
+  npx playwright test e2e/room-flow.spec.ts
+} finally {
+  Stop-Process $server.Id, $web.Id
+}
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: document poker service frontends"
+```
+
+---
+
+## Self-Review
+
+- Spec coverage:
+  - 长期运行服务：Task 3, Task 4, Task 5
+  - `web/` 浏览器前端：Task 6, Task 7
+  - `cmd/pokerctl/` 终端前端：Task 8
+  - 单真人座位 + AI 补位：Task 2, Task 3
+  - 观战和脱敏快照：Task 1, Task 3, Task 4
+  - HTTP + WebSocket：Task 4
+  - 房间生命周期和等待人类动作：Task 2, Task 3
+  - 前端大厅与牌桌界面：Task 6, Task 7
+  - 错误处理与 token 校验：Task 2, Task 3, Task 4
+  - 测试与端到端回归：Task 1 through Task 9
+- Placeholder scan:
+  - 无 `TODO`、`TBD`、`implement later`
+  - 每个任务都给出文件、测试、命令、实现骨架、提交点
+- Type consistency:
+  - 服务快照类型集中在 `internal/table`
+  - `PendingAction`, `RoomStatus`, `Snapshot` 在 Go 与前端命名保持一致
+  - 服务入口固定为 `cmd/pokerd`
+  - 终端入口固定为 `cmd/pokerctl`
+
+## Execution Handoff
+
+Plan complete and saved to `docs/superpowers/plans/2026-04-20-poker-web-console-implementation.md`. Two execution options:
+
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+
+**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+
+Which approach?

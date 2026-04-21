@@ -153,7 +153,8 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 	card4 := game.DrawCard()
 	card5 := game.DrawCard()
 	game.BoardCards = model.Cards{card1, card2, card3, card4, card5}
-	interactWithPlayers(board)
+	notifyRoundChange(ctx, board, game.Round)
+	interactWithPlayers(ctx, board)
 	if game.Round == model.FINISH {
 		return
 	} else if checkIfCanJumpToShowdown(board) {
@@ -166,7 +167,8 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 	(*game.BoardCards[0]).UpdateRevealed(true)
 	(*game.BoardCards[1]).UpdateRevealed(true)
 	(*game.BoardCards[2]).UpdateRevealed(true)
-	interactWithPlayers(board)
+	notifyRoundChange(ctx, board, game.Round)
+	interactWithPlayers(ctx, board)
 	if game.Round == model.FINISH {
 		return
 	} else if checkIfCanJumpToShowdown(board) {
@@ -177,7 +179,8 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 	// Turn
 	game.Round = model.TURN
 	(*game.BoardCards[3]).UpdateRevealed(true)
-	interactWithPlayers(board)
+	notifyRoundChange(ctx, board, game.Round)
+	interactWithPlayers(ctx, board)
 	if game.Round == model.FINISH {
 		return
 	} else if checkIfCanJumpToShowdown(board) {
@@ -188,7 +191,8 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 	// River
 	game.Round = model.RIVER
 	(*game.BoardCards[4]).UpdateRevealed(true)
-	interactWithPlayers(board)
+	notifyRoundChange(ctx, board, game.Round)
+	interactWithPlayers(ctx, board)
 	if game.Round == model.FINISH {
 		return
 	} else if checkIfCanJumpToShowdown(board) {
@@ -198,6 +202,13 @@ func PlayGame(ctx *model.Context, board *model.Board) {
 
 	game.Round = model.SHOWDOWN
 	showdown(board)
+}
+
+func notifyRoundChange(ctx *model.Context, board *model.Board, round model.Round) {
+	if ctx == nil || ctx.OnRoundChange == nil {
+		return
+	}
+	ctx.OnRoundChange(board, round)
 }
 
 func EndGame(ctx *model.Context, board *model.Board) {
@@ -253,7 +264,7 @@ func getInteractStartIndex(board *model.Board) int {
 	return smallBlindIndex
 }
 
-func interactWithPlayers(board *model.Board) {
+func interactWithPlayers(ctx *model.Context, board *model.Board) {
 	game := board.Game
 
 	actualSmallBlindIndex := board.PositionIndexMap[model.PositionSmallBlind]
@@ -288,7 +299,7 @@ func interactWithPlayers(board *model.Board) {
 		for i := 0; i < len(board.Players); i++ {
 			actualIndex := (i + interactStartIndex) % len(board.Players)
 
-			callInteract(board, actualIndex)
+			callInteract(ctx, board, actualIndex)
 
 			if model.CheckIfOnlyOneLeft(board) {
 				settleBecauseOthersAllFold(board)
@@ -425,7 +436,7 @@ func settleBecauseOthersAllFold(board *model.Board) {
 	}
 }
 
-func callInteract(board *model.Board, playerIndex int) {
+func callInteract(ctx *model.Context, board *model.Board, playerIndex int) {
 	if playerIndex < 0 || playerIndex >= len(board.Players) {
 		panic("callInteract invalid input")
 	}
@@ -458,6 +469,9 @@ func callInteract(board *model.Board, playerIndex int) {
 	}
 
 	performAction(board, playerIndex, action)
+	if ctx != nil && ctx.OnAction != nil {
+		ctx.OnAction(board, playerIndex, action)
+	}
 }
 
 func checkAction(board *model.Board, playerIndex int, action model.Action) error {

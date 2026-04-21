@@ -5,5 +5,7 @@ import (
 )
 
 type Context struct {
-	Rng *rand.Rand
+	Rng           *rand.Rand
+	OnAction      func(board *Board, playerIndex int, action Action)
+	OnRoundChange func(board *Board, round Round)
 }

@@ -1,0 +1,739 @@
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { vi } from "vitest";
+
+import type { RoomSnapshot } from "../lib/types";
+import { RoomPage, RoomRoute } from "./RoomPage";
+
+class MockWebSocket {
+  static instances: MockWebSocket[] = [];
+
+  readonly close = vi.fn();
+  onerror: (() => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  readonly url: string;
+
+  constructor(url: string | URL) {
+    this.url = String(url);
+    MockWebSocket.instances.push(this);
+  }
+}
+
+describe("RoomPage", () => {
+  afterEach(() => {
+    MockWebSocket.instances = [];
+    vi.unstubAllGlobals();
+    window.localStorage.clear();
+  });
+
+  it("renders the live table, board cards, and seat states", () => {
+    const { container } = render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          viewerRole: "player",
+          handNumber: 3,
+          smallBlind: 1,
+          pot: 6,
+          currentAmount: 2,
+          round: "FLOP",
+          boardCards: ["♥Q", "**", "**"],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 98,
+              inPotAmount: 2,
+              isTurn: false,
+              cards: ["**", "**"],
+            },
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 99,
+              inPotAmount: 1,
+              isTurn: true,
+              cards: ["♣A", "♣K"],
+            },
+          ],
+          pendingAction: {
+            token: "turn-1",
+            seatIndex: 5,
+            minAmount: 1,
+            maxAmount: 99,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    const flopCard = screen
+      .getAllByText((_, element) => element?.textContent === "♥Q")
+      .find((element) => element.classList.contains("card-face"));
+
+    expect(screen.getByText("Table 1")).toBeInTheDocument();
+    expect(flopCard).toBeInTheDocument();
+    expect(screen.getByText("Player6")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /fold/i })).toBeInTheDocument();
+    expect(flopCard).toHaveClass("card-face", "card-face--hearts");
+    expect(container.querySelector(".room-shell--fixed")).toBeInTheDocument();
+    expect(
+      container.querySelector(".table-stage > .room-stats"),
+    ).not.toBeInTheDocument();
+    expect(container.querySelector(".board-cluster")).toBeInTheDocument();
+    expect(container.querySelector(".board-meta")).toBeInTheDocument();
+    expect(container.querySelectorAll(".table-stat-row")).toHaveLength(3);
+    expect(container.querySelector(".table-stat-icon")).not.toBeInTheDocument();
+    expect(container.querySelector(".board-badge-dot")).not.toBeInTheDocument();
+    expect(container.querySelector(".seat-orbit")).toBeInTheDocument();
+    expect(container.querySelector(".seat-grid")).not.toBeInTheDocument();
+    expect(container.querySelector(".side-panel--scroll")).toBeInTheDocument();
+    expect(
+      container.querySelector(".room-history-stack.room-history-stack--scroll"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("PLAYING")).not.toBeInTheDocument();
+  });
+
+  it("uses a full-ring seat orbit when the room has ten players", () => {
+    const { container } = render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-010",
+          roomName: "Full Ring",
+          status: "running",
+          viewerRole: "player",
+          humanSeat: 9,
+          playerCount: 10,
+          handNumber: 2,
+          smallBlind: 1,
+          pot: 12,
+          currentAmount: 4,
+          round: "PREFLOP",
+          boardCards: [],
+          seats: Array.from({ length: 10 }, (_, index) => ({
+            index,
+            name: `Player${index + 1}`,
+            status: "PLAYING",
+            bankroll: 100 - index,
+            inPotAmount: index === 0 ? 1 : 0,
+            isTurn: index === 9,
+            cards: index === 9 ? ["♠A", "♥K"] : ["**", "**"],
+          })),
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(container.querySelector(".table-live-layout")).toHaveStyle({
+      "--orbit-min-height": "872px",
+      "--orbit-seat-width": "188px",
+    });
+    expect(container.querySelector(".seat-orbit--10")).toBeInTheDocument();
+    expect(container.querySelectorAll(".seat-slot")).toHaveLength(10);
+    expect(container.querySelector(".seat-slot--hero")).toBeInTheDocument();
+    expect(
+      parseFloat(
+        (
+          container.querySelector(".seat-slot--top-center") as HTMLElement
+        ).style.top,
+      ),
+    ).toBeGreaterThanOrEqual(11);
+    expect(
+      parseFloat(
+        (
+          container.querySelector(".seat-slot--top-left") as HTMLElement
+        ).style.top,
+      ),
+    ).toBeGreaterThanOrEqual(14);
+    expect(
+      parseFloat(
+        (
+          container.querySelector(".seat-slot--left-lower") as HTMLElement
+        ).style.left,
+      ),
+    ).toBeGreaterThanOrEqual(12);
+    expect(
+      parseFloat(
+        (
+          container.querySelector(".seat-slot--bottom-left") as HTMLElement
+        ).style.top,
+      ),
+    ).toBeGreaterThanOrEqual(78);
+    expect(
+      parseFloat(
+        (
+          container.querySelector(".seat-slot--right-lower") as HTMLElement
+        ).style.left,
+      ),
+    ).toBeLessThanOrEqual(88);
+  });
+
+  it("renders waiting rooms without crashing when collections are missing", () => {
+    const { container } = render(
+      <RoomPage
+        snapshot={
+          {
+            roomId: "room-001",
+            roomName: "Table 1",
+            status: "waiting",
+            handNumber: 0,
+            smallBlind: 1,
+          } as RoomSnapshot
+        }
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Table 1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /start hand/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/no events yet/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/waiting for the opening deal/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/start a hand to bring players onto the felt/i),
+    ).toBeInTheDocument();
+    expect(container.querySelector(".table-empty-state")).toBeInTheDocument();
+    expect(container.querySelector(".board-cluster")).not.toBeInTheDocument();
+    expect(
+      container.querySelector(".table-placeholder"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders seats whose cards have not been dealt yet", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "running",
+          viewerRole: "player",
+          humanSeat: 5,
+          handNumber: 1,
+          smallBlind: 1,
+          pot: 3,
+          currentAmount: 2,
+          round: "PREFLOP",
+          boardCards: [],
+          seats: [
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 99,
+              inPotAmount: 1,
+              isTurn: false,
+              cards: undefined as unknown as string[],
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Player6")).toBeInTheDocument();
+    expect(screen.getByText("You")).toBeInTheDocument();
+    expect(screen.queryByText(/player view active/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/your hole cards are shown/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a hand-finished summary with winners and chip swings", () => {
+    const { container } = render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "hand_finished",
+          viewerRole: "player",
+          handNumber: 4,
+          humanSeat: 5,
+          smallBlind: 1,
+          pot: 0,
+          currentAmount: 0,
+          round: "FINISH",
+          boardCards: ["♥Q", "♣J", "♦10", "♠2", "♣3"],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 118,
+              inPotAmount: 0,
+              isTurn: false,
+              cards: ["♥A", "♠K"],
+              netChange: 18,
+              bestHand: "Straight",
+              isWinner: true,
+            },
+            {
+              index: 2,
+              name: "Player3",
+              status: "PLAYING",
+              bankroll: 100,
+              inPotAmount: 0,
+              isTurn: false,
+              cards: ["**", "**"],
+              netChange: 0,
+              bestHand: "No pair",
+              isWinner: false,
+            },
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 82,
+              inPotAmount: 0,
+              isTurn: false,
+              cards: ["♣9", "♦9"],
+              netChange: -18,
+              bestHand: "One pair",
+              isWinner: false,
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Player1 wins +18")).toBeInTheDocument();
+    expect(screen.getByText("Winning hand: Straight")).toBeInTheDocument();
+    expect(screen.getAllByText("Player6")).toHaveLength(2);
+    expect(screen.getAllByText("-18")).toHaveLength(2);
+    expect(screen.getAllByText("One pair")).toHaveLength(2);
+    const historyStack = container.querySelector(
+      ".room-history-stack.room-history-stack--scroll",
+    );
+    const settlementPanel = container.querySelector(".settlement-panel");
+    const feedPanel = container.querySelector(".room-feed-panel");
+    const settlementQueries = within(settlementPanel as HTMLElement);
+    expect(historyStack).toBeInTheDocument();
+    expect(settlementPanel?.parentElement).toBe(historyStack);
+    expect(feedPanel?.parentElement).toBe(historyStack);
+    expect(settlementQueries.queryByText("Player3")).not.toBeInTheDocument();
+    expect(settlementQueries.queryByText("No pair")).not.toBeInTheDocument();
+    expect(settlementQueries.queryByText(/^0$/)).not.toBeInTheDocument();
+  });
+
+  it("requires an inline confirmation before leaving for the lobby", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          viewerRole: "player",
+          handNumber: 3,
+          humanSeat: 5,
+          smallBlind: 1,
+          pot: 6,
+          currentAmount: 2,
+          round: "FLOP",
+          boardCards: ["♥Q", "**", "**"],
+          seats: [
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 99,
+              inPotAmount: 1,
+              isTurn: true,
+              cards: ["♣A", "♣K"],
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.queryByText(/leave this table/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /back to lobby/i }));
+
+    expect(screen.getByText(/leave this table/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /stay here/i }),
+    ).toBeInTheDocument();
+
+    const leaveLink = screen.getByRole("link", { name: /leave room/i });
+    expect(leaveLink).toHaveAttribute("href", "/");
+
+    fireEvent.click(screen.getByRole("button", { name: /stay here/i }));
+
+    expect(screen.queryByText(/leave this table/i)).not.toBeInTheDocument();
+  });
+
+  it("shows current-round seat actions derived from structured room events", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          viewerRole: "player",
+          handNumber: 9,
+          humanSeat: 5,
+          smallBlind: 1,
+          pot: 6,
+          currentAmount: 2,
+          round: "FLOP",
+          boardCards: ["♥Q", "♣J", "**"],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 98,
+              inPotAmount: 2,
+              isTurn: false,
+              cards: ["**", "**"],
+            },
+            {
+              index: 3,
+              name: "Player4",
+              status: "OUT",
+              bankroll: 100,
+              inPotAmount: 0,
+              isTurn: false,
+              cards: ["**", "**"],
+            },
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 99,
+              inPotAmount: 1,
+              isTurn: true,
+              cards: ["♣A", "♣K"],
+            },
+          ],
+          pendingAction: {
+            token: "turn-1",
+            seatIndex: 5,
+            minAmount: 1,
+            maxAmount: 99,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+          events: [
+            {
+              kind: "round_start",
+              message: "preflop opened",
+              round: "PREFLOP",
+              handNumber: 9,
+            },
+            {
+              kind: "player_action",
+              message: "seat 1 called 2",
+              round: "PREFLOP",
+              handNumber: 9,
+              seatIndex: 0,
+              actionType: "CALL",
+              amount: 2,
+            },
+            {
+              kind: "round_start",
+              message: "flop opened",
+              round: "FLOP",
+              handNumber: 9,
+            },
+            {
+              kind: "player_action",
+              message: "seat 1 bet 4",
+              round: "FLOP",
+              handNumber: 9,
+              seatIndex: 0,
+              actionType: "BET",
+              amount: 4,
+            },
+            {
+              kind: "player_action",
+              message: "seat 4 folded",
+              round: "FLOP",
+              handNumber: 9,
+              seatIndex: 3,
+              actionType: "FOLD",
+              amount: 0,
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Bet 4")).toBeInTheDocument();
+    expect(screen.getByText("Folded")).toBeInTheDocument();
+  });
+
+  it("keeps spectators out of the live action controls even when a hand is awaiting input", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          viewerRole: "spectator",
+          humanSeat: 5,
+          handNumber: 3,
+          smallBlind: 1,
+          pot: 6,
+          currentAmount: 2,
+          round: "FLOP",
+          boardCards: ["♥Q", "**", "**"],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 98,
+              inPotAmount: 2,
+              isTurn: false,
+              cards: ["**", "**"],
+            },
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 99,
+              inPotAmount: 1,
+              isTurn: true,
+              cards: ["**", "**"],
+            },
+          ],
+          pendingAction: {
+            token: "turn-1",
+            seatIndex: 5,
+            minAmount: 1,
+            maxAmount: 99,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /confirm bet/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /spectate/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /your cards are hidden because this room is currently in spectator mode/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("disables the start-hand control while a hand is already in progress", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          viewerRole: "spectator",
+          humanSeat: 5,
+          handNumber: 4,
+          smallBlind: 1,
+          pot: 3,
+          currentAmount: 2,
+          round: "PREFLOP",
+          boardCards: ["**", "**", "**", "**", "**"],
+          seats: [
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 98,
+              inPotAmount: 2,
+              isTurn: true,
+              cards: ["**", "**"],
+            },
+          ],
+          pendingAction: {
+            token: "turn-1",
+            seatIndex: 5,
+            minAmount: 2,
+            maxAmount: 98,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /hand in progress/i }),
+    ).toBeDisabled();
+  });
+
+  it("leaves the room, releases the seat, and clears the stored viewer session", async () => {
+    window.localStorage.setItem("poker.viewerSeat.room-001", "5");
+    window.localStorage.setItem("poker.viewerToken.room-001", "viewer-token-1");
+
+    const playerSnapshot: RoomSnapshot = {
+      roomId: "room-001",
+      roomName: "Table 1",
+      status: "awaiting_action",
+      viewerRole: "player",
+      humanSeat: 5,
+      handNumber: 3,
+      smallBlind: 1,
+      pot: 6,
+      currentAmount: 2,
+      round: "FLOP",
+      boardCards: ["♥Q", "**", "**"],
+      seats: [
+        {
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 99,
+          inPotAmount: 1,
+          isTurn: true,
+          cards: ["♣A", "♣K"],
+        },
+      ],
+      pendingAction: {
+        token: "turn-1",
+        seatIndex: 5,
+        minAmount: 1,
+        maxAmount: 99,
+        canCheck: false,
+        canCall: true,
+        canBet: true,
+        canFold: true,
+        canAllIn: true,
+      },
+    };
+    const spectatorSnapshot: RoomSnapshot = {
+      roomId: "room-001",
+      roomName: "Table 1",
+      status: "running",
+      viewerRole: "spectator",
+      humanSeat: 5,
+      handNumber: 3,
+      smallBlind: 1,
+      pot: 6,
+      currentAmount: 2,
+      round: "FLOP",
+      boardCards: ["♥Q", "**", "**"],
+      seats: [
+        {
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 99,
+          inPotAmount: 1,
+          isTurn: true,
+          cards: ["**", "**"],
+        },
+      ],
+    };
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => playerSnapshot,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          roomId: "room-001",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("WebSocket", MockWebSocket as unknown as typeof WebSocket);
+
+    render(
+      <MemoryRouter initialEntries={["/rooms/room-001"]}>
+        <Routes>
+          <Route path="/" element={<div>Lobby landing</div>} />
+          <Route path="/rooms/:roomId" element={<RoomRoute />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Table 1")).toBeInTheDocument(),
+    );
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/rooms/room-001?viewerSeat=5&viewerToken=viewer-token-1",
+    );
+    expect(MockWebSocket.instances[0]?.url).toContain(
+      "/ws/rooms/room-001?viewerSeat=5&viewerToken=viewer-token-1",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /back to lobby/i }));
+    fireEvent.click(screen.getByRole("link", { name: /leave room/i }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        "/api/rooms/room-001/leave",
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ viewerToken: "viewer-token-1" }),
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Lobby landing")).toBeInTheDocument(),
+    );
+
+    expect(window.localStorage.getItem("poker.viewerSeat.room-001")).toBeNull();
+    expect(
+      window.localStorage.getItem("poker.viewerToken.room-001"),
+    ).toBeNull();
+    expect(MockWebSocket.instances[0]?.close).toHaveBeenCalled();
+  });
+});

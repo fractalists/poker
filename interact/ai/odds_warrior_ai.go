@@ -26,6 +26,14 @@ func NewOddsWarriorAI() *OddsWarriorAI {
 	}
 }
 
+func NewOddsWarriorAIWithMonteCarloTimes(times int) *OddsWarriorAI {
+	ai := NewOddsWarriorAI()
+	if times > 0 {
+		ai.mentoCarloTimes = times
+	}
+	return ai
+}
+
 func (oddsWarriorAI *OddsWarriorAI) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(board *model.Board, interactType model.InteractType) model.Action {
 	oddsWarriorAI.selfIndex = selfIndex
 	oddsWarriorAI.getBoardInfoFunc = getBoardInfoFunc

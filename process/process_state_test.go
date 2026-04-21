@@ -50,7 +50,7 @@ func TestInteractWithPlayersHeadsUpPostFlopStartsFromBigBlind(t *testing.T) {
 		},
 	}
 
-	interactWithPlayers(board)
+	interactWithPlayers(nil, board)
 
 	assert.Equal(t, []int{1, 0}, order[:2])
 }
@@ -147,7 +147,7 @@ func TestCallInteractFallsBackToFoldAfterThreeInvalidActions(t *testing.T) {
 	}
 
 	assert.NotPanics(t, func() {
-		callInteract(board, 0)
+		callInteract(nil, board, 0)
 	})
 	assert.Equal(t, 3, attempts)
 	assert.Equal(t, model.PlayerStatusOut, board.Players[0].Status)

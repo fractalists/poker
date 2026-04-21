@@ -2,3 +2,5 @@
 *.exe
 *.exe~
 .audit-work/
+web/node_modules/
+web/dist/
