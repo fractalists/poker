@@ -23,9 +23,17 @@ describe("roomLayout", () => {
   it("keeps full-ring seats above the readability floor", () => {
     const layout = buildOrbitLayout(10, 9);
 
-    expect(px(layout.spec.seatWidth)).toBeGreaterThanOrEqual(188);
-    expect(px(layout.spec.seatMinHeight)).toBeGreaterThanOrEqual(170);
+    expect(px(layout.spec.seatWidth)).toBeGreaterThanOrEqual(184);
+    expect(px(layout.spec.seatMinHeight)).toBeGreaterThanOrEqual(152);
     expect(layout.spec.cardScale).toBeGreaterThanOrEqual(0.94);
-    expect(px(layout.spec.minHeight)).toBeGreaterThanOrEqual(872);
+    expect(px(layout.spec.minHeight)).toBeGreaterThanOrEqual(804);
+  });
+
+  it("packs six-handed tables into a denser but still readable seat footprint", () => {
+    const layout = buildOrbitLayout(6, 5);
+
+    expect(px(layout.spec.seatWidth)).toBeLessThanOrEqual(200);
+    expect(px(layout.spec.seatMinHeight)).toBeLessThanOrEqual(158);
+    expect(px(layout.spec.minHeight)).toBeLessThanOrEqual(684);
   });
 });

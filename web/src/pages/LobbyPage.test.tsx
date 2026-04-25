@@ -5,6 +5,7 @@ import { LobbyPage } from "./LobbyPage";
 
 describe("LobbyPage", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     window.localStorage.clear();
   });
@@ -28,7 +29,7 @@ describe("LobbyPage", () => {
       }),
     );
 
-    render(<LobbyPage />);
+    const { container } = render(<LobbyPage />);
 
     await waitFor(() =>
       expect(screen.getByText("Table 1")).toBeInTheDocument(),
@@ -41,10 +42,14 @@ describe("LobbyPage", () => {
     expect(
       screen.getByRole("button", { name: /spectate room/i }),
     ).toBeInTheDocument();
+    const workGrid = container.querySelector(".work-grid");
+    expect(workGrid?.firstElementChild).toHaveClass("room-strip");
+    expect(workGrid?.lastElementChild).toHaveClass("create-panel");
   });
 
-  it("creates a room with the selected player count and auto claims the last seat", async () => {
+  it("creates a room with the selected player count and auto claims a random human seat", async () => {
     const navigateToRoom = vi.fn();
+    vi.spyOn(Math, "random").mockReturnValue(0.25);
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -56,7 +61,7 @@ describe("LobbyPage", () => {
         json: async () => ({
           roomId: "room-002",
           roomName: "Table 2",
-          humanSeat: 3,
+          humanSeat: 1,
           status: "waiting",
           handNumber: 0,
           smallBlind: 1,
@@ -68,7 +73,7 @@ describe("LobbyPage", () => {
         ok: true,
         json: async () => ({
           roomId: "room-002",
-          viewerSeat: 3,
+          viewerSeat: 1,
           viewerToken: "viewer-token-1",
         }),
       });
@@ -90,7 +95,7 @@ describe("LobbyPage", () => {
     await waitFor(() =>
       expect(navigateToRoom).toHaveBeenCalledWith("room-002"),
     );
-    expect(window.localStorage.getItem("poker.viewerSeat.room-002")).toBe("3");
+    expect(window.localStorage.getItem("poker.viewerSeat.room-002")).toBe("1");
     expect(window.localStorage.getItem("poker.viewerToken.room-002")).toBe(
       "viewer-token-1",
     );
@@ -103,7 +108,7 @@ describe("LobbyPage", () => {
           name: "Table 1",
           smallBlind: 1,
           startingBankroll: 100,
-          humanSeat: 3,
+          humanSeat: 1,
           playerCount: 4,
         }),
       }),
@@ -113,7 +118,7 @@ describe("LobbyPage", () => {
       "/api/rooms/room-002/seat",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ seatIndex: 3 }),
+        body: JSON.stringify({ seatIndex: 1 }),
       }),
     );
   });

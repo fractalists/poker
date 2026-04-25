@@ -24,10 +24,11 @@ function clampBetAmount(amount: number, pendingAction: PendingAction) {
 
 function formatBetRange(pendingAction: PendingAction) {
   const minimumBet = getMinimumBet(pendingAction);
+  const actionLabel = pendingAction.minAmount > 0 ? "Raise to" : "Bet";
   if (minimumBet >= pendingAction.maxAmount) {
-    return `Bet ${pendingAction.maxAmount}`;
+    return `${actionLabel} ${pendingAction.maxAmount}`;
   }
-  return `Bet ${minimumBet}~${pendingAction.maxAmount}`;
+  return `${actionLabel} ${minimumBet}~${pendingAction.maxAmount}`;
 }
 
 function getShortcutBetAmount(pot: number, ratio: number, pendingAction: PendingAction) {
@@ -48,17 +49,48 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
   const [betAmount, setBetAmount] = useState("");
   const [isBetting, setIsBetting] = useState(false);
   const [selectedShortcut, setSelectedShortcut] = useState<ShortcutKey | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(() =>
+    pendingAction.expiresAt
+      ? Math.max(0, Math.ceil((pendingAction.expiresAt - Date.now()) / 1000))
+      : null,
+  );
   const isCallEquivalentToAllIn = pendingAction.canAllIn && pendingAction.minAmount >= pendingAction.maxAmount;
   const canShowCall =
     pendingAction.canCheck || (pendingAction.canCall && pendingAction.minAmount <= pendingAction.maxAmount && !isCallEquivalentToAllIn);
   const callLabel = pendingAction.canCheck ? "Check" : `Call ${pendingAction.minAmount}`;
   const betLabel = formatBetRange(pendingAction);
+  const isRaise = pendingAction.minAmount > 0;
+  const amountLabel = isRaise ? "Raise to amount" : "Bet amount";
+  const confirmLabel = isRaise ? "Confirm raise" : "Confirm bet";
+  const minimumBet = getMinimumBet(pendingAction);
 
   useEffect(() => {
     setBetAmount("");
     setIsBetting(false);
     setSelectedShortcut(null);
+    setRemainingSeconds(
+      pendingAction.expiresAt
+        ? Math.max(0, Math.ceil((pendingAction.expiresAt - Date.now()) / 1000))
+        : null,
+    );
   }, [roomId, pendingAction.token]);
+
+  useEffect(() => {
+    if (!pendingAction.expiresAt) {
+      setRemainingSeconds(null);
+      return;
+    }
+
+    function updateRemainingSeconds() {
+      setRemainingSeconds(
+        Math.max(0, Math.ceil(((pendingAction.expiresAt ?? 0) - Date.now()) / 1000)),
+      );
+    }
+
+    updateRemainingSeconds();
+    const timer = window.setInterval(updateRemainingSeconds, 250);
+    return () => window.clearInterval(timer);
+  }, [pendingAction.expiresAt, pendingAction.token]);
 
   function applyBetShortcut(shortcutKey: ShortcutKey, ratio: number) {
     setBetAmount(String(getShortcutBetAmount(pot, ratio, pendingAction)));
@@ -79,6 +111,17 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
         <div>
           <span className="eyebrow">Your Turn</span>
         </div>
+        {remainingSeconds !== null ? (
+          <strong className="turn-countdown">{remainingSeconds}s</strong>
+        ) : null}
+      </div>
+
+      <div className="action-context">
+        <span>{pendingAction.canCheck ? "Can check" : `To call ${pendingAction.minAmount}`}</span>
+        {pendingAction.canBet ? (
+          <span>{isRaise ? `Min raise to ${minimumBet}` : `Min bet ${minimumBet}`}</span>
+        ) : null}
+        <span>{`Stack ${pendingAction.maxAmount}`}</span>
       </div>
 
       <div className="action-buttons">
@@ -133,11 +176,11 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
       {pendingAction.canBet && isBetting ? (
         <div className="bet-panel">
           <label className="action-amount">
-            <span>Bet amount</span>
+            <span>{amountLabel}</span>
             <input
-              aria-label="Bet amount"
+              aria-label={amountLabel}
               type="number"
-              min={getMinimumBet(pendingAction)}
+              min={minimumBet}
               max={pendingAction.maxAmount}
               value={betAmount}
               onChange={(event) => {
@@ -161,7 +204,7 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
               </button>
             ))}
             <button className="primary" disabled={busy} onClick={() => void submitBet()} type="button">
-              Confirm bet
+              {confirmLabel}
             </button>
           </div>
         </div>

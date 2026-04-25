@@ -2,6 +2,7 @@ package table
 
 import (
 	"fmt"
+	"math/rand"
 	"poker/config"
 	"poker/interact/ai"
 	"poker/model"
@@ -10,6 +11,7 @@ import (
 	goruntime "runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/panjf2000/ants/v2"
 )
@@ -21,6 +23,7 @@ type RuntimeConfig struct {
 	StartingBankroll int
 	HumanSeat        int
 	PlayerCount      int
+	TurnTimeout      time.Duration
 }
 
 type Runtime struct {
@@ -40,9 +43,12 @@ type Runtime struct {
 }
 
 var aiPoolOnce sync.Once
+var endGameFn = process.EndGame
+var newRealtimeBotInteract = randomRealtimeBotInteract
 
 const realtimeBotMonteCarloTimes = 20000
 const defaultPlayerCount = 6
+const defaultTurnTimeout = 30 * time.Second
 
 func NewRuntime(cfg RuntimeConfig) *Runtime {
 	ensureAIPool()
@@ -81,6 +87,7 @@ func (runtime *Runtime) StartNextHand() error {
 	if len(runtime.board.Players) == 0 {
 		process.InitializePlayers(runtime.ctx, runtime.board, runtime.buildInteracts(), runtime.cfg.StartingBankroll)
 	}
+	runtime.refreshBotInteracts()
 
 	runtime.handNumber++
 	runtime.currentPending = nil
@@ -161,6 +168,9 @@ func (runtime *Runtime) SnapshotForViewer(viewerSeat *int) Snapshot {
 			CanFold:      req.CanFold,
 			CanAllIn:     req.CanAllIn,
 		}
+		if !req.ExpiresAt.IsZero() {
+			pending.ExpiresAt = req.ExpiresAt.UnixMilli()
+		}
 	}
 
 	board := runtime.board
@@ -187,8 +197,10 @@ func (runtime *Runtime) SnapshotForViewer(viewerSeat *int) Snapshot {
 func (runtime *Runtime) playHand() {
 	process.PlayGame(runtime.ctx, runtime.board)
 	completedBoard := cloneBoard(runtime.board)
-	process.EndGame(runtime.ctx, runtime.board)
+	runtime.finishCompletedHand(completedBoard)
+}
 
+func (runtime *Runtime) finishCompletedHand(completedBoard *model.Board) {
 	runtime.mu.Lock()
 	runtime.currentPending = nil
 	runtime.completedBoard = completedBoard
@@ -199,12 +211,14 @@ func (runtime *Runtime) playHand() {
 		Message:    fmt.Sprintf("hand %d finished", runtime.handNumber),
 		HandNumber: runtime.handNumber,
 	})
+	endGameFn(runtime.ctx, runtime.board)
 	runtime.mu.Unlock()
 	runtime.notifyUpdate()
 }
 
 func (runtime *Runtime) watchHumanTurns() {
 	for req := range runtime.human.Pending() {
+		req.ExpiresAt = time.Now().Add(runtime.turnTimeout())
 		runtime.mu.Lock()
 		reqCopy := req
 		runtime.currentPending = &reqCopy
@@ -219,7 +233,54 @@ func (runtime *Runtime) watchHumanTurns() {
 		})
 		runtime.mu.Unlock()
 		runtime.notifyUpdate()
+		go runtime.submitTimeoutAction(reqCopy)
 	}
+}
+
+func (runtime *Runtime) submitTimeoutAction(req HumanTurnRequest) {
+	timer := time.NewTimer(time.Until(req.ExpiresAt))
+	defer timer.Stop()
+	<-timer.C
+
+	action, ok := runtime.timeoutAction(req)
+	if !ok {
+		return
+	}
+	_ = runtime.SubmitAction(req.Token, action)
+}
+
+func (runtime *Runtime) timeoutAction(req HumanTurnRequest) (model.Action, bool) {
+	runtime.mu.RLock()
+	pending := runtime.currentPending
+	board := runtime.board
+	runtime.mu.RUnlock()
+
+	if pending == nil || pending.Token != req.Token || pending.SeatIndex != req.SeatIndex || board == nil || board.Game == nil {
+		return model.Action{}, false
+	}
+	return safeTimeoutAction(req.SeatIndex, board), true
+}
+
+func safeTimeoutAction(seatIndex int, board *model.Board) model.Action {
+	if seatIndex < 0 || seatIndex >= len(board.Players) || board.Players[seatIndex] == nil || board.Game == nil {
+		return model.Action{ActionType: model.ActionTypeFold}
+	}
+	player := board.Players[seatIndex]
+	if player.Status != model.PlayerStatusPlaying {
+		return model.Action{ActionType: model.ActionTypeKeepWatching}
+	}
+	minAmount := board.Game.CurrentAmount - player.InPotAmount
+	if minAmount <= 0 {
+		return model.Action{ActionType: model.ActionTypeCall, Amount: 0}
+	}
+	return model.Action{ActionType: model.ActionTypeFold}
+}
+
+func (runtime *Runtime) turnTimeout() time.Duration {
+	if runtime.cfg.TurnTimeout > 0 {
+		return runtime.cfg.TurnTimeout
+	}
+	return defaultTurnTimeout
 }
 
 func (runtime *Runtime) recordRoundStart(board *model.Board, round model.Round) {
@@ -293,9 +354,36 @@ func (runtime *Runtime) buildInteracts() []model.Interact {
 			interacts[index] = runtime.human
 			continue
 		}
-		interacts[index] = ai.NewOddsWarriorAIWithMonteCarloTimes(realtimeBotMonteCarloTimes)
+		interacts[index] = newRealtimeBotInteract(runtime.ctx.Rng)
 	}
 	return interacts
+}
+
+func (runtime *Runtime) refreshBotInteracts() {
+	if runtime.board == nil {
+		return
+	}
+
+	for index, player := range runtime.board.Players {
+		if player == nil || index == runtime.cfg.HumanSeat {
+			continue
+		}
+		player.Interact = newRealtimeBotInteract(runtime.ctx.Rng).InitInteract(index, model.GenGetBoardInfoFunc(runtime.board, index))
+	}
+}
+
+func randomRealtimeBotInteract(rng *rand.Rand) model.Interact {
+	if rng == nil {
+		rng = util.NewRng()
+	}
+
+	factories := []func() model.Interact{
+		func() model.Interact { return ai.NewOddsWarriorAIWithMonteCarloTimes(realtimeBotMonteCarloTimes) },
+		func() model.Interact { return ai.NewTightConservativeAI() },
+		func() model.Interact { return ai.NewLooseAggressiveAI() },
+	}
+
+	return factories[rng.Intn(len(factories))]()
 }
 
 func ensureAIPool() {

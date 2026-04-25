@@ -1,7 +1,7 @@
 package table
 
 import (
-	"poker/interact/ai"
+	"math/rand"
 	"poker/model"
 	"testing"
 	"time"
@@ -77,6 +77,34 @@ func TestRuntimeStartNextHandPublishesPendingAction(t *testing.T) {
 	require.NotNil(t, snap.PendingAction)
 	assert.Equal(t, 5, snap.PendingAction.SeatIndex)
 	assert.NotEmpty(t, snap.PendingAction.Token)
+	assert.Greater(t, snap.PendingAction.ExpiresAt, time.Now().UnixMilli())
+}
+
+func TestRuntimePendingActionExpiresAndAutoFolds(t *testing.T) {
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "Heads Up",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        0,
+		PlayerCount:      2,
+		TurnTimeout:      150 * time.Millisecond,
+	})
+	runtime.SetHumanOccupied(true)
+
+	require.NoError(t, runtime.StartNextHand())
+
+	var snap Snapshot
+	require.Eventually(t, func() bool {
+		snap = runtime.SnapshotForViewer(nil)
+		return snap.PendingAction != nil
+	}, 2*time.Second, 10*time.Millisecond)
+	require.NotZero(t, snap.PendingAction.ExpiresAt)
+
+	require.Eventually(t, func() bool {
+		snap = runtime.SnapshotForViewer(nil)
+		return snap.PendingAction == nil && snap.Status != StatusAwaitingAction
+	}, 2*time.Second, 20*time.Millisecond)
 }
 
 func TestRuntimeSubmitActionClearsPendingState(t *testing.T) {
@@ -158,6 +186,73 @@ func TestRuntimeSnapshotForViewerKeepsCompletedBoardAfterHandFinishes(t *testing
 	assert.Equal(t, 4, snap.HandNumber)
 }
 
+func TestRuntimeFinishCompletedHandDoesNotExposeRunningEmptyTable(t *testing.T) {
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "Table 1",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        5,
+	})
+
+	runtime.status = StatusRunning
+	runtime.handNumber = 4
+	runtime.handStartBankrolls = []int{102}
+	runtime.board = &model.Board{
+		Players: []*model.Player{
+			{
+				Name:        "Player1",
+				Index:       0,
+				Status:      model.PlayerStatusPlaying,
+				Hands:       model.Cards{model.NewCustomCard(model.HEARTS, model.ACE, true), model.NewCustomCard(model.SPADES, model.KING, true)},
+				Bankroll:    120,
+				InPotAmount: 18,
+			},
+		},
+		Game: &model.Game{
+			Round:       model.FINISH,
+			Pot:         18,
+			SmallBlinds: 1,
+			BoardCards: model.Cards{
+				model.NewCustomCard(model.HEARTS, model.QUEEN, true),
+				model.NewCustomCard(model.CLUBS, model.JACK, true),
+				model.NewCustomCard(model.DIAMONDS, model.TEN, true),
+				model.NewCustomCard(model.SPADES, model.TWO, true),
+				model.NewCustomCard(model.CLUBS, model.THREE, true),
+			},
+		},
+	}
+
+	completedBoard := cloneBoard(runtime.board)
+
+	originalEndGameFn := endGameFn
+	t.Cleanup(func() {
+		endGameFn = originalEndGameFn
+	})
+
+	var observedStatus RoomStatus
+	var observedBoardCleared bool
+	var observedCompletedBoard *model.Board
+	endGameFn = func(ctx *model.Context, board *model.Board) {
+		originalEndGameFn(ctx, board)
+		observedStatus = runtime.status
+		observedBoardCleared = runtime.board.Game == nil
+		observedCompletedBoard = runtime.completedBoard
+	}
+
+	runtime.finishCompletedHand(completedBoard)
+
+	assert.True(t, observedBoardCleared)
+	assert.Equal(t, StatusHandFinished, observedStatus)
+	require.NotNil(t, observedCompletedBoard)
+
+	snap := runtime.SnapshotForViewer(nil)
+	require.Len(t, snap.Seats, 1)
+	assert.Equal(t, StatusHandFinished, snap.Status)
+	assert.Equal(t, []string{"♥Q", "♣J", "♦10", "♠2", "♣3"}, snap.BoardCards)
+	assert.Equal(t, []string{"♥A", "♠K"}, snap.Seats[0].Cards)
+}
+
 func TestRuntimeBuildInteractsUsesOddsWarriorAIForBotSeats(t *testing.T) {
 	runtime := NewRuntime(RuntimeConfig{
 		RoomID:           "room-1",
@@ -171,8 +266,52 @@ func TestRuntimeBuildInteractsUsesOddsWarriorAIForBotSeats(t *testing.T) {
 	interacts := runtime.buildInteracts()
 
 	require.Len(t, interacts, 4)
-	assert.IsType(t, ai.NewOddsWarriorAI(), interacts[0])
+	assert.NotNil(t, interacts[0])
 	assert.IsType(t, &HumanActor{}, interacts[3])
+}
+
+type recordingBotInteract struct {
+	initializedSeats *[]int
+}
+
+func (interact recordingBotInteract) InitInteract(selfIndex int, getBoardInfoFunc func() *model.Board) func(*model.Board, model.InteractType) model.Action {
+	*interact.initializedSeats = append(*interact.initializedSeats, selfIndex)
+	return func(*model.Board, model.InteractType) model.Action {
+		return model.Action{ActionType: model.ActionTypeKeepWatching}
+	}
+}
+
+func TestRuntimeRefreshesBotStrategiesForEachHand(t *testing.T) {
+	originalNewRealtimeBotInteract := newRealtimeBotInteract
+	t.Cleanup(func() {
+		newRealtimeBotInteract = originalNewRealtimeBotInteract
+	})
+
+	var initializedSeats []int
+	newRealtimeBotInteract = func(*rand.Rand) model.Interact {
+		return recordingBotInteract{initializedSeats: &initializedSeats}
+	}
+
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "Mixed Bots",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        1,
+		PlayerCount:      3,
+	})
+	runtime.board = &model.Board{
+		Players: []*model.Player{
+			{Index: 0, Status: model.PlayerStatusPlaying},
+			{Index: 1, Status: model.PlayerStatusPlaying},
+			{Index: 2, Status: model.PlayerStatusPlaying},
+		},
+	}
+
+	runtime.refreshBotInteracts()
+	runtime.refreshBotInteracts()
+
+	assert.Equal(t, []int{0, 2, 0, 2}, initializedSeats)
 }
 
 func TestRuntimeBuildInteractsSupportsTenSeatTable(t *testing.T) {
@@ -188,7 +327,7 @@ func TestRuntimeBuildInteractsSupportsTenSeatTable(t *testing.T) {
 	interacts := runtime.buildInteracts()
 
 	require.Len(t, interacts, 10)
-	assert.IsType(t, ai.NewOddsWarriorAI(), interacts[0])
+	assert.NotNil(t, interacts[0])
 	assert.IsType(t, &HumanActor{}, interacts[9])
 }
 

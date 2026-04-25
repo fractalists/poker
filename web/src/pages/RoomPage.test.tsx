@@ -1,15 +1,25 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { vi } from "vitest";
 
 import type { RoomSnapshot } from "../lib/types";
 import { RoomPage, RoomRoute } from "./RoomPage";
+import { ACTION_PLAYBACK_DELAY_MS } from "./roomPlayback";
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
 
   readonly close = vi.fn();
+  onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
+  onopen: (() => void) | null = null;
   onmessage: ((event: MessageEvent) => void) | null = null;
   readonly url: string;
 
@@ -138,8 +148,8 @@ describe("RoomPage", () => {
     );
 
     expect(container.querySelector(".table-live-layout")).toHaveStyle({
-      "--orbit-min-height": "872px",
-      "--orbit-seat-width": "188px",
+      "--orbit-min-height": "804px",
+      "--orbit-seat-width": "184px",
     });
     expect(container.querySelector(".seat-orbit--10")).toBeInTheDocument();
     expect(container.querySelectorAll(".seat-slot")).toHaveLength(10);
@@ -164,7 +174,7 @@ describe("RoomPage", () => {
           container.querySelector(".seat-slot--left-lower") as HTMLElement
         ).style.left,
       ),
-    ).toBeGreaterThanOrEqual(12);
+    ).toBeGreaterThanOrEqual(11.5);
     expect(
       parseFloat(
         (
@@ -178,7 +188,65 @@ describe("RoomPage", () => {
           container.querySelector(".seat-slot--right-lower") as HTMLElement
         ).style.left,
       ),
-    ).toBeLessThanOrEqual(88);
+    ).toBeLessThanOrEqual(88.5);
+  });
+
+  it("prioritizes the player's seat and current actor in the narrow-screen seat order", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-010",
+          roomName: "Full Ring",
+          status: "awaiting_action",
+          viewerRole: "player",
+          humanSeat: 9,
+          playerCount: 10,
+          handNumber: 8,
+          smallBlind: 1,
+          pot: 20,
+          currentAmount: 4,
+          round: "TURN",
+          boardCards: ["♠A", "♥K", "♣4", "♦9", "**"],
+          seats: Array.from({ length: 10 }, (_, index) => ({
+            index,
+            name: `Player${index + 1}`,
+            status:
+              index === 7 || index === 8
+                ? "OUT"
+                : "PLAYING",
+            bankroll: index === 8 ? 0 : 100 - index,
+            inPotAmount: index === 3 ? 4 : 0,
+            isTurn: index === 3,
+            cards: index === 9 ? ["♠A", "♥K"] : ["**", "**"],
+          })),
+          pendingAction: {
+            token: "turn-8",
+            seatIndex: 3,
+            minAmount: 4,
+            maxAmount: 96,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    const ownSlot = screen.getByText("Player10").closest(".seat-slot") as HTMLElement;
+    const currentSlot = screen.getByText("Player4").closest(".seat-slot") as HTMLElement;
+    const foldedSlot = screen.getByText("Player8").closest(".seat-slot") as HTMLElement;
+    const bustedSlot = screen.getByText("Player9").closest(".seat-slot") as HTMLElement;
+
+    expect(ownSlot.style.getPropertyValue("--mobile-seat-order")).toBe("0");
+    expect(currentSlot.style.getPropertyValue("--mobile-seat-order")).toBe("1");
+    expect(Number(foldedSlot.style.getPropertyValue("--mobile-seat-order"))).toBeLessThan(
+      Number(bustedSlot.style.getPropertyValue("--mobile-seat-order")),
+    );
   });
 
   it("renders waiting rooms without crashing when collections are missing", () => {
@@ -320,21 +388,129 @@ describe("RoomPage", () => {
 
     expect(screen.getByText("Player1 wins +18")).toBeInTheDocument();
     expect(screen.getByText("Winning hand: Straight")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /start next hand/i }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Player6")).toHaveLength(2);
     expect(screen.getAllByText("-18")).toHaveLength(2);
     expect(screen.getAllByText("One pair")).toHaveLength(2);
     const historyStack = container.querySelector(
       ".room-history-stack.room-history-stack--scroll",
     );
-    const settlementPanel = container.querySelector(".settlement-panel");
+    const settlementPanel = container.querySelector(
+      ".settlement-panel.is-animated",
+    );
     const feedPanel = container.querySelector(".room-feed-panel");
     const settlementQueries = within(settlementPanel as HTMLElement);
     expect(historyStack).toBeInTheDocument();
     expect(settlementPanel?.parentElement).toBe(historyStack);
     expect(feedPanel?.parentElement).toBe(historyStack);
+    expect(
+      container.querySelector(".table-seat.is-settlement-winner"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(".table-seat.is-settlement-loser"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelectorAll(".settlement-entry").length,
+    ).toBe(2);
     expect(settlementQueries.queryByText("Player3")).not.toBeInTheDocument();
     expect(settlementQueries.queryByText("No pair")).not.toBeInTheDocument();
     expect(settlementQueries.queryByText(/^0$/)).not.toBeInTheDocument();
+  });
+
+  it("reveals newly dealt community cards one at a time", async () => {
+    const baseSnapshot: RoomSnapshot = {
+      roomId: "room-001",
+      roomName: "Table 1",
+      status: "running",
+      viewerRole: "player",
+      humanSeat: 1,
+      playerCount: 2,
+      handNumber: 6,
+      smallBlind: 1,
+      pot: 3,
+      currentAmount: 2,
+      round: "PREFLOP",
+      boardCards: ["**", "**", "**", "**", "**"],
+      seats: [
+        {
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 98,
+          inPotAmount: 2,
+          isTurn: false,
+          cards: ["**", "**"],
+        },
+        {
+          index: 1,
+          name: "Player2",
+          status: "PLAYING",
+          bankroll: 99,
+          inPotAmount: 1,
+          isTurn: true,
+          cards: ["♣A", "♣K"],
+        },
+      ],
+    };
+
+    const findBoardCard = (container: HTMLElement, card: string) =>
+      Array.from(container.querySelectorAll(".board-card .card-face")).find(
+        (element) => element.textContent === card,
+      );
+
+    const { container, rerender } = render(
+      <RoomPage
+        snapshot={baseSnapshot}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    vi.useFakeTimers();
+    try {
+      rerender(
+        <RoomPage
+          snapshot={{
+            ...baseSnapshot,
+            round: "FLOP",
+            boardCards: ["♥Q", "♣J", "♦10", "**", "**"],
+          }}
+          onAction={async () => {}}
+          onStartHand={async () => {}}
+          onTakeSeat={async () => {}}
+        />,
+      );
+
+      const board = container.querySelector(".board-cards") as HTMLElement;
+
+      expect(findBoardCard(board, "♥Q")).toBeUndefined();
+      expect(board.querySelectorAll(".card-face--back")).toHaveLength(5);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(220);
+      });
+
+      expect(findBoardCard(board, "♥Q")).toBeInTheDocument();
+      expect(findBoardCard(board, "♣J")).toBeUndefined();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(220);
+      });
+
+      expect(findBoardCard(board, "♣J")).toBeInTheDocument();
+      expect(findBoardCard(board, "♦10")).toBeUndefined();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(220);
+      });
+
+      expect(findBoardCard(board, "♦10")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("requires an inline confirmation before leaving for the lobby", () => {
@@ -604,9 +780,12 @@ describe("RoomPage", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("button", { name: /hand in progress/i }),
-    ).toBeDisabled();
+    const startHandButton = screen.getByRole("button", {
+      name: /hand in progress/i,
+    });
+    expect(startHandButton).toBeDisabled();
+    expect(startHandButton).not.toHaveClass("primary");
+    expect(startHandButton).toHaveClass("secondary");
   });
 
   it("leaves the room, releases the seat, and clears the stored viewer session", async () => {
@@ -735,5 +914,284 @@ describe("RoomPage", () => {
       window.localStorage.getItem("poker.viewerToken.room-001"),
     ).toBeNull();
     expect(MockWebSocket.instances[0]?.close).toHaveBeenCalled();
+  });
+
+  it("plays queued websocket snapshots with a perceptible action delay", async () => {
+    window.localStorage.setItem("poker.viewerSeat.room-001", "5");
+    window.localStorage.setItem("poker.viewerToken.room-001", "viewer-token-1");
+
+    const initialSnapshot: RoomSnapshot = {
+      roomId: "room-001",
+      roomName: "Table 1",
+      status: "running",
+      viewerRole: "player",
+      humanSeat: 5,
+      playerCount: 6,
+      handNumber: 4,
+      smallBlind: 1,
+      pot: 3,
+      currentAmount: 2,
+      round: "PREFLOP",
+      boardCards: [],
+      seats: [
+        {
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 98,
+          inPotAmount: 2,
+          isTurn: false,
+          cards: ["**", "**"],
+        },
+        {
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 99,
+          inPotAmount: 1,
+          isTurn: true,
+          cards: ["♣A", "♣K"],
+        },
+      ],
+      pendingAction: {
+        token: "turn-1",
+        seatIndex: 5,
+        minAmount: 1,
+        maxAmount: 99,
+        canCheck: false,
+        canCall: true,
+        canBet: true,
+        canFold: true,
+        canAllIn: true,
+      },
+      events: [],
+      version: 1,
+    };
+
+    const firstActionSnapshot: RoomSnapshot = {
+      ...initialSnapshot,
+      pot: 5,
+      seats: [
+        {
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 96,
+          inPotAmount: 4,
+          isTurn: false,
+          cards: ["**", "**"],
+        },
+        {
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 99,
+          inPotAmount: 1,
+          isTurn: true,
+          cards: ["♣A", "♣K"],
+        },
+      ],
+      events: [
+        {
+          kind: "player_action",
+          message: "seat 0 called 2",
+          handNumber: 4,
+          round: "PREFLOP",
+          seatIndex: 0,
+          actionType: "CALL",
+          amount: 2,
+        },
+      ],
+      version: 2,
+    };
+
+    const secondActionSnapshot: RoomSnapshot = {
+      ...firstActionSnapshot,
+      status: "hand_finished",
+      pendingAction: undefined,
+      seats: [
+        {
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 96,
+          inPotAmount: 4,
+          isTurn: false,
+          cards: ["**", "**"],
+        },
+        {
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 104,
+          inPotAmount: 0,
+          isTurn: false,
+          isWinner: true,
+          netChange: 5,
+          bestHand: "One pair",
+          cards: ["♣A", "♣K"],
+        },
+      ],
+      events: [
+        ...firstActionSnapshot.events!,
+        {
+          kind: "player_action",
+          message: "seat 5 called 2",
+          handNumber: 4,
+          round: "PREFLOP",
+          seatIndex: 5,
+          actionType: "CALL",
+          amount: 2,
+        },
+      ],
+      version: 3,
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => initialSnapshot,
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("WebSocket", MockWebSocket as unknown as typeof WebSocket);
+
+    render(
+      <MemoryRouter initialEntries={["/rooms/room-001"]}>
+        <Routes>
+          <Route path="/" element={<div>Lobby landing</div>} />
+          <Route path="/rooms/:roomId" element={<RoomRoute />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Table 1")).toBeInTheDocument(),
+    );
+
+    vi.useFakeTimers();
+    try {
+      await act(async () => {
+        MockWebSocket.instances[0]?.onmessage?.({
+          data: JSON.stringify(firstActionSnapshot),
+        } as MessageEvent);
+        MockWebSocket.instances[0]?.onmessage?.({
+          data: JSON.stringify(secondActionSnapshot),
+        } as MessageEvent);
+      });
+
+      expect(screen.queryByText("seat 5 called 2")).not.toBeInTheDocument();
+      expect(screen.queryByText("Player6 wins +5")).not.toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(ACTION_PLAYBACK_DELAY_MS);
+      });
+
+      expect(screen.getByText("seat 0 called 2")).toBeInTheDocument();
+      expect(screen.queryByText("seat 5 called 2")).not.toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(ACTION_PLAYBACK_DELAY_MS);
+      });
+
+      expect(screen.getByText("seat 5 called 2")).toBeInTheDocument();
+      expect(screen.getByText("Player6 wins +5")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows connection state and resubscribes after the room socket closes", async () => {
+    window.localStorage.setItem("poker.viewerSeat.room-001", "5");
+    window.localStorage.setItem("poker.viewerToken.room-001", "viewer-token-1");
+
+    const initialSnapshot: RoomSnapshot = {
+      roomId: "room-001",
+      roomName: "Table 1",
+      status: "running",
+      viewerRole: "player",
+      humanSeat: 5,
+      playerCount: 6,
+      handNumber: 4,
+      smallBlind: 1,
+      pot: 3,
+      currentAmount: 2,
+      round: "PREFLOP",
+      boardCards: [],
+      seats: [
+        {
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 99,
+          inPotAmount: 1,
+          isTurn: true,
+          cards: ["♣A", "♣K"],
+        },
+      ],
+      version: 1,
+    };
+    const resumedSnapshot = {
+      ...initialSnapshot,
+      pot: 5,
+      version: 2,
+    };
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => initialSnapshot,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => resumedSnapshot,
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("WebSocket", MockWebSocket as unknown as typeof WebSocket);
+
+    render(
+      <MemoryRouter initialEntries={["/rooms/room-001"]}>
+        <Routes>
+          <Route path="/" element={<div>Lobby landing</div>} />
+          <Route path="/rooms/:roomId" element={<RoomRoute />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Table 1")).toBeInTheDocument(),
+    );
+
+    act(() => {
+      MockWebSocket.instances[0]?.onopen?.();
+    });
+
+    expect(screen.getByText("live connection")).toBeInTheDocument();
+
+    vi.useFakeTimers();
+    try {
+      act(() => {
+        MockWebSocket.instances[0]?.onclose?.();
+      });
+
+      expect(screen.getByText("reconnecting")).toBeInTheDocument();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(MockWebSocket.instances).toHaveLength(2);
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        "/api/rooms/room-001?viewerSeat=5&viewerToken=viewer-token-1",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

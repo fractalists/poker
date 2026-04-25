@@ -9,6 +9,7 @@ import (
 	"poker/util"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type HumanTurnRequest struct {
@@ -22,6 +23,7 @@ type HumanTurnRequest struct {
 	CanBet       bool
 	CanFold      bool
 	CanAllIn     bool
+	ExpiresAt    time.Time
 }
 
 type HumanActor struct {

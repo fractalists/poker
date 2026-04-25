@@ -48,7 +48,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
     setSubmitting(true);
     setError("");
     try {
-      const humanSeat = playerCount - 1;
+      const humanSeat = Math.floor(Math.random() * playerCount);
       const room = await createRoom({
         name,
         smallBlind: 1,
@@ -119,44 +119,6 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
       </section>
 
       <section className="work-grid">
-        <form className="create-panel" onSubmit={onSubmit}>
-          <div className="panel-head">
-            <h2>Create room</h2>
-            <p>
-              Choose the table size. The last seat is reserved for you and the
-              other seats are filled by AI.
-            </p>
-          </div>
-
-          <label className="field">
-            <span>Room name</span>
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-
-          <label className="field">
-            <span>Total players</span>
-            <select
-              value={playerCount}
-              onChange={(event) => setPlayerCount(Number(event.target.value))}
-            >
-              {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((count) => (
-                <option key={count} value={count}>
-                  {count} players
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button type="submit" disabled={submitting}>
-            {submitting ? "Creating..." : "Create Room"}
-          </button>
-
-          {error ? <p className="error-text">{error}</p> : null}
-        </form>
-
         <section className="room-strip" aria-label="room list">
           <div className="panel-head">
             <h2>Live rooms</h2>
@@ -203,6 +165,44 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
             ) : null}
           </div>
         </section>
+
+        <form className="create-panel" onSubmit={onSubmit}>
+          <div className="panel-head">
+            <h2>Create room</h2>
+            <p>
+              Choose the table size. Your seat is assigned randomly and the
+              other seats are filled by AI.
+            </p>
+          </div>
+
+          <label className="field">
+            <span>Room name</span>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+
+          <label className="field">
+            <span>Total players</span>
+            <select
+              value={playerCount}
+              onChange={(event) => setPlayerCount(Number(event.target.value))}
+            >
+              {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((count) => (
+                <option key={count} value={count}>
+                  {count} players
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button type="submit" disabled={submitting}>
+            {submitting ? "Creating..." : "Create Room"}
+          </button>
+
+          {error ? <p className="error-text">{error}</p> : null}
+        </form>
       </section>
     </main>
   );

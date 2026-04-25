@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 300" role="img" aria-label="Five minimal playing card back options">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#173456" />
+      <stop offset="1" stop-color="#0b1d34" />
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#020812" flood-opacity="0.24" />
+    </filter>
+    <style>
+      .label {
+        fill: #dcecff;
+        font: 600 18px "Segoe UI", Arial, sans-serif;
+        letter-spacing: 0.08em;
+      }
+      .card {
+        fill: url(#paper);
+        stroke: #e7bd72;
+        stroke-width: 2;
+        filter: url(#softShadow);
+      }
+      .line {
+        fill: none;
+        stroke: #e7bd72;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .muted {
+        opacity: 0.42;
+      }
+      .soft {
+        opacity: 0.64;
+      }
+      .dot {
+        fill: #e7bd72;
+        opacity: 0.72;
+      }
+    </style>
+  </defs>
+
+  <rect width="1040" height="300" fill="#07121f" />
+
+  <g transform="translate(40 32)">
+    <text class="label" x="80" y="252" text-anchor="middle">01 DIAMOND</text>
+    <rect class="card" x="0" y="0" width="160" height="224" rx="18" />
+    <rect class="line soft" x="13" y="13" width="134" height="198" rx="12" stroke-width="2" />
+    <rect class="line muted" x="25" y="25" width="110" height="174" rx="8" stroke-width="1.4" />
+    <path class="line soft" d="M80 44 118 112 80 180 42 112Z" stroke-width="2.2" />
+    <path class="line muted" d="M80 68 104 112 80 156 56 112Z" stroke-width="1.5" />
+    <path class="line muted" d="M80 28v36M80 160v36M26 112h32M102 112h32" stroke-width="1.4" />
+    <circle class="dot" cx="80" cy="112" r="3" />
+  </g>
+
+  <g transform="translate(240 32)">
+    <text class="label" x="80" y="252" text-anchor="middle">02 LATTICE</text>
+    <rect class="card" x="0" y="0" width="160" height="224" rx="18" />
+    <rect class="line soft" x="14" y="14" width="132" height="196" rx="12" stroke-width="2" />
+    <path class="line muted" d="M24 64 88 0M24 112 136 0M24 160 160 24M24 208 160 72M72 224 160 136" stroke-width="1.2" />
+    <path class="line muted" d="M136 64 72 0M136 112 24 0M136 160 0 24M136 208 0 72M88 224 0 136" stroke-width="1.2" />
+    <rect class="line soft" x="58" y="90" width="44" height="44" transform="rotate(45 80 112)" stroke-width="2" />
+    <circle class="dot" cx="80" cy="112" r="3" />
+    <circle class="dot" cx="42" cy="58" r="2.4" />
+    <circle class="dot" cx="118" cy="166" r="2.4" />
+  </g>
+
+  <g transform="translate(440 32)">
+    <text class="label" x="80" y="252" text-anchor="middle">03 ORBIT</text>
+    <rect class="card" x="0" y="0" width="160" height="224" rx="18" />
+    <rect class="line soft" x="14" y="14" width="132" height="196" rx="12" stroke-width="2" />
+    <ellipse class="line soft" cx="80" cy="112" rx="48" ry="72" stroke-width="2" />
+    <ellipse class="line muted" cx="80" cy="112" rx="30" ry="50" stroke-width="1.4" />
+    <path class="line muted" d="M80 34v156M31 112h98" stroke-width="1.4" />
+    <path class="line soft" d="M80 84 108 112 80 140 52 112Z" stroke-width="2" />
+    <circle class="dot" cx="80" cy="34" r="3" />
+    <circle class="dot" cx="80" cy="190" r="3" />
+  </g>
+
+  <g transform="translate(640 32)">
+    <text class="label" x="80" y="252" text-anchor="middle">04 RAYS</text>
+    <rect class="card" x="0" y="0" width="160" height="224" rx="18" />
+    <rect class="line soft" x="14" y="14" width="132" height="196" rx="12" stroke-width="2" />
+    <circle class="line soft" cx="80" cy="112" r="38" stroke-width="2" />
+    <circle class="line muted" cx="80" cy="112" r="24" stroke-width="1.4" />
+    <path class="line muted" d="M80 46v26M80 152v26M14 112h26M120 112h26M34 66l18 18M108 140l18 18M126 66l-18 18M52 140l-18 18" stroke-width="1.5" />
+    <path class="line soft" d="M80 93 99 112 80 131 61 112Z" stroke-width="2" />
+    <circle class="dot" cx="80" cy="112" r="3" />
+  </g>
+
+  <g transform="translate(840 32)">
+    <text class="label" x="80" y="252" text-anchor="middle">05 RIBBON</text>
+    <rect class="card" x="0" y="0" width="160" height="224" rx="18" />
+    <rect class="line soft" x="14" y="14" width="132" height="196" rx="12" stroke-width="2" />
+    <path class="line muted" d="M52 28v168M108 28v168" stroke-width="1.4" />
+    <path class="line soft" d="M80 28v168" stroke-width="2" />
+    <path class="line soft" d="M80 48 118 84 80 120 42 84Z" stroke-width="2" />
+    <path class="line soft" d="M80 104 118 140 80 176 42 140Z" stroke-width="2" />
+    <path class="line muted" d="M52 84h56M52 140h56" stroke-width="1.4" />
+    <circle class="dot" cx="80" cy="28" r="3" />
+    <circle class="dot" cx="80" cy="196" r="3" />
+  </g>
+</svg>

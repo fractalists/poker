@@ -11,6 +11,7 @@ type TableSeatProps = {
   seat: SeatSnapshot;
   viewerSeat?: number;
   recentAction?: SeatActionView;
+  showSettlementEffects?: boolean;
 };
 
 function formatNetChange(delta: number) {
@@ -20,22 +21,40 @@ function formatNetChange(delta: number) {
   return `${delta}`;
 }
 
-export function TableSeat({ seat, viewerSeat, recentAction }: TableSeatProps) {
+export function TableSeat({
+  seat,
+  viewerSeat,
+  recentAction,
+  showSettlementEffects = false,
+}: TableSeatProps) {
   const cards = seat.cards ?? [];
   const hasOutcome = Boolean(seat.bestHand);
   const isViewerSeat = viewerSeat === seat.index;
+  const isAllInSeat = seat.status === "ALLIN" || seat.status === "ALL_IN";
   const isEliminatedSeat = seat.status === "OUT" && seat.bankroll === 0;
   const isFoldedSeat = seat.status === "OUT" && !isEliminatedSeat;
+  const isSettlementWinner = showSettlementEffects && Boolean(seat.isWinner);
+  const isSettlementLoser =
+    showSettlementEffects && !seat.isWinner && (seat.netChange ?? 0) < 0;
   const headerBadge = recentAction
     ? recentAction
+    : seat.isTurn
+      ? { label: "To act", tone: "call" as const, stamp: `seat-${seat.index}-turn` }
+      : isAllInSeat
+        ? { label: "All-in", tone: "all-in" as const, stamp: `seat-${seat.index}-all-in` }
     : isEliminatedSeat
       ? { label: "Busted", tone: "out" as const, stamp: `seat-${seat.index}-out` }
       : null;
   const className = [
     "table-seat",
+    headerBadge ? "has-recent-action" : "",
+    recentAction ? `has-recent-action--${recentAction.tone}` : "",
     seat.isTurn ? "is-turn" : "",
+    isAllInSeat ? "is-all-in" : "",
     isFoldedSeat ? "is-folded" : "",
     isEliminatedSeat ? "is-eliminated" : "",
+    isSettlementWinner ? "is-settlement-winner" : "",
+    isSettlementLoser ? "is-settlement-loser" : "",
     seat.isWinner ? "is-winner" : "",
     isViewerSeat ? "is-viewer" : "",
   ]
@@ -48,9 +67,11 @@ export function TableSeat({ seat, viewerSeat, recentAction }: TableSeatProps) {
         <div className="seat-identity">
           <div className="seat-name-row">
             <h3>{seat.name}</h3>
+            {seat.position ? (
+              <span className="seat-position-badge">{seat.position}</span>
+            ) : null}
             {isViewerSeat ? <span className="seat-player-badge">You</span> : null}
           </div>
-          <div className="seat-status">Seat {seat.index + 1}</div>
         </div>
         <div className="seat-header-meta">
           {headerBadge ? (

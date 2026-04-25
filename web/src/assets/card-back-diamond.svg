@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 146" role="img" aria-label="Minimal diamond playing card back">
+  <style>
+    .line {
+      fill: none;
+      stroke: #e7bd72;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .soft {
+      opacity: 0.72;
+    }
+    .muted {
+      opacity: 0.42;
+    }
+    .dot {
+      fill: #e7bd72;
+      opacity: 0.76;
+    }
+  </style>
+
+  <path id="diamond-frame" class="line soft" d="M50 22 76 73 50 124 24 73Z" stroke-width="1.45" />
+  <path class="line muted" d="M50 39 64 73 50 107 36 73Z" stroke-width="1.05" />
+  <path class="line muted" d="M50 8v36M50 102v36M14 73h23M63 73h23" stroke-width="0.95" />
+  <circle class="dot" cx="50" cy="73" r="2" />
+</svg>

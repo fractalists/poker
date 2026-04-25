@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ActionBar } from "../components/ActionBar";
-import { CardFace } from "../components/CardFace";
+import { CommunityCards } from "../components/CommunityCards";
 import { TableSeat, type SeatActionView } from "../components/TableSeat";
 import {
   getRoom,
@@ -11,7 +11,7 @@ import {
   submitAction,
   takeSeat,
 } from "../lib/api";
-import { subscribeRoom } from "../lib/socket";
+import { subscribeRoom, type RoomSocketStatus } from "../lib/socket";
 import type {
   ActionSubmission,
   RoomSnapshot,
@@ -19,6 +19,7 @@ import type {
 } from "../lib/types";
 import { viewerSeatKey, viewerTokenKey } from "../lib/viewerSeat";
 import { buildOrbitLayout } from "./roomLayout";
+import { getPlaybackDelayMs } from "./roomPlayback";
 
 type RoomPageProps = {
   snapshot: RoomSnapshot;
@@ -29,6 +30,13 @@ type RoomPageProps = {
   onTakeSeat: () => Promise<void>;
   onLeave?: () => Promise<void>;
   onSpectate?: () => Promise<void>;
+  connectionStatus?: ConnectionStatus;
+};
+
+type ConnectionStatus = "connecting" | "live" | "reconnecting";
+
+type SeatSlotStyle = CSSProperties & {
+  "--mobile-seat-order"?: string;
 };
 
 function formatNetChange(delta: number) {
@@ -144,6 +152,25 @@ function buildSeatActionMap(snapshot: RoomSnapshot) {
   return actions;
 }
 
+function getMobileSeatOrder(snapshot: RoomSnapshot, seat: SeatSnapshot) {
+  if (snapshot.viewerRole === "player" && snapshot.humanSeat === seat.index) {
+    return 0;
+  }
+  if (seat.isTurn || snapshot.pendingAction?.seatIndex === seat.index) {
+    return 1;
+  }
+
+  const isEliminatedSeat = seat.status === "OUT" && seat.bankroll === 0;
+  const isFoldedSeat = seat.status === "OUT" && !isEliminatedSeat;
+  if (!isFoldedSeat && !isEliminatedSeat) {
+    return 10 + seat.index;
+  }
+  if (isFoldedSeat) {
+    return 100 + seat.index;
+  }
+  return 200 + seat.index;
+}
+
 export function RoomPage({
   snapshot,
   busy = false,
@@ -153,6 +180,7 @@ export function RoomPage({
   onTakeSeat,
   onLeave,
   onSpectate,
+  connectionStatus = "connecting",
 }: RoomPageProps) {
   const leaveConfirmRef = useRef<HTMLDivElement | null>(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -185,17 +213,25 @@ export function RoomPage({
   } as CSSProperties;
   const isPlayerView = snapshot.viewerRole === "player";
   const isHandFinished = snapshot.status === "hand_finished";
+  const hasPendingAction = isPlayerView && Boolean(snapshot.pendingAction);
   const canStartHand =
     snapshot.status === "waiting" || snapshot.status === "hand_finished";
-  const startHandLabel = canStartHand ? "Start hand" : "Hand in progress";
+  const startHandLabel = !canStartHand
+    ? "Hand in progress"
+    : snapshot.handNumber > 0
+      ? "Start next hand"
+      : "Start hand";
   const isOpeningState =
     snapshot.status === "waiting" &&
     !snapshot.pendingAction &&
     !isHandFinished &&
     seats.length === 0 &&
     dealtBoardCards.length === 0;
+  const settlementSummarySeats = isHandFinished ? seats : [];
   const settlementSeats = isHandFinished
-    ? [...seats].sort(
+    ? [...seats]
+        .filter((seat) => (seat.netChange ?? 0) !== 0)
+        .sort(
         (left, right) =>
           (right.netChange ?? 0) - (left.netChange ?? 0) ||
           left.index - right.index,
@@ -210,6 +246,13 @@ export function RoomPage({
     {
       label: formatRoomStatus(snapshot.status),
       className: "room-chip room-chip--status",
+    },
+    {
+      label:
+        connectionStatus === "live"
+          ? "live connection"
+          : connectionStatus,
+      className: `room-chip room-chip--connection room-chip--connection-${connectionStatus}`,
     },
     ...(isPlayerView
       ? []
@@ -247,7 +290,15 @@ export function RoomPage({
   }, [showLeaveConfirm]);
 
   return (
-    <main className="room-shell room-shell--fixed">
+    <main
+      className={[
+        "room-shell",
+        "room-shell--fixed",
+        hasPendingAction ? "has-pending-action" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <header className="room-topbar">
         <div className="room-title-block">
           <div className="room-title-row">
@@ -366,14 +417,7 @@ export function RoomPage({
                         </div>
                         <div className="board-cards-shell">
                           <div className="board-cards">
-                            {boardCards.map((card, index) => (
-                              <div
-                                className="board-card"
-                                key={`${card}-${index}`}
-                              >
-                                <CardFace card={card} />
-                              </div>
-                            ))}
+                            <CommunityCards cards={boardCards} />
                           </div>
                         </div>
                       </div>
@@ -393,6 +437,17 @@ export function RoomPage({
                     ) : null}
                     {seats.map((seat) => {
                       const slot = orbitPositions.get(seat.index);
+                      const slotStyle: SeatSlotStyle = {
+                        "--mobile-seat-order": String(
+                          getMobileSeatOrder(snapshot, seat),
+                        ),
+                        ...(slot
+                          ? {
+                              left: `${slot.x}%`,
+                              top: `${slot.y}%`,
+                            }
+                          : {}),
+                      };
                       return (
                         <div
                           className={[
@@ -402,18 +457,12 @@ export function RoomPage({
                             .filter(Boolean)
                             .join(" ")}
                           key={seat.index}
-                          style={
-                            slot
-                              ? ({
-                                  left: `${slot.x}%`,
-                                  top: `${slot.y}%`,
-                                } as CSSProperties)
-                              : undefined
-                          }
+                          style={slotStyle}
                         >
                           <TableSeat
                             recentAction={seatActions.get(seat.index)}
                             seat={seat}
+                            showSettlementEffects={isHandFinished}
                             viewerSeat={
                               isPlayerView ? snapshot.humanSeat : undefined
                             }
@@ -431,7 +480,7 @@ export function RoomPage({
         <aside className="side-panel side-panel--scroll">
           <section className="control-stack">
             <button
-              className="primary"
+              className={`start-hand-control ${canStartHand ? "primary" : "secondary"}`}
               disabled={busy || !canStartHand}
               onClick={() => void onStartHand()}
               type="button"
@@ -473,13 +522,27 @@ export function RoomPage({
 
           <div className="room-history-stack room-history-stack--scroll">
             {isHandFinished ? (
-              <section className="settlement-panel">
+              <section className="settlement-panel is-animated">
                 <span className="eyebrow">Hand Review</span>
-                <h2>{buildSettlementHeadline(settlementSeats)}</h2>
-                <p>{buildSettlementDetail(settlementSeats)}</p>
+                <h2>{buildSettlementHeadline(settlementSummarySeats)}</h2>
+                <p>{buildSettlementDetail(settlementSummarySeats)}</p>
                 <ul className="settlement-list">
-                  {settlementSeats.map((seat) => (
-                    <li key={`settlement-${seat.index}`}>
+                  {settlementSeats.map((seat, index) => (
+                    <li
+                      className={[
+                        "settlement-entry",
+                        seat.isWinner ? "is-winner" : "",
+                        (seat.netChange ?? 0) < 0 ? "is-loser" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      key={`settlement-${seat.index}`}
+                      style={
+                        {
+                          "--settlement-index": String(index),
+                        } as CSSProperties
+                      }
+                    >
                       <div>
                         <strong>{seat.name}</strong>
                         {seat.bestHand ? (
@@ -535,6 +598,9 @@ export function RoomRoute() {
   const navigate = useNavigate();
   const params = useParams();
   const roomId = params.roomId ?? "";
+  const playbackQueueRef = useRef<RoomSnapshot[]>([]);
+  const playbackTimerRef = useRef<number | null>(null);
+  const snapshotRef = useRef<RoomSnapshot | null>(null);
   const [viewerSeat, setViewerSeat] = useState<number | undefined>(() => {
     const stored = roomId
       ? window.localStorage.getItem(viewerSeatKey(roomId))
@@ -550,6 +616,71 @@ export function RoomRoute() {
   const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>("connecting");
+
+  function applySnapshot(nextSnapshot: RoomSnapshot) {
+    snapshotRef.current = nextSnapshot;
+    setSnapshot(nextSnapshot);
+  }
+
+  function clearPlaybackState() {
+    if (playbackTimerRef.current !== null) {
+      window.clearTimeout(playbackTimerRef.current);
+      playbackTimerRef.current = null;
+    }
+    playbackQueueRef.current = [];
+  }
+
+  function flushPlaybackQueue() {
+    if (playbackTimerRef.current !== null) {
+      return;
+    }
+
+    while (playbackQueueRef.current.length > 0) {
+      const nextSnapshot = playbackQueueRef.current[0];
+      const delay = getPlaybackDelayMs(snapshotRef.current, nextSnapshot);
+      if (delay <= 0) {
+        playbackQueueRef.current.shift();
+        applySnapshot(nextSnapshot);
+        continue;
+      }
+
+      playbackTimerRef.current = window.setTimeout(() => {
+        playbackTimerRef.current = null;
+        const queuedSnapshot = playbackQueueRef.current.shift();
+        if (queuedSnapshot) {
+          applySnapshot(queuedSnapshot);
+        }
+        flushPlaybackQueue();
+      }, delay);
+      break;
+    }
+  }
+
+  function queueSnapshot(nextSnapshot: RoomSnapshot) {
+    const currentVersion = snapshotRef.current?.version ?? -1;
+    const queuedVersion =
+      playbackQueueRef.current[playbackQueueRef.current.length - 1]?.version ??
+      currentVersion;
+    const nextVersion = nextSnapshot.version ?? currentVersion;
+
+    if (nextVersion <= queuedVersion) {
+      return;
+    }
+
+    if (snapshotRef.current === null && playbackQueueRef.current.length === 0) {
+      applySnapshot(nextSnapshot);
+      return;
+    }
+
+    playbackQueueRef.current.push(nextSnapshot);
+    flushPlaybackQueue();
+  }
+
+  useEffect(() => {
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
 
   useEffect(() => {
     if (!roomId) {
@@ -559,8 +690,8 @@ export function RoomRoute() {
     let cancelled = false;
     void getRoom(roomId, viewerSeat, viewerToken)
       .then((nextSnapshot) => {
-        if (!cancelled) {
-          setSnapshot(nextSnapshot);
+        if (!cancelled && snapshotRef.current === null) {
+          applySnapshot(nextSnapshot);
         }
       })
       .catch((err) => {
@@ -571,6 +702,7 @@ export function RoomRoute() {
 
     return () => {
       cancelled = true;
+      clearPlaybackState();
     };
   }, [roomId, viewerSeat, viewerToken]);
 
@@ -579,16 +711,75 @@ export function RoomRoute() {
       return;
     }
 
-    return subscribeRoom(
-      roomId,
-      viewerSeat,
-      viewerToken,
-      (nextSnapshot) => {
-        setSnapshot(nextSnapshot);
-        setError("");
-      },
-      (message) => setError(message),
-    );
+    let stopped = false;
+    let unsubscribe: (() => void) | undefined;
+    let reconnectTimer: number | null = null;
+
+    async function syncLatestSnapshot() {
+      try {
+        const latestSnapshot = await getRoom(roomId, viewerSeat, viewerToken);
+        if (!stopped) {
+          applySnapshot(latestSnapshot);
+          setError("");
+        }
+      } catch (err) {
+        if (!stopped) {
+          setError(err instanceof Error ? err.message : "failed to reconnect");
+        }
+      }
+    }
+
+    function scheduleReconnect() {
+      if (stopped || reconnectTimer !== null) {
+        return;
+      }
+      setConnectionStatus("reconnecting");
+      unsubscribe?.();
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = null;
+        if (stopped) {
+          return;
+        }
+        void syncLatestSnapshot().finally(() => {
+          if (!stopped) {
+            openSubscription();
+          }
+        });
+      }, 500);
+    }
+
+    function openSubscription() {
+      if (stopped) {
+        return;
+      }
+      setConnectionStatus(snapshotRef.current ? "reconnecting" : "connecting");
+      unsubscribe = subscribeRoom(
+        roomId,
+        viewerSeat,
+        viewerToken,
+        (nextSnapshot) => {
+          queueSnapshot(nextSnapshot);
+          setError("");
+        },
+        (message) => setError(message),
+        (status: RoomSocketStatus) => {
+          if (status === "live") {
+            setConnectionStatus("live");
+            return;
+          }
+          scheduleReconnect();
+        },
+      );
+    }
+
+    openSubscription();
+    return () => {
+      stopped = true;
+      if (reconnectTimer !== null) {
+        window.clearTimeout(reconnectTimer);
+      }
+      unsubscribe?.();
+    };
   }, [roomId, viewerSeat, viewerToken]);
 
   async function withBusy(work: () => Promise<void>) {
@@ -685,6 +876,7 @@ export function RoomRoute() {
           setViewerToken(undefined);
         })
       }
+      connectionStatus={connectionStatus}
     />
   );
 }

@@ -9,11 +9,13 @@ export type PendingAction = {
   canBet: boolean;
   canFold: boolean;
   canAllIn: boolean;
+  expiresAt?: number;
 };
 
 export type SeatSnapshot = {
   index: number;
   name: string;
+  position?: string;
   status: string;
   bankroll: number;
   inPotAmount: number;

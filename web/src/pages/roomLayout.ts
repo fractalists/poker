@@ -121,9 +121,9 @@ function buildOrbitSpec(playerCount: number): OrbitSpec {
   const normalized = clamp(playerCount, 2, 10);
   const crowding = (normalized - 2) / 8;
 
-  const minHeight = 596 + crowding * 276;
-  const seatWidth = 228 - crowding * 40;
-  const seatMinHeight = 176 - crowding * 6;
+  const minHeight = 560 + crowding * 244;
+  const seatWidth = 208 - crowding * 24;
+  const seatMinHeight = 160 - crowding * 8;
   const cardScale = 1 - crowding * 0.05;
   const boardTopPadding = 54 + crowding * 78;
   const boardSidePadding = 72 + crowding * 94;

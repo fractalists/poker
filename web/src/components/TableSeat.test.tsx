@@ -80,8 +80,29 @@ describe("TableSeat", () => {
 
     expect(screen.getByText("Player6")).toBeInTheDocument();
     expect(screen.getByText("You")).toBeInTheDocument();
-    expect(screen.getByText("Seat 6")).toBeInTheDocument();
+    expect(screen.queryByText("Seat 6")).not.toBeInTheDocument();
     expect(screen.queryByText("PLAYING")).not.toBeInTheDocument();
+  });
+
+  it("shows the standard table position abbreviation in the seat header", () => {
+    const { container } = render(
+      <TableSeat
+        seat={{
+          index: 0,
+          name: "Player1",
+          position: "UTG",
+          status: "PLAYING",
+          bankroll: 100,
+          inPotAmount: 2,
+          isTurn: false,
+          cards: ["**", "**"],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("UTG")).toBeInTheDocument();
+    expect(container.querySelector(".seat-position-badge")).toHaveTextContent("UTG");
+    expect(screen.queryByText("Seat 1")).not.toBeInTheDocument();
   });
 
   it("renders folded seats dimmed and current-turn seats highlighted", () => {
@@ -126,6 +147,26 @@ describe("TableSeat", () => {
     );
 
     expect(container.querySelector(".table-seat.is-turn")).toBeInTheDocument();
+    expect(screen.getByText("To act")).toBeInTheDocument();
+  });
+
+  it("shows all-in seats with a dedicated table badge", () => {
+    const { container } = render(
+      <TableSeat
+        seat={{
+          index: 2,
+          name: "Player3",
+          status: "ALLIN",
+          bankroll: 0,
+          inPotAmount: 32,
+          isTurn: false,
+          cards: ["**", "**"],
+        }}
+      />,
+    );
+
+    expect(container.querySelector(".table-seat.is-all-in")).toBeInTheDocument();
+    expect(screen.getByText("All-in")).toBeInTheDocument();
   });
 
   it("renders an elimination badge for busted seats even without a fresh action", () => {
@@ -149,5 +190,56 @@ describe("TableSeat", () => {
       container.querySelector(".seat-header-meta .seat-action-pill.tone-out"),
     ).toBeInTheDocument();
     expect(screen.getByText("Busted")).toBeInTheDocument();
+  });
+
+  it("adds dedicated settlement emphasis classes for winners and losers", () => {
+    const { container, rerender } = render(
+      <TableSeat
+        seat={{
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 124,
+          inPotAmount: 0,
+          isTurn: false,
+          cards: ["♥A", "♠K"],
+          netChange: 24,
+          bestHand: "Straight",
+          isWinner: true,
+        }}
+        showSettlementEffects
+      />,
+    );
+
+    expect(
+      container.querySelector(".table-seat.is-settlement-winner"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(".table-seat.is-settlement-loser"),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <TableSeat
+        seat={{
+          index: 5,
+          name: "Player6",
+          status: "PLAYING",
+          bankroll: 76,
+          inPotAmount: 0,
+          isTurn: false,
+          cards: ["♣9", "♦9"],
+          netChange: -24,
+          bestHand: "One pair",
+        }}
+        showSettlementEffects
+      />,
+    );
+
+    expect(
+      container.querySelector(".table-seat.is-settlement-loser"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(".table-seat.is-settlement-winner"),
+    ).not.toBeInTheDocument();
   });
 });

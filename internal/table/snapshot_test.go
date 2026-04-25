@@ -136,6 +136,70 @@ func TestBuildSnapshotForSeatWithoutDealtCardsUsesEmptyCardList(t *testing.T) {
 	assert.Empty(t, snap.Seats[0].Cards)
 }
 
+func TestBuildSnapshotAddsStandardSeatPositionLabels(t *testing.T) {
+	board := &model.Board{
+		Players: []*model.Player{
+			{Name: "Player1", Index: 0, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+			{Name: "Player2", Index: 1, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+			{Name: "Player3", Index: 2, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+			{Name: "Player4", Index: 3, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+			{Name: "Player5", Index: 4, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+			{Name: "Player6", Index: 5, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+		},
+		PositionIndexMap: map[model.Position]int{
+			model.PositionSmallBlind:  4,
+			model.PositionBigBlind:    5,
+			model.PositionButton:      3,
+			model.PositionUnderTheGun: 0,
+		},
+		Game: &model.Game{Round: model.PREFLOP, SmallBlinds: 1},
+	}
+
+	snap := BuildSnapshot(BuildSnapshotInput{
+		RoomID:   "room-1",
+		RoomName: "Table 1",
+		Status:   StatusRunning,
+		Board:    board,
+	})
+
+	require.Len(t, snap.Seats, 6)
+	assert.Equal(t, []string{"UTG", "HJ", "CO", "BTN", "SB", "BB"}, []string{
+		snap.Seats[0].Position,
+		snap.Seats[1].Position,
+		snap.Seats[2].Position,
+		snap.Seats[3].Position,
+		snap.Seats[4].Position,
+		snap.Seats[5].Position,
+	})
+}
+
+func TestBuildSnapshotCombinesHeadsUpButtonAndSmallBlindPosition(t *testing.T) {
+	board := &model.Board{
+		Players: []*model.Player{
+			{Name: "Player1", Index: 0, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+			{Name: "Player2", Index: 1, Status: model.PlayerStatusPlaying, Hands: model.Cards{model.NewUnknownCard(), model.NewUnknownCard()}},
+		},
+		PositionIndexMap: map[model.Position]int{
+			model.PositionSmallBlind:  0,
+			model.PositionBigBlind:    1,
+			model.PositionButton:      1,
+			model.PositionUnderTheGun: 0,
+		},
+		Game: &model.Game{Round: model.PREFLOP, SmallBlinds: 1},
+	}
+
+	snap := BuildSnapshot(BuildSnapshotInput{
+		RoomID:   "room-1",
+		RoomName: "Table 1",
+		Status:   StatusRunning,
+		Board:    board,
+	})
+
+	require.Len(t, snap.Seats, 2)
+	assert.Equal(t, "BTN/SB", snap.Seats[0].Position)
+	assert.Equal(t, "BB", snap.Seats[1].Position)
+}
+
 func TestBuildSnapshotForActiveHandOmitsSettlementDelta(t *testing.T) {
 	board := &model.Board{
 		Players: []*model.Player{
