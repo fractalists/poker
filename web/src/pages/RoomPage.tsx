@@ -40,11 +40,6 @@ type SeatSlotStyle = CSSProperties & {
   "--mobile-seat-order"?: string;
 };
 
-type ChipFlowCue = {
-  label: string;
-  tone: "commit" | "payout";
-};
-
 function formatNetChange(delta: number) {
   if (delta > 0) {
     return `+${delta}`;
@@ -197,78 +192,6 @@ function buildTableActionCue(snapshot: RoomSnapshot) {
   return null;
 }
 
-function formatChipFlowCue(event: RoomEvent, seats: SeatSnapshot[]): ChipFlowCue | null {
-  const amount = event.amount ?? 0;
-  if (event.kind === "blind_posted" && amount > 0) {
-    return {
-      label: `${seatName(seats, event.seatIndex)} to Pot +${amount}`,
-      tone: "commit",
-    };
-  }
-
-  if (
-    event.kind === "player_action" &&
-    amount > 0 &&
-    (event.actionType === "CALL" ||
-      event.actionType === "BET" ||
-      event.actionType === "ALL_IN")
-  ) {
-    return {
-      label: `${seatName(seats, event.seatIndex)} to Pot +${amount}`,
-      tone: "commit",
-    };
-  }
-
-  if (event.kind === "pot_collected") {
-    const winners = seats.filter(
-      (seat) => seat.isWinner && (seat.netChange ?? 0) > 0,
-    );
-    if (winners.length === 1) {
-      const winner = winners[0];
-      const payout = winner.netChange ?? amount;
-      if (payout > 0) {
-        return {
-          label: `Pot to ${winner.name} +${payout}`,
-          tone: "payout",
-        };
-      }
-    }
-    if (winners.length > 1) {
-      const payout =
-        amount ||
-        winners.reduce((total, seat) => total + (seat.netChange ?? 0), 0);
-      if (payout > 0) {
-        return {
-          label: `Pot to ${winners.map((seat) => seat.name).join(" + ")} +${payout}`,
-          tone: "payout",
-        };
-      }
-    }
-  }
-
-  return null;
-}
-
-function buildChipFlowCue(snapshot: RoomSnapshot) {
-  const events = snapshot.events ?? [];
-  const handNumber = snapshot.handNumber;
-  const seats = snapshot.seats ?? [];
-  for (let index = events.length - 1; index >= 0; index -= 1) {
-    const event = events[index];
-    if (event.handNumber !== undefined && event.handNumber !== handNumber) {
-      continue;
-    }
-    const chipFlowCue = formatChipFlowCue(event, seats);
-    if (chipFlowCue) {
-      return chipFlowCue;
-    }
-    if (formatTableActionCue(event, seats)) {
-      return null;
-    }
-  }
-  return null;
-}
-
 function formatRoomFeedEvent(event: RoomEvent, seats: SeatSnapshot[]) {
   const formatted = formatTableActionCue(event, seats);
   if (formatted) {
@@ -379,7 +302,6 @@ export function RoomPage({
   const events = snapshot.events ?? [];
   const seatActions = buildSeatActionMap(snapshot);
   const tableActionCue = buildTableActionCue(snapshot);
-  const chipFlowCue = buildChipFlowCue(snapshot);
   const orbitPlayerCount = Math.max(
     snapshot.playerCount ?? 0,
     seats.length,
@@ -403,6 +325,10 @@ export function RoomPage({
     "--orbit-board-gap": orbitSpec.boardGap,
   } as CSSProperties;
   const isPlayerView = snapshot.viewerRole === "player";
+  const playerSeat =
+    isPlayerView && snapshot.humanSeat !== undefined
+      ? seats.find((seat) => seat.index === snapshot.humanSeat)
+      : undefined;
   const isHandFinished = snapshot.status === "hand_finished";
   const hasPendingAction = isPlayerView && Boolean(snapshot.pendingAction);
   const canStartHand =
@@ -636,16 +562,6 @@ export function RoomPage({
                             </strong>
                           </div>
                         ) : null}
-                        {chipFlowCue ? (
-                          <div
-                            className={`chip-flow-cue chip-flow-cue--${chipFlowCue.tone}`}
-                            aria-live="polite"
-                          >
-                            <strong className="chip-flow-amount">
-                              {chipFlowCue.label}
-                            </strong>
-                          </div>
-                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -729,6 +645,7 @@ export function RoomPage({
               roomId={snapshot.roomId}
               pot={snapshot.pot ?? 0}
               pendingAction={snapshot.pendingAction}
+              playerSeat={playerSeat}
               busy={busy}
               onSubmit={onAction}
             />

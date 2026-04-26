@@ -62,13 +62,6 @@ describe("room board styling tokens", () => {
     expect(stylesheet).toMatch(/\.table-live-layout--pot-collected\s+\.board-cards-shell\s*\{[^}]*animation:\s*pot-collect-flash 780ms ease-out both;/s);
   });
 
-  it("adds a compact chip flow cue for money moving into and out of the pot", () => {
-    expect(stylesheet).toMatch(/\.chip-flow-cue\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*margin:\s*6px auto 0;[^}]*animation:\s*chip-flow-cue-in 620ms cubic-bezier\(0\.18,\s*0\.82,\s*0\.24,\s*1\) both;/s);
-    expect(stylesheet).toMatch(/\.chip-flow-cue--commit\s+\.chip-flow-amount\s*\{[^}]*color:\s*var\(--accent\);/s);
-    expect(stylesheet).toMatch(/\.chip-flow-cue--payout\s+\.chip-flow-amount\s*\{[^}]*color:\s*#ffd666;/s);
-    expect(stylesheet).toMatch(/@keyframes chip-flow-cue-in\s*\{/s);
-  });
-
   it("marks disabled controls with a non-interactive cursor", () => {
     expect(stylesheet).toMatch(/button:disabled\s*\{[^}]*cursor:\s*not-allowed;/s);
     expect(stylesheet).toMatch(/\.control-stack button\.start-hand-control\s*\{[^}]*grid-column:\s*1 \/ -1;/s);
@@ -76,25 +69,28 @@ describe("room board styling tokens", () => {
 
   it("switches constrained tables to a playable seat list instead of a clipped orbit", () => {
     expect(stylesheet).toMatch(/\.table-stage\s*\{[^}]*container-type:\s*inline-size;[^}]*container-name:\s*table-stage;/s);
-    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*980px\)\s*\{[\s\S]*?\.seat-orbit\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(196px,\s*224px\)\);[^}]*justify-content:\s*center;/s);
-    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*980px\)\s*\{[\s\S]*?\.seat-slot\s*\{[^}]*position:\s*static;[^}]*order:\s*var\(--mobile-seat-order,\s*20\);/s);
+    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*760px\)\s*\{[\s\S]*?\.seat-orbit\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(196px,\s*224px\)\);[^}]*justify-content:\s*center;/s);
+    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*760px\)\s*\{[\s\S]*?\.seat-slot\s*\{[^}]*position:\s*static;[^}]*order:\s*var\(--mobile-seat-order,\s*20\);/s);
   });
 
   it("keeps desktop seat orbits inside the felt instead of adding an inner vertical scroller", () => {
     expect(stylesheet).toMatch(/\.table-felt\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s);
     expect(stylesheet).toMatch(/\.table-live-layout\s*\{[^}]*height:\s*min\(100%,\s*var\(--orbit-min-height,\s*560px\)\);[^}]*min-height:\s*0;/s);
     expect(stylesheet).toMatch(/\.seat-orbit\s*\{[^}]*height:\s*100%;[^}]*min-height:\s*0;/s);
-    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*980px\)\s*\{[\s\S]*?\.table-felt\s*\{[^}]*overflow:\s*auto;/s);
-    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*980px\)\s*\{[\s\S]*?\.table-live-layout\s*\{[^}]*height:\s*auto;[^}]*min-height:\s*auto;/s);
+    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*760px\)\s*\{[\s\S]*?\.table-felt\s*\{[^}]*overflow:\s*auto;/s);
+    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*760px\)\s*\{[\s\S]*?\.table-live-layout\s*\{[^}]*height:\s*auto;[^}]*min-height:\s*auto;/s);
   });
 
   it("uses a mobile control layout with a fixed action dock for portrait play", () => {
     expect(stylesheet).toMatch(/@media \(max-width:\s*900px\),\s*\(orientation:\s*portrait\)\s*\{/s);
-    expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s*\{[^}]*padding-bottom:\s*min\(42svh,\s*320px\);/s);
-    expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s+\.action-bar\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*12px;[^}]*max-height:\s*min\(58svh,\s*420px\);/s);
-    expect(stylesheet).toMatch(/\.room-history-stack--scroll\s*\{[^}]*max-height:\s*48svh;[^}]*overflow-y:\s*auto;/s);
+    expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s*\{[^}]*padding-bottom:\s*min\(50svh,\s*430px\);/s);
+    expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s+\.action-bar\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*12px;[^}]*max-height:\s*min\(50svh,\s*430px\);/s);
+    expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s+\.room-grid\s+\.room-history-stack--scroll\s*\{[^}]*display:\s*none;/s);
+    expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s+\.control-stack\s*\{[^}]*display:\s*none;/s);
+    expect(stylesheet).toMatch(/\.action-buttons\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s);
+    expect(stylesheet).toMatch(/\.table-stage\s*\{[^}]*min-height:\s*240px;/s);
+    expect(stylesheet).toMatch(/\.table-felt\s*\{[^}]*min-height:\s*222px;/s);
     expect(stylesheet).toMatch(/\.table-action-cue\s*\{[^}]*max-width:\s*calc\(100%\s*-\s*24px\);[^}]*margin:\s*8px auto 0;/s);
-    expect(stylesheet).toMatch(/\.chip-flow-cue\s*\{[^}]*max-width:\s*calc\(100%\s*-\s*28px\);[^}]*margin:\s*6px auto 0;/s);
     expect(stylesheet).toMatch(/\.board-cards-shell\s*\{[^}]*padding:\s*24px var\(--board-shell-inline-padding\);[^}]*border-radius:\s*22px;/s);
   });
 

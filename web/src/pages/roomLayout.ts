@@ -55,11 +55,11 @@ const baseTemplates: Record<number, OrbitPosition[]> = {
   ],
   6: [
     { slot: "hero", x: 50, y: 84 },
-    { slot: "bottom-left", x: 32, y: 78 },
-    { slot: "left-upper", x: 16, y: 33 },
+    { slot: "bottom-left", x: 28, y: 70 },
+    { slot: "left-upper", x: 14, y: 38 },
     { slot: "top-center", x: 50, y: 13 },
-    { slot: "right-upper", x: 84, y: 33 },
-    { slot: "bottom-right", x: 68, y: 78 },
+    { slot: "right-upper", x: 86, y: 38 },
+    { slot: "bottom-right", x: 72, y: 70 },
   ],
   7: [
     { slot: "hero", x: 50, y: 84 },
@@ -163,7 +163,7 @@ function buildSafeInset(spec: OrbitSpec): SafeInset {
   const verticalHalfSeatPercent = (seatHeight / minHeight) * 50;
   const horizontalHalfSeatPercent = (seatWidth / estimatedStageWidth) * 50;
   const isCompactTable = minHeight < 720;
-  const topClearanceOffset = isCompactTable ? -1 : 1.6;
+  const topClearanceOffset = isCompactTable ? 2.5 : 1.6;
   const bottomClearanceOffset = isCompactTable ? 0.5 : 2.5;
 
   return {

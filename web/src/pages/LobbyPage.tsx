@@ -18,6 +18,43 @@ function formatRoomAIStyle(style?: string) {
   return normalized;
 }
 
+function formatRoomStatus(status?: string) {
+  const normalized = status?.trim().toLowerCase();
+  switch (normalized) {
+    case "awaiting_action":
+      return "Awaiting action";
+    case "hand_finished":
+      return "Hand finished";
+    case "running":
+      return "Running";
+    case "waiting":
+      return "Waiting";
+    case "closed":
+      return "Closed";
+    default:
+      return normalized
+        ? normalized.replace(/_/g, " ")
+        : "Unknown";
+  }
+}
+
+function roomStatusRank(status?: string) {
+  switch (status?.trim().toLowerCase()) {
+    case "awaiting_action":
+      return 0;
+    case "running":
+      return 1;
+    case "waiting":
+      return 2;
+    case "hand_finished":
+      return 3;
+    case "closed":
+      return 4;
+    default:
+      return 5;
+  }
+}
+
 export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
   const [rooms, setRooms] = useState<RoomSnapshot[]>([]);
   const [name, setName] = useState("Table 1");
@@ -30,6 +67,12 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
   const [submitting, setSubmitting] = useState(false);
   const [openingRoomId, setOpeningRoomId] = useState("");
   const [error, setError] = useState("");
+  const sortedRooms = [...rooms].sort(
+    (left, right) =>
+      roomStatusRank(left.status) - roomStatusRank(right.status) ||
+      (right.handNumber ?? 0) - (left.handNumber ?? 0) ||
+      left.roomName.localeCompare(right.roomName),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -126,16 +169,16 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
   }
 
   return (
-    <main className="app-shell">
-      <section className="hero-band">
-        <div className="hero-copy">
+    <main className="app-shell app-shell--lobby">
+      <section className="lobby-statusbar">
+        <div className="lobby-title">
           <span className="eyebrow">Poker Service</span>
           <h1>Poker Control Room</h1>
           <p>
             Create a table, claim the human seat, or monitor the live room feed.
           </p>
         </div>
-        <div className="hero-meta">
+        <div className="lobby-status-metrics">
           <span>
             {loading
               ? "Syncing rooms"
@@ -158,24 +201,40 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
           </div>
 
           <div className="room-list">
-            {rooms.map((room) => {
+            {sortedRooms.map((room) => {
+              const hasSavedSession = Boolean(
+                window.localStorage.getItem(viewerTokenKey(room.roomId)),
+              );
               return (
                 <article key={room.roomId} className="room-row">
                   <div className="room-row-main">
                     <div className="room-row-title">
                       <h3>{room.roomName}</h3>
-                      <span className="status-pill">{room.status}</span>
+                      <span className="status-pill">
+                        {formatRoomStatus(room.status)}
+                      </span>
                     </div>
-                    <button
-                      className="room-open-link"
-                      disabled={openingRoomId === room.roomId}
-                      onClick={() => void openRoomAsSpectator(room.roomId)}
-                      type="button"
-                    >
-                      {openingRoomId === room.roomId
-                        ? "Opening..."
-                        : "Spectate room"}
-                    </button>
+                    <div className="room-row-actions">
+                      {hasSavedSession ? (
+                        <button
+                          className="room-open-link room-open-link--primary"
+                          onClick={() => navigateToRoom?.(room.roomId)}
+                          type="button"
+                        >
+                          Resume room
+                        </button>
+                      ) : null}
+                      <button
+                        className="room-open-link"
+                        disabled={openingRoomId === room.roomId}
+                        onClick={() => void openRoomAsSpectator(room.roomId)}
+                        type="button"
+                      >
+                        {openingRoomId === room.roomId
+                          ? "Opening..."
+                          : "Spectate room"}
+                      </button>
+                    </div>
                   </div>
                   <div className="room-row-meta">
                     <span>Room {room.roomId}</span>
@@ -209,6 +268,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
           <label className="field">
             <span>Room name</span>
             <input
+              className="field-control"
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
@@ -217,6 +277,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
           <label className="field">
             <span>Total players</span>
             <select
+              className="field-control"
               value={playerCount}
               onChange={(event) => setPlayerCount(Number(event.target.value))}
             >
@@ -231,6 +292,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
           <label className="field">
             <span>AI style</span>
             <select
+              className="field-control"
               value={aiStyle}
               onChange={(event) => setAIStyle(event.target.value)}
             >

@@ -8,7 +8,7 @@ describe("ActionBar", () => {
     vi.useRealTimers();
   });
 
-  it("renders numeric action labels directly on the primary buttons", () => {
+  it("renders a decision summary and semantic action labels", () => {
     render(
       <ActionBar
         roomId="room-001"
@@ -31,12 +31,15 @@ describe("ActionBar", () => {
 
     expect(screen.getByRole("button", { name: "Fold" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Call 2" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Raise to 4~96" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Raise 4 to 96" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "All-in 96" })).toBeInTheDocument();
     expect(screen.queryByText(/seat 6/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("To call 2")).not.toBeInTheDocument();
-    expect(screen.queryByText("Min raise to 4")).not.toBeInTheDocument();
-    expect(screen.queryByText("Stack 96")).not.toBeInTheDocument();
+    expect(screen.queryByText("To call")).not.toBeInTheDocument();
+    expect(screen.getByText("Pot")).toBeInTheDocument();
+    expect(screen.getByText("Stack")).toBeInTheDocument();
+    expect(screen.getByText("After call")).toBeInTheDocument();
+    expect(screen.getByText("Pot odds")).toBeInTheDocument();
+    expect(screen.getByText("20%")).toBeInTheDocument();
     expect(screen.queryByLabelText(/bet amount/i)).not.toBeInTheDocument();
   });
 
@@ -63,7 +66,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Raise to 4~96" }));
+    fireEvent.click(screen.getByRole("button", { name: "Raise 4 to 96" }));
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/raise to amount/i)).toBeInTheDocument();
@@ -96,7 +99,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Raise to 4~96" }));
+    fireEvent.click(screen.getByRole("button", { name: "Raise 4 to 96" }));
     fireEvent.click(screen.getByRole("button", { name: "1/2 Pot" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm raise" }));
 
@@ -124,7 +127,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Bet 1~96" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bet 1 to 96" }));
     expect((screen.getByLabelText(/bet amount/i) as HTMLInputElement).value).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "1/4 Pot" }));
     expect(screen.getByLabelText(/bet amount/i)).toHaveValue(3);
@@ -154,7 +157,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Raise to 4~100" }));
+    fireEvent.click(screen.getByRole("button", { name: "Raise 4 to 100" }));
 
     fireEvent.click(screen.getByRole("button", { name: "1/4 Pot" }));
     expect(screen.getByLabelText(/raise to amount/i)).toHaveValue(4);
@@ -187,7 +190,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Raise to 4~100" }));
+    fireEvent.click(screen.getByRole("button", { name: "Raise 4 to 100" }));
     fireEvent.click(screen.getByRole("button", { name: "1/2 Pot" }));
 
     expect(screen.getByLabelText(/raise to amount/i)).toHaveValue(4);
@@ -222,7 +225,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Raise to 6~98" }));
+    fireEvent.click(screen.getByRole("button", { name: "Raise 6 to 98" }));
     fireEvent.click(screen.getByRole("button", { name: "1/2 Pot" }));
     expect(screen.getByLabelText(/raise to amount/i)).toHaveValue(12);
 
@@ -270,7 +273,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Raise to 4~96" }));
+    fireEvent.click(screen.getByRole("button", { name: "Raise 4 to 96" }));
     fireEvent.change(screen.getByLabelText(/raise to amount/i), { target: { value: "" } });
 
     expect((screen.getByLabelText(/raise to amount/i) as HTMLInputElement).value).toBe("");
@@ -297,7 +300,7 @@ describe("ActionBar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Bet 1~96" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bet 1 to 96" }));
     fireEvent.click(screen.getByRole("button", { name: "1 Pot" }));
 
     expect(screen.getByLabelText(/bet amount/i)).toHaveValue(24);
@@ -353,6 +356,33 @@ describe("ActionBar", () => {
     expect(screen.getByRole("button", { name: "Fold" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Call 55" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "All-in 55" })).toBeInTheDocument();
+  });
+
+  it("hides raise when the minimum raise is the same as going all-in", () => {
+    render(
+      <ActionBar
+        roomId="room-001"
+        pot={80}
+        pendingAction={{
+          token: "turn-1",
+          seatIndex: 5,
+          minAmount: 30,
+          minBetAmount: 55,
+          maxAmount: 55,
+          canCheck: false,
+          canCall: true,
+          canBet: true,
+          canFold: true,
+          canAllIn: true,
+        }}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Call 30" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Raise 55" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All-in 55" })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/raise to amount/i)).not.toBeInTheDocument();
   });
 
   it("shows a live countdown when the pending action has an expiry", () => {

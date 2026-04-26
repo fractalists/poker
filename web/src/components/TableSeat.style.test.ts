@@ -14,15 +14,19 @@ describe("table seat state styling", () => {
     expect(stylesheet).toMatch(/\.seat-stack-pill\s*\{[^}]*min-height:\s*36px;[^}]*padding:\s*6px 9px;/s);
     expect(stylesheet).toMatch(/\.seat-stack-pill--has-result\s*\{[^}]*padding-right:\s*52px;/s);
     expect(stylesheet).not.toMatch(/\.seat-stack-pill--bankroll\s*\{[^}]*padding-right:/s);
-    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*980px\)\s*\{[\s\S]*\.seat-orbit\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(196px,\s*224px\)\);[^}]*justify-content:\s*center;/s);
-    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*980px\)\s*\{[\s\S]*\.seat-slot \.table-seat\s*\{[^}]*min-height:\s*158px;/s);
+    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*760px\)\s*\{[\s\S]*\.seat-orbit\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(196px,\s*224px\)\);[^}]*justify-content:\s*center;/s);
+    expect(stylesheet).toMatch(/@container table-stage \(max-width:\s*760px\)\s*\{[\s\S]*\.seat-slot \.table-seat\s*\{[^}]*min-height:\s*158px;/s);
   });
 
-  it("lets compact full-ring seat chrome shrink instead of clipping right-side badges", () => {
-    expect(stylesheet).toMatch(/\.seat-header\s*\{[^}]*min-width:\s*0;/s);
+  it("gives full-ring action badges their own row instead of clipping them", () => {
+    expect(stylesheet).toMatch(/\.seat-header\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*max-content;[^}]*min-width:\s*0;/s);
     expect(stylesheet).toMatch(/\.seat-name-row\s*\{[^}]*min-width:\s*0;/s);
-    expect(stylesheet).toMatch(/\.seat-header-meta\s*\{[^}]*min-width:\s*0;/s);
-    expect(stylesheet).toMatch(/\.seat-action-pill\s*\{[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;/s);
+    expect(stylesheet).toMatch(/\.seat-header-meta\s*\{[^}]*min-width:\s*max-content;[^}]*max-width:\s*none;/s);
+    expect(stylesheet).toMatch(/\.seat-action-pill\s*\{[^}]*min-width:\s*max-content;[^}]*font-family:\s*"Segoe UI Variable Text",\s*"Segoe UI",\s*sans-serif;[^}]*font-weight:\s*800;[^}]*line-height:\s*1;/s);
+    expect(stylesheet).not.toMatch(/(?:^|\n)\.seat-action-pill\s*\{[^}]*overflow:\s*hidden;/s);
+    expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-header,\s*\.seat-orbit--9 \.seat-header,\s*\.seat-orbit--10 \.seat-header\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);[^}]*gap:\s*6px;/s);
+    expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-header-meta,\s*\.seat-orbit--9 \.seat-header-meta,\s*\.seat-orbit--10 \.seat-header-meta\s*\{[^}]*grid-column:\s*1 \/ -1;[^}]*justify-content:\s*flex-start;[^}]*min-width:\s*0;[^}]*max-width:\s*100%;/s);
+    expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-action-pill,\s*\.seat-orbit--9 \.seat-action-pill,\s*\.seat-orbit--10 \.seat-action-pill\s*\{[^}]*min-width:\s*max-content;[^}]*max-width:\s*none;[^}]*overflow:\s*visible;[^}]*text-overflow:\s*clip;/s);
     expect(stylesheet).toMatch(/\.seat-stack-pill\s*\{[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;/s);
     expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-footer,\s*\.seat-orbit--9 \.seat-footer,\s*\.seat-orbit--10 \.seat-footer\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*max-content;/s);
   });

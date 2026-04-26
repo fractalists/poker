@@ -66,9 +66,52 @@ describe("LobbyPage", () => {
     expect(
       screen.getByRole("button", { name: /spectate room/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Waiting")).toBeInTheDocument();
+    expect(container.querySelector(".app-shell--lobby")).toBeInTheDocument();
+    expect(container.querySelector(".lobby-statusbar")).toBeInTheDocument();
+    expect(container.querySelector(".hero-band")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/total players/i)).toHaveClass("field-control");
+    expect(screen.getByLabelText(/ai style/i)).toHaveClass("field-control");
     const workGrid = container.querySelector(".work-grid");
     expect(workGrid?.firstElementChild).toHaveClass("room-strip");
     expect(workGrid?.lastElementChild).toHaveClass("create-panel");
+  });
+
+  it("resumes a saved player session without forcing spectator mode", async () => {
+    const navigateToRoom = vi.fn();
+    window.localStorage.setItem("poker.viewerSeat.room-001", "5");
+    window.localStorage.setItem("poker.viewerToken.room-001", "viewer-token-1");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "awaiting_action",
+          handNumber: 3,
+          smallBlind: 1,
+          playerCount: 6,
+          seats: [],
+        },
+      ],
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<LobbyPage navigateToRoom={navigateToRoom} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Table 1")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /resume room/i }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(navigateToRoom).toHaveBeenCalledWith("room-001");
+    expect(window.localStorage.getItem("poker.viewerSeat.room-001")).toBe("5");
+    expect(window.localStorage.getItem("poker.viewerToken.room-001")).toBe(
+      "viewer-token-1",
+    );
   });
 
   it("creates a room with the selected player count and auto claims a random human seat", async () => {

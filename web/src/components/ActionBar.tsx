@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 
-import type { ActionSubmission, PendingAction } from "../lib/types";
+import type { ActionSubmission, PendingAction, SeatSnapshot } from "../lib/types";
+import { CardFace } from "./CardFace";
 
 type ActionBarProps = {
   roomId: string;
   pot?: number;
   pendingAction: PendingAction;
+  playerSeat?: SeatSnapshot;
   busy?: boolean;
   onSubmit: (action: ActionSubmission) => void | Promise<void>;
 };
@@ -24,17 +26,30 @@ function clampBetAmount(amount: number, pendingAction: PendingAction) {
 
 function formatBetRange(pendingAction: PendingAction) {
   const minimumBet = getMinimumBet(pendingAction);
-  const actionLabel = pendingAction.minAmount > 0 ? "Raise to" : "Bet";
+  const actionLabel = pendingAction.minAmount > 0 ? "Raise" : "Bet";
   if (minimumBet >= pendingAction.maxAmount) {
     return `${actionLabel} ${pendingAction.maxAmount}`;
   }
-  return `${actionLabel} ${minimumBet}~${pendingAction.maxAmount}`;
+  return `${actionLabel} ${minimumBet} to ${pendingAction.maxAmount}`;
 }
 
 function getShortcutBetAmount(pot: number, ratio: number, pendingAction: PendingAction) {
   const callAmount = pendingAction.minAmount;
   const potAfterCall = pot + callAmount;
   return clampBetAmount(callAmount + ratio * potAfterCall, pendingAction);
+}
+
+function formatPotOdds(pot: number, callAmount: number) {
+  if (callAmount <= 0) {
+    return "Free";
+  }
+
+  const potAfterCall = pot + callAmount;
+  if (potAfterCall <= 0) {
+    return "--";
+  }
+
+  return `${Math.round((callAmount / potAfterCall) * 100)}%`;
 }
 
 type ShortcutKey = "quarter" | "half" | "pot";
@@ -45,7 +60,14 @@ const betShortcuts: Array<{ key: ShortcutKey; label: string; ratio: number }> = 
   { key: "pot", label: "1 Pot", ratio: 1 },
 ];
 
-export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubmit }: ActionBarProps) {
+export function ActionBar({
+  roomId,
+  pot = 0,
+  pendingAction,
+  playerSeat,
+  busy = false,
+  onSubmit,
+}: ActionBarProps) {
   const [betAmount, setBetAmount] = useState("");
   const [isBetting, setIsBetting] = useState(false);
   const [selectedShortcut, setSelectedShortcut] = useState<ShortcutKey | null>(null);
@@ -63,6 +85,15 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
   const amountLabel = isRaise ? "Raise to amount" : "Bet amount";
   const confirmLabel = isRaise ? "Confirm raise" : "Confirm bet";
   const minimumBet = getMinimumBet(pendingAction);
+  const isBetEquivalentToAllIn = pendingAction.canAllIn && minimumBet >= pendingAction.maxAmount;
+  const canShowBet = pendingAction.canBet && !isBetEquivalentToAllIn;
+  const stackAmount = pendingAction.maxAmount;
+  const callAmount = pendingAction.canCheck
+    ? 0
+    : Math.min(Math.max(pendingAction.minAmount, 0), stackAmount);
+  const afterCallStack = Math.max(0, stackAmount - callAmount);
+  const potOdds = formatPotOdds(pot, callAmount);
+  const decisionCards = playerSeat?.cards?.length ? playerSeat.cards : ["--", "--"];
 
   useEffect(() => {
     setBetAmount("");
@@ -116,15 +147,56 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
         ) : null}
       </div>
 
+      <div
+        className={[
+          "decision-summary",
+          playerSeat ? "" : "decision-summary--metrics-only",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {playerSeat ? (
+          <div className="decision-hand">
+            <span className="decision-label">Your hand</span>
+            <div className="decision-cards" aria-label="your hand cards">
+              {decisionCards.map((card, index) => (
+                <span className="decision-card" key={`${card}-${index}`}>
+                  <CardFace card={card} />
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="decision-metrics">
+          <span className="decision-metric decision-metric--pot">
+            <span className="decision-label">Pot</span>
+            <strong>{pot}</strong>
+          </span>
+          <span className="decision-metric">
+            <span className="decision-label">Stack</span>
+            <strong>{stackAmount}</strong>
+          </span>
+          <span className="decision-metric">
+            <span className="decision-label">After call</span>
+            <strong>{afterCallStack}</strong>
+          </span>
+          <span className="decision-metric decision-metric--odds">
+            <span className="decision-label">Pot odds</span>
+            <strong>{potOdds}</strong>
+          </span>
+        </div>
+      </div>
+
       <div className="action-buttons">
         {pendingAction.canFold ? (
-          <button disabled={busy} onClick={() => onSubmit({ token: pendingAction.token, actionType: "FOLD", amount: 0 })} type="button">
+          <button className="action-button action-button--fold" disabled={busy} onClick={() => onSubmit({ token: pendingAction.token, actionType: "FOLD", amount: 0 })} type="button">
             Fold
           </button>
         ) : null}
         {canShowCall ? (
           <button
-            className="primary"
+            className="action-button action-button--call primary"
             disabled={busy}
             onClick={() =>
               onSubmit({
@@ -138,9 +210,15 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
             {callLabel}
           </button>
         ) : null}
-        {pendingAction.canBet ? (
+        {canShowBet ? (
           <button
-            className={isBetting ? "is-open" : undefined}
+            className={[
+              "action-button",
+              "action-button--raise",
+              isBetting ? "is-open" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             disabled={busy}
             onClick={() => setIsBetting((current) => !current)}
             type="button"
@@ -150,6 +228,7 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
         ) : null}
         {pendingAction.canAllIn ? (
           <button
+            className="action-button action-button--all-in"
             disabled={busy}
             onClick={() =>
               onSubmit({
@@ -165,7 +244,7 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
         ) : null}
       </div>
 
-      {pendingAction.canBet && isBetting ? (
+      {canShowBet && isBetting ? (
         <div className="bet-panel">
           <label className="action-amount">
             <span>{amountLabel}</span>

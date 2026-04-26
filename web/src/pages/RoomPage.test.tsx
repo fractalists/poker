@@ -127,6 +127,69 @@ describe("RoomPage", () => {
     expect(screen.queryByText("PLAYING")).not.toBeInTheDocument();
   });
 
+  it("keeps the player's hand and call context inside the action controls", () => {
+    const { container } = render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Decision Table",
+          status: "awaiting_action",
+          viewerRole: "player",
+          humanSeat: 5,
+          playerCount: 6,
+          handNumber: 3,
+          smallBlind: 1,
+          pot: 94,
+          currentAmount: 83,
+          round: "PREFLOP",
+          boardCards: ["**", "**", "**", "**", "**"],
+          seats: [
+            {
+              index: 5,
+              name: "Player6",
+              status: "PLAYING",
+              bankroll: 100,
+              inPotAmount: 0,
+              isTurn: true,
+              cards: ["♣A", "♠2"],
+            },
+          ],
+          pendingAction: {
+            token: "turn-1",
+            seatIndex: 5,
+            minAmount: 83,
+            minBetAmount: 100,
+            maxAmount: 100,
+            canCheck: false,
+            canCall: true,
+            canBet: true,
+            canFold: true,
+            canAllIn: true,
+          },
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    const actionBar = container.querySelector(".action-bar") as HTMLElement;
+    const actionBarQueries = within(actionBar);
+
+    expect(actionBarQueries.getByText("Your hand")).toBeInTheDocument();
+    expect(
+      actionBar.querySelectorAll(".decision-card .card-face"),
+    ).toHaveLength(2);
+    expect(actionBarQueries.queryByText("To call")).not.toBeInTheDocument();
+    expect(actionBarQueries.getByText("Stack")).toBeInTheDocument();
+    expect(actionBarQueries.getByText("100")).toBeInTheDocument();
+    expect(actionBarQueries.getByText("After call")).toBeInTheDocument();
+    expect(actionBarQueries.getByText("17")).toBeInTheDocument();
+    expect(actionBarQueries.getByText("Pot odds")).toBeInTheDocument();
+    expect(actionBarQueries.getByText("47%")).toBeInTheDocument();
+    expect(actionBarQueries.getByRole("button", { name: "Call 83" })).toBeInTheDocument();
+  });
+
   it("uses a full-ring seat orbit when the room has ten players", () => {
     const { container } = render(
       <RoomPage
@@ -743,10 +806,8 @@ describe("RoomPage", () => {
     expect(
       container.querySelector(".table-live-layout--blind-posted"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Player1 to Pot +1")).toBeInTheDocument();
-    expect(
-      container.querySelector(".chip-flow-cue--commit"),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Player1 to Pot +1")).not.toBeInTheDocument();
+    expect(container.querySelector(".chip-flow-cue")).not.toBeInTheDocument();
 
     rerender(
       <RoomPage
@@ -802,10 +863,8 @@ describe("RoomPage", () => {
     expect(
       container.querySelector(".table-live-layout--pot-collected"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Pot to Player1 +3")).toBeInTheDocument();
-    expect(
-      container.querySelector(".chip-flow-cue--payout"),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Pot to Player1 +3")).not.toBeInTheDocument();
+    expect(container.querySelector(".chip-flow-cue")).not.toBeInTheDocument();
   });
 
   it("shows dealt streets in the latest table event cue", () => {

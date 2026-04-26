@@ -58,7 +58,7 @@ describe("roomLayout", () => {
     expect(px(layout.spec.minHeight)).toBeLessThanOrEqual(684);
   });
 
-  it("keeps six-handed top and bottom seats clear of the center board HUD lane", () => {
+  it("keeps six-handed top and bottom seats clear of the felt edges and center board HUD lane", () => {
     const layout = buildOrbitLayout(6, 5);
     const seatHalf = verticalHalfSeatPercent(layout);
     const topSeat = [...layout.positions.values()].find(
@@ -70,8 +70,30 @@ describe("roomLayout", () => {
 
     expect(topSeat).toBeDefined();
     expect(heroSeat).toBeDefined();
-    expect(topSeat!.y + seatHalf).toBeLessThanOrEqual(24.6);
+    expect(topSeat!.y).toBeGreaterThanOrEqual(seatHalf);
+    expect(topSeat!.y + seatHalf).toBeLessThanOrEqual(28.5);
     expect(heroSeat!.y - seatHalf).toBeGreaterThanOrEqual(74);
+  });
+
+  it("keeps six-handed lower side seats clear of the hero player seat", () => {
+    const layout = buildOrbitLayout(6, 5);
+    const heroSeat = [...layout.positions.values()].find(
+      (position) => position.slot === "hero",
+    );
+    const bottomLeft = [...layout.positions.values()].find(
+      (position) => position.slot === "bottom-left",
+    );
+    const bottomRight = [...layout.positions.values()].find(
+      (position) => position.slot === "bottom-right",
+    );
+
+    expect(heroSeat).toBeDefined();
+    expect(bottomLeft).toBeDefined();
+    expect(bottomRight).toBeDefined();
+    expect(heroSeat!.y - bottomLeft!.y).toBeGreaterThanOrEqual(12);
+    expect(heroSeat!.y - bottomRight!.y).toBeGreaterThanOrEqual(12);
+    expect(Math.abs(heroSeat!.x - bottomLeft!.x)).toBeGreaterThanOrEqual(20);
+    expect(Math.abs(heroSeat!.x - bottomRight!.x)).toBeGreaterThanOrEqual(20);
   });
 
   it("keeps full-ring community cards visually centered between top and bottom seats", () => {
