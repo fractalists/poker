@@ -16,6 +16,7 @@ type CreateRoomRequest struct {
 	StartingBankroll int
 	HumanSeat        int
 	PlayerCount      int
+	AIStyle          string
 }
 
 type ViewerSession struct {
@@ -35,10 +36,22 @@ func (subscription *Subscription) Close() {
 	}
 }
 
+type RoomListSubscription struct {
+	C     chan []table.Snapshot
+	close func()
+}
+
+func (subscription *RoomListSubscription) Close() {
+	if subscription.close != nil {
+		subscription.close()
+	}
+}
+
 type Room struct {
 	ID        string
 	humanSeat int
 	runtime   *table.Runtime
+	config    CreateRoomRequest
 
 	mu            sync.RWMutex
 	humanOccupied bool
@@ -52,10 +65,16 @@ type subscriptionState struct {
 	ch                  chan table.Snapshot
 }
 
+type roomListSubscriptionState struct {
+	ch chan []table.Snapshot
+}
+
 type Manager struct {
-	mu    sync.RWMutex
-	rooms map[string]*Room
-	next  int
+	mu                  sync.RWMutex
+	rooms               map[string]*Room
+	next                int
+	roomListSubscribers map[*roomListSubscriptionState]struct{}
+	store               *roomStore
 }
 
 const (
@@ -64,8 +83,73 @@ const (
 )
 
 func NewManager() *Manager {
+	return newManager(nil)
+}
+
+func NewPersistentManager(storePath string) (*Manager, error) {
+	store := newJSONRoomStore(storePath)
+	var state persistedRooms
+	if store != nil {
+		loaded, err := store.load()
+		if err != nil {
+			return nil, err
+		}
+		state = loaded
+	}
+
+	manager := newManager(store)
+	manager.next = state.Next
+	for _, record := range state.Rooms {
+		req := CreateRoomRequest{
+			Name:             record.Name,
+			SmallBlind:       record.SmallBlind,
+			StartingBankroll: record.StartingBankroll,
+			HumanSeat:        record.HumanSeat,
+			PlayerCount:      record.PlayerCount,
+			AIStyle:          table.NormalizeAIStyle(record.AIStyle),
+		}
+		initialEvents := interruptedEvents(record)
+		room := &Room{
+			ID:        record.ID,
+			humanSeat: req.HumanSeat,
+			config:    req,
+			runtime: table.NewRuntime(table.RuntimeConfig{
+				RoomID:           record.ID,
+				RoomName:         req.Name,
+				SmallBlind:       req.SmallBlind,
+				StartingBankroll: req.StartingBankroll,
+				HumanSeat:        req.HumanSeat,
+				PlayerCount:      req.PlayerCount,
+				AIStyle:          req.AIStyle,
+				InitialHand:      record.HandNumber,
+				InitialEvents:    initialEvents,
+			}),
+			subscribers: map[*subscriptionState]struct{}{},
+		}
+		manager.rooms[record.ID] = room
+		go manager.watchRoom(room)
+	}
+	return manager, nil
+}
+
+func newManager(store *roomStore) *Manager {
 	return &Manager{
-		rooms: map[string]*Room{},
+		rooms:               map[string]*Room{},
+		roomListSubscribers: map[*roomListSubscriptionState]struct{}{},
+		store:               store,
+	}
+}
+
+func interruptedEvents(record persistedRoom) []table.RoomEvent {
+	if record.Status != table.StatusRunning && record.Status != table.StatusAwaitingAction {
+		return nil
+	}
+	return []table.RoomEvent{
+		{
+			Kind:       "hand_interrupted",
+			Message:    "previous hand interrupted by service restart",
+			HandNumber: record.HandNumber,
+		},
 	}
 }
 
@@ -79,6 +163,7 @@ func (manager *Manager) CreateRoom(req CreateRoomRequest) (*Room, error) {
 	if req.HumanSeat < 0 || req.HumanSeat >= req.PlayerCount {
 		return nil, fmt.Errorf("human seat %d is outside player count %d", req.HumanSeat, req.PlayerCount)
 	}
+	req.AIStyle = table.NormalizeAIStyle(req.AIStyle)
 
 	manager.mu.Lock()
 	manager.next++
@@ -86,13 +171,16 @@ func (manager *Manager) CreateRoom(req CreateRoomRequest) (*Room, error) {
 	room := &Room{
 		ID:          roomID,
 		humanSeat:   req.HumanSeat,
-		runtime:     table.NewRuntime(table.RuntimeConfig{RoomID: roomID, RoomName: req.Name, SmallBlind: req.SmallBlind, StartingBankroll: req.StartingBankroll, HumanSeat: req.HumanSeat, PlayerCount: req.PlayerCount}),
+		config:      req,
+		runtime:     table.NewRuntime(table.RuntimeConfig{RoomID: roomID, RoomName: req.Name, SmallBlind: req.SmallBlind, StartingBankroll: req.StartingBankroll, HumanSeat: req.HumanSeat, PlayerCount: req.PlayerCount, AIStyle: req.AIStyle}),
 		subscribers: map[*subscriptionState]struct{}{},
 	}
 	manager.rooms[roomID] = room
 	manager.mu.Unlock()
 
 	go manager.watchRoom(room)
+	_ = manager.persist()
+	manager.publishRoomList()
 	return room, nil
 }
 
@@ -170,7 +258,12 @@ func (manager *Manager) StartHand(roomID string) error {
 	if err != nil {
 		return err
 	}
-	return room.runtime.StartNextHand()
+	if err := room.runtime.StartNextHand(); err != nil {
+		return err
+	}
+	_ = manager.persist()
+	manager.publishRoomList()
+	return nil
 }
 
 func (manager *Manager) SubmitAction(roomID, token, viewerToken string, action model.Action) error {
@@ -212,6 +305,27 @@ func (manager *Manager) SubscribeRoom(roomID string, viewerSeat *int, viewerToke
 	}, nil
 }
 
+func (manager *Manager) SubscribeRooms() (*RoomListSubscription, error) {
+	state := &roomListSubscriptionState{
+		ch: make(chan []table.Snapshot, 16),
+	}
+
+	manager.mu.Lock()
+	manager.roomListSubscribers[state] = struct{}{}
+	manager.mu.Unlock()
+
+	state.ch <- manager.ListRooms()
+	return &RoomListSubscription{
+		C: state.ch,
+		close: func() {
+			manager.mu.Lock()
+			delete(manager.roomListSubscribers, state)
+			close(state.ch)
+			manager.mu.Unlock()
+		},
+	}, nil
+}
+
 func (manager *Manager) watchRoom(room *Room) {
 	for range room.runtime.Updates() {
 		room.mu.RLock()
@@ -228,6 +342,8 @@ func (manager *Manager) watchRoom(room *Room) {
 			default:
 			}
 		}
+		_ = manager.persist()
+		manager.publishRoomList()
 	}
 }
 
@@ -246,6 +362,60 @@ func (manager *Manager) publishSnapshot(room *Room) {
 		default:
 		}
 	}
+	_ = manager.persist()
+	manager.publishRoomList()
+}
+
+func (manager *Manager) publishRoomList() {
+	rooms := manager.ListRooms()
+
+	manager.mu.RLock()
+	subs := make([]*roomListSubscriptionState, 0, len(manager.roomListSubscribers))
+	for sub := range manager.roomListSubscribers {
+		subs = append(subs, sub)
+	}
+	manager.mu.RUnlock()
+
+	for _, sub := range subs {
+		select {
+		case sub.ch <- rooms:
+		default:
+		}
+	}
+}
+
+func (manager *Manager) persist() error {
+	if manager.store == nil {
+		return nil
+	}
+
+	return manager.store.save(manager.persistedState())
+}
+
+func (manager *Manager) persistedState() persistedRooms {
+	manager.mu.RLock()
+	defer manager.mu.RUnlock()
+
+	state := persistedRooms{
+		Next:  manager.next,
+		Rooms: make([]persistedRoom, 0, len(manager.rooms)),
+	}
+	for _, room := range manager.rooms {
+		snapshot := room.runtime.SnapshotForViewer(nil)
+		req := room.config
+		state.Rooms = append(state.Rooms, persistedRoom{
+			ID:               room.ID,
+			Name:             req.Name,
+			SmallBlind:       req.SmallBlind,
+			StartingBankroll: req.StartingBankroll,
+			HumanSeat:        req.HumanSeat,
+			PlayerCount:      req.PlayerCount,
+			AIStyle:          table.NormalizeAIStyle(req.AIStyle),
+			HandNumber:       snapshot.HandNumber,
+			Status:           snapshot.Status,
+		})
+	}
+	return state
 }
 
 func (manager *Manager) getRoom(roomID string) (*Room, error) {

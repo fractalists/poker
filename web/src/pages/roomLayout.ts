@@ -125,9 +125,11 @@ function buildOrbitSpec(playerCount: number): OrbitSpec {
   const seatWidth = 208 - crowding * 24;
   const seatMinHeight = 160 - crowding * 8;
   const cardScale = 1 - crowding * 0.05;
-  const boardTopPadding = 54 + crowding * 78;
+  const balancedBoardPadding = 96 + crowding * 80;
+  const crowdedCueBias = Math.max(0, crowding - 0.5) * 114;
+  const boardTopPadding = balancedBoardPadding + crowdedCueBias;
   const boardSidePadding = 72 + crowding * 94;
-  const boardBottomPadding = 148 + crowding * 76;
+  const boardBottomPadding = balancedBoardPadding - crowdedCueBias;
   const boardWidth = 700 - crowding * 56;
   const statWidth = 132 - crowding * 18;
   const boardGap = 24 - crowding * 2;
@@ -160,11 +162,18 @@ function buildSafeInset(spec: OrbitSpec): SafeInset {
   const estimatedStageWidth = boardWidth + boardSidePadding * 2;
   const verticalHalfSeatPercent = (seatHeight / minHeight) * 50;
   const horizontalHalfSeatPercent = (seatWidth / estimatedStageWidth) * 50;
+  const isCompactTable = minHeight < 720;
+  const topClearanceOffset = isCompactTable ? -1 : 1.6;
+  const bottomClearanceOffset = isCompactTable ? 0.5 : 2.5;
 
   return {
-    top: roundPercent(clamp(verticalHalfSeatPercent + 3.5, 12.5, 18.5)),
+    top: roundPercent(
+      clamp(verticalHalfSeatPercent + topClearanceOffset, 10.25, 17),
+    ),
     right: roundPercent(clamp(horizontalHalfSeatPercent + 2.5, 10.5, 15)),
-    bottom: roundPercent(clamp(verticalHalfSeatPercent + 4.5, 14, 19.5)),
+    bottom: roundPercent(
+      clamp(verticalHalfSeatPercent + bottomClearanceOffset, 10.5, 18),
+    ),
     left: roundPercent(clamp(horizontalHalfSeatPercent + 2.5, 10.5, 15)),
   };
 }

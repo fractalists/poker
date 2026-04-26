@@ -42,6 +42,7 @@ export async function createRoom(input: {
   startingBankroll: number;
   humanSeat: number;
   playerCount: number;
+  aiStyle: string;
 }): Promise<RoomSnapshot> {
   return parseJSON<RoomSnapshot>(
     await fetch("/api/rooms", {

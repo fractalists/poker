@@ -136,6 +136,38 @@ func TestBuildSnapshotForSeatWithoutDealtCardsUsesEmptyCardList(t *testing.T) {
 	assert.Empty(t, snap.Seats[0].Cards)
 }
 
+func TestBuildSnapshotOnlyExposesConcreteSeatAIStyles(t *testing.T) {
+	board := &model.Board{
+		Players: []*model.Player{
+			{Name: "Player1", Index: 0, Status: model.PlayerStatusPlaying},
+			{Name: "Player2", Index: 1, Status: model.PlayerStatusPlaying},
+			{Name: "Player3", Index: 2, Status: model.PlayerStatusPlaying},
+			{Name: "Player4", Index: 3, Status: model.PlayerStatusPlaying},
+		},
+		Game: &model.Game{Round: model.PREFLOP},
+	}
+
+	snap := BuildSnapshot(BuildSnapshotInput{
+		RoomID:  "room-1",
+		AIStyle: AIStyleMixed,
+		Status:  StatusRunning,
+		Board:   board,
+		SeatAIStyles: map[int]string{
+			0: AIStyleSmart,
+			1: AIStyleMixed,
+			2: AIStyleRandom,
+			3: AIStyleGTO,
+		},
+	})
+
+	assert.Equal(t, AIStyleRandom, snap.AIStyle)
+	require.Len(t, snap.Seats, 4)
+	assert.Equal(t, AIStyleSmart, snap.Seats[0].AIStyle)
+	assert.Empty(t, snap.Seats[1].AIStyle)
+	assert.Empty(t, snap.Seats[2].AIStyle)
+	assert.Equal(t, AIStyleGTO, snap.Seats[3].AIStyle)
+}
+
 func TestBuildSnapshotAddsStandardSeatPositionLabels(t *testing.T) {
 	board := &model.Board{
 		Players: []*model.Player{

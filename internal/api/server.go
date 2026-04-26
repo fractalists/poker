@@ -27,6 +27,7 @@ func NewServer(manager *service.Manager) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/rooms", server.handleRooms)
 	mux.HandleFunc("/api/rooms/", server.handleRoomRoutes)
+	mux.HandleFunc("/ws/rooms", server.handleRoomsSocket)
 	mux.HandleFunc("/ws/rooms/", server.handleRoomSocket)
 	return mux
 }
@@ -42,6 +43,7 @@ func (server *Server) handleRooms(w http.ResponseWriter, r *http.Request) {
 			StartingBankroll int    `json:"startingBankroll"`
 			HumanSeat        int    `json:"humanSeat"`
 			PlayerCount      int    `json:"playerCount"`
+			AIStyle          string `json:"aiStyle"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -54,6 +56,7 @@ func (server *Server) handleRooms(w http.ResponseWriter, r *http.Request) {
 			StartingBankroll: req.StartingBankroll,
 			HumanSeat:        req.HumanSeat,
 			PlayerCount:      req.PlayerCount,
+			AIStyle:          req.AIStyle,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -154,6 +157,32 @@ func (server *Server) handleRoomRoutes(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	default:
 		http.NotFound(w, r)
+	}
+}
+
+func (server *Server) handleRoomsSocket(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/ws/rooms" {
+		http.NotFound(w, r)
+		return
+	}
+
+	conn, err := server.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	sub, err := server.manager.SubscribeRooms()
+	if err != nil {
+		_ = conn.WriteJSON(map[string]string{"error": err.Error()})
+		return
+	}
+	defer sub.Close()
+
+	for rooms := range sub.C {
+		if err := conn.WriteJSON(rooms); err != nil {
+			return
+		}
 	}
 }
 

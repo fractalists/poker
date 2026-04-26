@@ -16,6 +16,7 @@ export type SeatSnapshot = {
   index: number;
   name: string;
   position?: string;
+  aiStyle?: string;
   status: string;
   bankroll: number;
   inPotAmount: number;
@@ -31,6 +32,7 @@ export type RoomSnapshot = {
   roomName: string;
   humanSeat?: number;
   playerCount?: number;
+  aiStyle?: string;
   status: string;
   viewerRole?: "player" | "spectator";
   handNumber: number;

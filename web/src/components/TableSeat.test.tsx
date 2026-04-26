@@ -30,7 +30,7 @@ describe("TableSeat", () => {
     expect(spadeCard).toHaveClass("card-face", "card-face--spades");
   });
 
-  it("renders bankroll and settlement delta in the same footer group", () => {
+  it("renders stack and settlement delta in the same footer group", () => {
     const { container } = render(
       <TableSeat
         seat={{
@@ -52,8 +52,9 @@ describe("TableSeat", () => {
     const bankrollPill = container.querySelector(".seat-stack-pill--bankroll");
 
     expect(bankrollGroup).toBeInTheDocument();
-    expect(bankrollPill).toHaveTextContent("Bankroll");
+    expect(bankrollPill).toHaveTextContent("Stack");
     expect(bankrollPill).toHaveTextContent("118");
+    expect(bankrollPill).toHaveClass("seat-stack-pill--has-result");
     expect(bankrollGroup).toHaveTextContent("+18");
     expect(bankrollPill).toBeInTheDocument();
     expect(bankrollPill?.querySelector(".seat-result-pill")).toBeInTheDocument();
@@ -103,6 +104,83 @@ describe("TableSeat", () => {
     expect(screen.getByText("UTG")).toBeInTheDocument();
     expect(container.querySelector(".seat-position-badge")).toHaveTextContent("UTG");
     expect(screen.queryByText("Seat 1")).not.toBeInTheDocument();
+  });
+
+  it("shows a bot strategy badge when a seat has an AI style", () => {
+    const { container } = render(
+      <TableSeat
+        seat={{
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 100,
+          inPotAmount: 2,
+          isTurn: false,
+          aiStyle: "aggressive",
+          cards: ["**", "**"],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("AI aggressive")).toBeInTheDocument();
+    expect(container.querySelector(".seat-ai-badge")).toHaveTextContent(
+      "AI aggressive",
+    );
+  });
+
+  it("does not show aggregate randomization labels as concrete seat AI styles", () => {
+    const { container } = render(
+      <TableSeat
+        seat={{
+          index: 0,
+          name: "Player1",
+          status: "PLAYING",
+          bankroll: 100,
+          inPotAmount: 2,
+          isTurn: false,
+          aiStyle: "mixed",
+          cards: ["**", "**"],
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("AI mixed")).not.toBeInTheDocument();
+    expect(container.querySelector(".seat-ai-badge")).not.toBeInTheDocument();
+  });
+
+  it("does not reserve an empty outcome row when the hand result is not available", () => {
+    const { container, rerender } = render(
+      <TableSeat
+        seat={{
+          index: 9,
+          name: "Player10",
+          status: "PLAYING",
+          bankroll: 10,
+          inPotAmount: 90,
+          isTurn: false,
+          cards: ["**", "**"],
+        }}
+      />,
+    );
+
+    expect(container.querySelector(".seat-meta-row")).not.toBeInTheDocument();
+
+    rerender(
+      <TableSeat
+        seat={{
+          index: 9,
+          name: "Player10",
+          status: "PLAYING",
+          bankroll: 10,
+          inPotAmount: 90,
+          isTurn: false,
+          bestHand: "Two pair",
+          cards: ["**", "**"],
+        }}
+      />,
+    );
+
+    expect(container.querySelector(".seat-meta-row")).toHaveTextContent("Two pair");
   });
 
   it("renders folded seats dimmed and current-turn seats highlighted", () => {

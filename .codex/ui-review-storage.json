@@ -1,0 +1,20 @@
+{
+    "cookies":  [
+
+                ],
+    "origins":  [
+                    {
+                        "localStorage":  [
+                                             {
+                                                 "value":  "5",
+                                                 "name":  "poker.viewerSeat.room-014"
+                                             },
+                                             {
+                                                 "value":  "e30802658d0dc1dedf996fb22ff7d812",
+                                                 "name":  "poker.viewerToken.room-014"
+                                             }
+                                         ],
+                        "origin":  "http://127.0.0.1:4173"
+                    }
+                ]
+}

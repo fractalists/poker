@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createRoom, leaveRoom, listRooms, takeSeat } from "../lib/api";
+import { subscribeRooms, type RoomSocketStatus } from "../lib/socket";
 import type { RoomSnapshot } from "../lib/types";
 import { viewerSeatKey, viewerTokenKey } from "../lib/viewerSeat";
 
@@ -9,11 +10,23 @@ type LobbyPageProps = {
   navigateToRoom?: (roomId: string) => void;
 };
 
+function formatRoomAIStyle(style?: string) {
+  const normalized = style?.trim().toLowerCase();
+  if (!normalized || normalized === "mixed" || normalized === "random") {
+    return "mixed";
+  }
+  return normalized;
+}
+
 export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
   const [rooms, setRooms] = useState<RoomSnapshot[]>([]);
   const [name, setName] = useState("Table 1");
   const [playerCount, setPlayerCount] = useState(6);
+  const [aiStyle, setAIStyle] = useState("random");
   const [loading, setLoading] = useState(true);
+  const [roomSyncStatus, setRoomSyncStatus] = useState<
+    RoomSocketStatus | "connecting"
+  >("connecting");
   const [submitting, setSubmitting] = useState(false);
   const [openingRoomId, setOpeningRoomId] = useState("");
   const [error, setError] = useState("");
@@ -43,6 +56,18 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
     };
   }, []);
 
+  useEffect(() => {
+    return subscribeRooms(
+      (nextRooms) => {
+        setRooms(nextRooms);
+        setError("");
+        setLoading(false);
+      },
+      (message) => setError(message),
+      (status) => setRoomSyncStatus(status),
+    );
+  }, []);
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -55,6 +80,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
         startingBankroll: 100,
         humanSeat,
         playerCount,
+        aiStyle,
       });
       const session = await takeSeat(room.roomId, room.humanSeat ?? humanSeat);
       if (session.viewerSeat !== undefined) {
@@ -72,6 +98,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
       setRooms((current) => [...current, room]);
       setName("Table 1");
       setPlayerCount(6);
+      setAIStyle("random");
       navigateToRoom?.(room.roomId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to create room");
@@ -114,6 +141,9 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
               ? "Syncing rooms"
               : `${rooms.length} room${rooms.length === 1 ? "" : "s"}`}
           </span>
+          <span>
+            {roomSyncStatus === "live" ? "Live lobby" : roomSyncStatus}
+          </span>
           <span>Choose 2-10 players, one human plus AI fillers</span>
         </div>
       </section>
@@ -153,6 +183,7 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
                     <span>Blind {room.smallBlind}</span>
                     <span>Hand {room.handNumber}</span>
                     <span>Human seat {room.humanSeat ?? 5}</span>
+                    <span>AI {formatRoomAIStyle(room.aiStyle)}</span>
                   </div>
                 </article>
               );
@@ -194,6 +225,20 @@ export function LobbyPage({ navigateToRoom }: LobbyPageProps = {}) {
                   {count} players
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="field">
+            <span>AI style</span>
+            <select
+              value={aiStyle}
+              onChange={(event) => setAIStyle(event.target.value)}
+            >
+              <option value="random">Mixed AI</option>
+              <option value="gto">GTO-inspired</option>
+              <option value="smart">Smart odds</option>
+              <option value="conservative">Conservative</option>
+              <option value="aggressive">Aggressive</option>
             </select>
           </label>
 

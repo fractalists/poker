@@ -14,6 +14,7 @@ import {
 import { subscribeRoom, type RoomSocketStatus } from "../lib/socket";
 import type {
   ActionSubmission,
+  RoomEvent,
   RoomSnapshot,
   SeatSnapshot,
 } from "../lib/types";
@@ -37,6 +38,11 @@ type ConnectionStatus = "connecting" | "live" | "reconnecting";
 
 type SeatSlotStyle = CSSProperties & {
   "--mobile-seat-order"?: string;
+};
+
+type ChipFlowCue = {
+  label: string;
+  tone: "commit" | "payout";
 };
 
 function formatNetChange(delta: number) {
@@ -89,6 +95,189 @@ function formatSeatActionLabel(actionType?: string, amount?: number) {
     default:
       return "";
   }
+}
+
+function seatName(seats: SeatSnapshot[], seatIndex?: number) {
+  if (seatIndex === undefined) {
+    return "Seat";
+  }
+  return (
+    seats.find((seat) => seat.index === seatIndex)?.name ??
+    `Seat ${seatIndex + 1}`
+  );
+}
+
+function formatTableActionCue(event: RoomEvent, seats: SeatSnapshot[]) {
+  const actor = seatName(seats, event.seatIndex);
+  switch (event.kind) {
+    case "hole_cards_dealt":
+      return "Hole cards dealt";
+    case "blind_posted":
+      if (event.actionType === "SMALL_BLIND") {
+        return `${actor} posts small blind ${event.amount ?? ""}`.trim();
+      }
+      if (event.actionType === "BIG_BLIND") {
+        return `${actor} posts big blind ${event.amount ?? ""}`.trim();
+      }
+      return `${actor} posts blind ${event.amount ?? ""}`.trim();
+    case "round_start":
+      if (event.round === "FLOP") {
+        return "Flop dealt";
+      }
+      if (event.round === "TURN") {
+        return "Turn dealt";
+      }
+      if (event.round === "RIVER") {
+        return "River dealt";
+      }
+      return "";
+    case "player_action":
+      switch (event.actionType) {
+        case "CALL":
+          return event.amount && event.amount > 0
+            ? `${actor} calls ${event.amount}`
+            : `${actor} checks`;
+        case "BET":
+          return event.amount !== undefined
+            ? `${actor} bets ${event.amount}`
+            : `${actor} bets`;
+        case "FOLD":
+          return `${actor} folds`;
+        case "ALL_IN":
+          return event.amount !== undefined
+            ? `${actor} goes all-in ${event.amount}`
+            : `${actor} goes all-in`;
+        default:
+          return "";
+      }
+    case "pot_collected":
+      return formatPayoutCue(event, seats);
+    default:
+      return "";
+  }
+}
+
+function formatPayoutCue(event: RoomEvent, seats: SeatSnapshot[]) {
+  const winners = seats.filter(
+    (seat) => seat.isWinner && (seat.netChange ?? 0) > 0,
+  );
+  if (winners.length === 1) {
+    const winner = winners[0];
+    const amount = winner.netChange ?? event.amount;
+    return amount !== undefined
+      ? `${winner.name} wins ${amount}`
+      : `${winner.name} wins`;
+  }
+  if (winners.length > 1) {
+    return `Pot split: ${winners.map((seat) => seat.name).join(" + ")}`;
+  }
+  return event.amount !== undefined
+    ? `Pot paid out ${event.amount}`
+    : "Pot paid out";
+}
+
+function buildTableActionCue(snapshot: RoomSnapshot) {
+  const events = snapshot.events ?? [];
+  const handNumber = snapshot.handNumber;
+  const seats = snapshot.seats ?? [];
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (event.handNumber !== undefined && event.handNumber !== handNumber) {
+      continue;
+    }
+    const label = formatTableActionCue(event, seats);
+    if (!label) {
+      continue;
+    }
+    return {
+      label,
+      className: `table-live-layout--${event.kind.replace(/_/g, "-")}`,
+    };
+  }
+  return null;
+}
+
+function formatChipFlowCue(event: RoomEvent, seats: SeatSnapshot[]): ChipFlowCue | null {
+  const amount = event.amount ?? 0;
+  if (event.kind === "blind_posted" && amount > 0) {
+    return {
+      label: `${seatName(seats, event.seatIndex)} to Pot +${amount}`,
+      tone: "commit",
+    };
+  }
+
+  if (
+    event.kind === "player_action" &&
+    amount > 0 &&
+    (event.actionType === "CALL" ||
+      event.actionType === "BET" ||
+      event.actionType === "ALL_IN")
+  ) {
+    return {
+      label: `${seatName(seats, event.seatIndex)} to Pot +${amount}`,
+      tone: "commit",
+    };
+  }
+
+  if (event.kind === "pot_collected") {
+    const winners = seats.filter(
+      (seat) => seat.isWinner && (seat.netChange ?? 0) > 0,
+    );
+    if (winners.length === 1) {
+      const winner = winners[0];
+      const payout = winner.netChange ?? amount;
+      if (payout > 0) {
+        return {
+          label: `Pot to ${winner.name} +${payout}`,
+          tone: "payout",
+        };
+      }
+    }
+    if (winners.length > 1) {
+      const payout =
+        amount ||
+        winners.reduce((total, seat) => total + (seat.netChange ?? 0), 0);
+      if (payout > 0) {
+        return {
+          label: `Pot to ${winners.map((seat) => seat.name).join(" + ")} +${payout}`,
+          tone: "payout",
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function buildChipFlowCue(snapshot: RoomSnapshot) {
+  const events = snapshot.events ?? [];
+  const handNumber = snapshot.handNumber;
+  const seats = snapshot.seats ?? [];
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (event.handNumber !== undefined && event.handNumber !== handNumber) {
+      continue;
+    }
+    const chipFlowCue = formatChipFlowCue(event, seats);
+    if (chipFlowCue) {
+      return chipFlowCue;
+    }
+    if (formatTableActionCue(event, seats)) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function formatRoomFeedEvent(event: RoomEvent, seats: SeatSnapshot[]) {
+  const formatted = formatTableActionCue(event, seats);
+  if (formatted) {
+    return formatted;
+  }
+  if (event.kind === "turn") {
+    return `${seatName(seats, event.seatIndex)} to act`;
+  }
+  return event.message;
 }
 
 function mapActionTone(actionType?: string): SeatActionView["tone"] {
@@ -189,6 +378,8 @@ export function RoomPage({
   const seats = snapshot.seats ?? [];
   const events = snapshot.events ?? [];
   const seatActions = buildSeatActionMap(snapshot);
+  const tableActionCue = buildTableActionCue(snapshot);
+  const chipFlowCue = buildChipFlowCue(snapshot);
   const orbitPlayerCount = Math.max(
     snapshot.playerCount ?? 0,
     seats.length,
@@ -238,9 +429,13 @@ export function RoomPage({
       )
     : [];
   const tableStats = [
-    { label: "Round", value: snapshot.round ?? "WAITING" },
-    { label: "Pot", value: String(snapshot.pot ?? 0) },
-    { label: "Current", value: String(snapshot.currentAmount ?? 0) },
+    { key: "round", label: "Round", value: snapshot.round ?? "WAITING" },
+    { key: "pot", label: "Pot", value: String(snapshot.pot ?? 0) },
+    {
+      key: "current",
+      label: "Current bet",
+      value: String(snapshot.currentAmount ?? 0),
+    },
   ];
   const metaChips = [
     {
@@ -392,23 +587,17 @@ export function RoomPage({
               </div>
             ) : (
               <>
-                <div className="table-live-layout" style={orbitStyle}>
+                <div
+                  className={[
+                    "table-live-layout",
+                    tableActionCue?.className ?? "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  style={orbitStyle}
+                >
                   <div className="board-strip">
                     <div className="board-cluster">
-                      <div className="board-meta" aria-label="table stats">
-                        {tableStats.map((stat) => (
-                          <div className="table-stat-row" key={stat.label}>
-                            <div className="table-stat-copy">
-                              <span className="table-stat-label">
-                                {stat.label}
-                              </span>
-                              <strong className="table-stat-value">
-                                {stat.value}
-                              </strong>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                       <div className="board-centerpiece">
                         <div className="board-badge">
                           <p className="table-note table-note--board">
@@ -420,6 +609,43 @@ export function RoomPage({
                             <CommunityCards cards={boardCards} />
                           </div>
                         </div>
+                        <div className="board-meta" aria-label="table stats">
+                          {tableStats.map((stat) => (
+                            <div
+                              className={`table-stat-row table-stat-row--${stat.key}`}
+                              key={stat.key}
+                            >
+                              <div className="table-stat-copy">
+                                <span className="table-stat-label">
+                                  {stat.label}
+                                </span>
+                                <strong className="table-stat-value">
+                                  {stat.value}
+                                </strong>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {tableActionCue ? (
+                          <div className="table-action-cue" aria-live="polite">
+                            <span className="table-action-cue-label">
+                              Latest event
+                            </span>
+                            <strong className="table-action-cue-value">
+                              {tableActionCue.label}
+                            </strong>
+                          </div>
+                        ) : null}
+                        {chipFlowCue ? (
+                          <div
+                            className={`chip-flow-cue chip-flow-cue--${chipFlowCue.tone}`}
+                            aria-live="polite"
+                          >
+                            <strong className="chip-flow-amount">
+                              {chipFlowCue.label}
+                            </strong>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -583,7 +809,9 @@ export function RoomPage({
                   .slice(-8)
                   .reverse()
                   .map((event, index) => (
-                    <li key={`${event.kind}-${index}`}>{event.message}</li>
+                    <li key={`${event.kind}-${index}`}>
+                      {formatRoomFeedEvent(event, seats)}
+                    </li>
                   ))}
               </ul>
             </section>

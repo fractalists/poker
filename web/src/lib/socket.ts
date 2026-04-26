@@ -20,6 +20,12 @@ function buildSocketURL(
   return url.toString();
 }
 
+function buildRoomsSocketURL(): string {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const url = new URL(`${protocol}//${window.location.host}/ws/rooms`);
+  return url.toString();
+}
+
 export function subscribeRoom(
   roomId: string,
   viewerSeat: number | undefined,
@@ -55,6 +61,52 @@ export function subscribeRoom(
   socket.onerror = () => {
     onStatus?.("reconnecting");
     onError?.("room socket disconnected");
+  };
+
+  socket.onclose = () => {
+    if (!closedByClient) {
+      onStatus?.("reconnecting");
+    }
+  };
+
+  return () => {
+    closedByClient = true;
+    socket.close();
+  };
+}
+
+export function subscribeRooms(
+  onRooms: (rooms: RoomSnapshot[]) => void,
+  onError?: (message: string) => void,
+  onStatus?: (status: RoomSocketStatus) => void,
+): () => void {
+  const socket = new WebSocket(buildRoomsSocketURL());
+  let closedByClient = false;
+
+  socket.onopen = () => {
+    onStatus?.("live");
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data) as
+        | RoomSnapshot[]
+        | { error?: string };
+      if (!Array.isArray(payload) && payload.error) {
+        onError?.(payload.error);
+        return;
+      }
+      onRooms(payload as RoomSnapshot[]);
+    } catch (err) {
+      onError?.(
+        err instanceof Error ? err.message : "failed to parse rooms update",
+      );
+    }
+  };
+
+  socket.onerror = () => {
+    onStatus?.("reconnecting");
+    onError?.("rooms socket disconnected");
   };
 
   socket.onclose = () => {

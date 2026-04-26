@@ -211,6 +211,30 @@ func notifyRoundChange(ctx *model.Context, board *model.Board, round model.Round
 	ctx.OnRoundChange(board, round)
 }
 
+func notifyBlind(ctx *model.Context, board *model.Board, playerIndex int, blindType string, amount int) {
+	if ctx == nil || ctx.OnBlind == nil {
+		return
+	}
+	ctx.OnBlind(board, playerIndex, blindType, amount)
+}
+
+func postBlind(ctx *model.Context, board *model.Board, playerIndex int, blindType string, requestedAmount int) {
+	game := board.Game
+	player := board.Players[playerIndex]
+	amount := util.Min(requestedAmount, player.Bankroll)
+
+	player.Bankroll -= amount
+	player.InPotAmount += amount
+	game.Pot += amount
+	if player.InPotAmount > game.CurrentAmount {
+		game.CurrentAmount = player.InPotAmount
+	}
+	if player.Bankroll == 0 {
+		player.Status = model.PlayerStatusAllIn
+	}
+	notifyBlind(ctx, board, playerIndex, blindType, amount)
+}
+
 func EndGame(ctx *model.Context, board *model.Board) {
 	for i := 0; i < len(board.Players); i++ {
 		player := board.Players[i]
@@ -274,19 +298,9 @@ func interactWithPlayers(ctx *model.Context, board *model.Board) {
 	interactStartIndex := getInteractStartIndex(board)
 
 	if game.Round == model.PREFLOP {
-		smallBlindPlayer := board.Players[actualSmallBlindIndex]
-		smallBlinds := util.Min(game.SmallBlinds, smallBlindPlayer.Bankroll)
-		smallBlindPlayer.Bankroll -= smallBlinds
-		smallBlindPlayer.InPotAmount += smallBlinds
-		game.Pot += smallBlinds
-		game.CurrentAmount = game.SmallBlinds
-
-		bigBlindPlayer := board.Players[actualBigBlindIndex]
-		bigBlinds := util.Min(2*game.SmallBlinds, bigBlindPlayer.Bankroll)
-		bigBlindPlayer.Bankroll -= bigBlinds
-		bigBlindPlayer.InPotAmount += bigBlinds
-		game.Pot += bigBlinds
-		game.CurrentAmount = 2 * game.SmallBlinds
+		game.CurrentAmount = 0
+		postBlind(ctx, board, actualSmallBlindIndex, "SMALL_BLIND", game.SmallBlinds)
+		postBlind(ctx, board, actualBigBlindIndex, "BIG_BLIND", 2*game.SmallBlinds)
 
 		interactStartIndex = actualUnderTheGunIndex
 	}
@@ -556,7 +570,7 @@ func performAction(board *model.Board, playerIndex int, action model.Action) {
 			game.CurrentAmount = currentPlayer.InPotAmount
 		}
 		raiseAmount := game.CurrentAmount - oldCurrentAmount
-		if raiseAmount >= game.LastRaiseAmount {
+		if raiseAmount > 0 && raiseAmount >= game.LastRaiseAmount {
 			game.LastRaiseAmount = raiseAmount
 			game.LastRaisePlayerIndex = playerIndex
 		}

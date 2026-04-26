@@ -102,8 +102,20 @@ describe("RoomPage", () => {
       container.querySelector(".table-stage > .room-stats"),
     ).not.toBeInTheDocument();
     expect(container.querySelector(".board-cluster")).toBeInTheDocument();
-    expect(container.querySelector(".board-meta")).toBeInTheDocument();
+    const boardCenterpiece = container.querySelector(".board-centerpiece");
+    const boardCardsShell = container.querySelector(".board-cards-shell");
+    const boardMeta = container.querySelector(".board-meta");
+    expect(boardMeta).toBeInTheDocument();
+    expect(boardMeta?.parentElement).toBe(boardCenterpiece);
+    expect(
+      Array.from(boardCenterpiece?.children ?? []).map(
+        (element) => element.className,
+      ),
+    ).toEqual(["board-badge", "board-cards-shell", "board-meta"]);
+    expect(boardCardsShell?.nextElementSibling).toBe(boardMeta);
     expect(container.querySelectorAll(".table-stat-row")).toHaveLength(3);
+    expect(container.querySelector(".table-stat-row--pot")).toHaveTextContent("6");
+    expect(container.querySelector(".table-stat-row--current")).toHaveTextContent("2");
     expect(container.querySelector(".table-stat-icon")).not.toBeInTheDocument();
     expect(container.querySelector(".board-badge-dot")).not.toBeInTheDocument();
     expect(container.querySelector(".seat-orbit")).toBeInTheDocument();
@@ -668,6 +680,177 @@ describe("RoomPage", () => {
 
     expect(screen.getByText("Bet 4")).toBeInTheDocument();
     expect(screen.getByText("Folded")).toBeInTheDocument();
+    expect(screen.getByText("Latest event")).toBeInTheDocument();
+    expect(screen.getAllByText("Player4 folds").length).toBeGreaterThanOrEqual(
+      2,
+    );
+  });
+
+  it("surfaces blind, deal, and pot collection events as table action cues", () => {
+    const { container, rerender } = render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "running",
+          viewerRole: "spectator",
+          humanSeat: 5,
+          handNumber: 3,
+          smallBlind: 1,
+          pot: 3,
+          currentAmount: 2,
+          round: "PREFLOP",
+          boardCards: [],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 99,
+              inPotAmount: 1,
+              isTurn: false,
+              cards: ["**", "**"],
+            },
+          ],
+          events: [
+            {
+              kind: "hole_cards_dealt",
+              message: "hole cards dealt",
+              handNumber: 3,
+              round: "PREFLOP",
+            },
+            {
+              kind: "blind_posted",
+              message: "small blind posted",
+              handNumber: 3,
+              round: "PREFLOP",
+              seatIndex: 0,
+              actionType: "SMALL_BLIND",
+              amount: 1,
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Latest event")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Player1 posts small blind 1").length,
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      container.querySelector(".table-live-layout--blind-posted"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Player1 to Pot +1")).toBeInTheDocument();
+    expect(
+      container.querySelector(".chip-flow-cue--commit"),
+    ).toBeInTheDocument();
+
+    rerender(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "hand_finished",
+          viewerRole: "spectator",
+          humanSeat: 5,
+          handNumber: 3,
+          smallBlind: 1,
+          pot: 0,
+          currentAmount: 0,
+          round: "FINISH",
+          boardCards: ["♥Q", "♣J", "♦10", "♠2", "♣3"],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 103,
+              inPotAmount: 0,
+              isTurn: false,
+              isWinner: true,
+              netChange: 3,
+              cards: ["♥A", "♠K"],
+            },
+          ],
+          events: [
+            {
+              kind: "pot_collected",
+              message: "pot collected",
+              handNumber: 3,
+              round: "FINISH",
+              amount: 3,
+            },
+            {
+              kind: "hand_finish",
+              message: "hand 3 finished",
+              handNumber: 3,
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getAllByText("Player1 wins 3").length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(
+      container.querySelector(".table-live-layout--pot-collected"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Pot to Player1 +3")).toBeInTheDocument();
+    expect(
+      container.querySelector(".chip-flow-cue--payout"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows dealt streets in the latest table event cue", () => {
+    render(
+      <RoomPage
+        snapshot={{
+          roomId: "room-001",
+          roomName: "Table 1",
+          status: "running",
+          viewerRole: "spectator",
+          humanSeat: 5,
+          handNumber: 4,
+          smallBlind: 1,
+          pot: 12,
+          currentAmount: 0,
+          round: "FLOP",
+          boardCards: ["♥Q", "♣J", "♦10", "**", "**"],
+          seats: [
+            {
+              index: 0,
+              name: "Player1",
+              status: "PLAYING",
+              bankroll: 98,
+              inPotAmount: 2,
+              isTurn: false,
+              cards: ["**", "**"],
+            },
+          ],
+          events: [
+            {
+              kind: "round_start",
+              message: "flop opened",
+              handNumber: 4,
+              round: "FLOP",
+            },
+          ],
+        }}
+        onAction={async () => {}}
+        onStartHand={async () => {}}
+        onTakeSeat={async () => {}}
+      />,
+    );
+
+    expect(screen.getByText("Latest event")).toBeInTheDocument();
+    expect(screen.getAllByText("Flop dealt").length).toBeGreaterThanOrEqual(2);
   });
 
   it("keeps spectators out of the live action controls even when a hand is awaiting input", () => {
@@ -1079,21 +1262,25 @@ describe("RoomPage", () => {
         } as MessageEvent);
       });
 
-      expect(screen.queryByText("seat 5 called 2")).not.toBeInTheDocument();
+      expect(screen.queryByText("Player6 calls 2")).not.toBeInTheDocument();
       expect(screen.queryByText("Player6 wins +5")).not.toBeInTheDocument();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(ACTION_PLAYBACK_DELAY_MS);
       });
 
-      expect(screen.getByText("seat 0 called 2")).toBeInTheDocument();
-      expect(screen.queryByText("seat 5 called 2")).not.toBeInTheDocument();
+      expect(screen.getAllByText("Player1 calls 2").length).toBeGreaterThanOrEqual(
+        2,
+      );
+      expect(screen.queryByText("Player6 calls 2")).not.toBeInTheDocument();
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(ACTION_PLAYBACK_DELAY_MS);
       });
 
-      expect(screen.getByText("seat 5 called 2")).toBeInTheDocument();
+      expect(screen.getAllByText("Player6 calls 2").length).toBeGreaterThanOrEqual(
+        2,
+      );
       expect(screen.getByText("Player6 wins +5")).toBeInTheDocument();
     } finally {
       vi.useRealTimers();

@@ -7,17 +7,23 @@ const stylesheet = readFileSync(
 );
 
 describe("room board styling tokens", () => {
-  it("renders the board stats as a pure type stack without logos or decorative rails", () => {
-    expect(stylesheet).toMatch(/\.board-meta\s*\{[^}]*width:\s*var\(--orbit-stat-width,\s*132px\);[^}]*gap:\s*12px;/s);
-    expect(stylesheet).toMatch(/\.table-stat-row\s*\{[^}]*grid-template-columns:\s*1fr;[^}]*padding:\s*0 0 12px;[^}]*border-bottom:\s*1px solid rgba/s);
-    expect(stylesheet).toMatch(/\.table-stat-label\s*\{[^}]*font-size:\s*0\.54rem;[^}]*font-weight:\s*600;[^}]*letter-spacing:\s*0\.28em;/s);
-    expect(stylesheet).toMatch(/\.table-stat-value\s*\{[^}]*font-family:\s*"Segoe UI Variable Display",\s*"Aptos Display",\s*"Segoe UI",\s*sans-serif;[^}]*font-size:\s*2\.1rem;[^}]*font-weight:\s*650;[^}]*font-variant-numeric:\s*tabular-nums lining-nums;[^}]*font-feature-settings:\s*"tnum" 1,\s*"lnum" 1;/s);
-    expect(stylesheet).toMatch(/\.table-stat-row:first-child\s+\.table-stat-value\s*\{[^}]*font-size:\s*2\.28rem;[^}]*letter-spacing:\s*-0\.09em;/s);
+  it("renders the board stats as a compact table HUD under the community cards", () => {
+    expect(stylesheet).toMatch(/\.board-cluster\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*auto\);[^}]*justify-items:\s*center;/s);
+    expect(stylesheet).toMatch(/\.board-centerpiece\s*\{[^}]*width:\s*min\([^}]*var\(--card-width\)\s*\*\s*5[^}]*var\(--board-card-gap,\s*12px\)\s*\*\s*4[^}]*var\(--board-shell-inline-padding,\s*24px\)\s*\*\s*2\)\s*\+\s*2px/s);
+    expect(stylesheet).toMatch(/\.board-meta\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(3,\s*max-content\);[^}]*width:\s*fit-content;[^}]*max-width:\s*min\(100%,\s*560px\);[^}]*min-height:\s*36px;[^}]*margin-top:\s*-18px;[^}]*border-radius:\s*999px;/s);
+    expect(stylesheet).toMatch(/\.table-stat-row\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*min-height:\s*34px;[^}]*padding:\s*0 12px;[^}]*border-right:\s*1px solid rgba/s);
+    expect(stylesheet).toMatch(/\.table-stat-copy\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;/s);
+    expect(stylesheet).toMatch(/\.table-stat-label\s*\{[^}]*font-size:\s*0\.5rem;[^}]*letter-spacing:\s*0\.16em;/s);
+    expect(stylesheet).toMatch(/\.table-stat-value\s*\{[^}]*font-size:\s*0\.92rem;[^}]*letter-spacing:\s*0;[^}]*font-variant-numeric:\s*tabular-nums lining-nums;/s);
+    expect(stylesheet).toMatch(/\.table-stat-row--pot\s+\.table-stat-value\s*\{[^}]*color:\s*var\(--accent\);[^}]*font-size:\s*1\.08rem;/s);
+    expect(stylesheet).not.toMatch(/\.board-meta\s*\{[^}]*width:\s*var\(--orbit-stat-width/s);
+    expect(stylesheet).not.toMatch(/\.table-stat-row\s*\{[^}]*align-items:\s*baseline;/s);
+    expect(stylesheet).not.toMatch(/\.table-stat-row:first-child\s+\.table-stat-value\s*\{/s);
   });
 
   it("anchors the community cards label into the tray as a text tab without an icon", () => {
     expect(stylesheet).toMatch(/\.board-centerpiece\s*\{[^}]*gap:\s*0;/s);
-    expect(stylesheet).toMatch(/\.board-badge\s*\{[^}]*margin-bottom:\s*-14px;[^}]*padding:\s*8px 18px 9px;/s);
+    expect(stylesheet).toMatch(/\.board-badge\s*\{[^}]*margin-bottom:\s*-18px;[^}]*padding:\s*8px 18px 9px;/s);
     expect(stylesheet).toMatch(/\.table-note--board\s*\{[^}]*letter-spacing:\s*0\.18em;[^}]*font-weight:\s*700;/s);
     expect(stylesheet).not.toMatch(/\.board-badge-dot\s*\{/s);
   });
@@ -36,7 +42,7 @@ describe("room board styling tokens", () => {
   it("compacts 8-10 handed seats so full-ring tables can use taller spacing without card overlap", () => {
     expect(stylesheet).toMatch(/\.seat-orbit--8 \.table-seat,\s*\.seat-orbit--9 \.table-seat,\s*\.seat-orbit--10 \.table-seat\s*\{[^}]*padding:\s*9px;[^}]*gap:\s*8px;/s);
     expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-stack-pill,\s*\.seat-orbit--9 \.seat-stack-pill,\s*\.seat-orbit--10 \.seat-stack-pill\s*\{[^}]*min-height:\s*34px;[^}]*padding:\s*6px 8px;/s);
-    expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-stack-pill \.seat-result-pill,\s*\.seat-orbit--9 \.seat-stack-pill \.seat-result-pill,\s*\.seat-orbit--10 \.seat-stack-pill \.seat-result-pill\s*\{[^}]*top:\s*5px;[^}]*right:\s*5px;[^}]*font-size:\s*0\.62rem;/s);
+    expect(stylesheet).toMatch(/\.seat-orbit--8 \.seat-stack-pill \.seat-result-pill,\s*\.seat-orbit--9 \.seat-stack-pill \.seat-result-pill,\s*\.seat-orbit--10 \.seat-stack-pill \.seat-result-pill\s*\{[^}]*right:\s*5px;[^}]*bottom:\s*5px;(?![^}]*top:)[^}]*font-size:\s*0\.62rem;/s);
   });
 
   it("stages settlement reveals with dedicated winner and loser animations", () => {
@@ -44,6 +50,23 @@ describe("room board styling tokens", () => {
     expect(stylesheet).toMatch(/\.table-seat\.is-settlement-loser\s*\{[^}]*animation:\s*settlement-loser-reveal 1180ms ease-out both;/s);
     expect(stylesheet).toMatch(/\.settlement-panel\.is-animated\s*\{[^}]*animation:\s*settlement-panel-reveal 820ms cubic-bezier\(0\.2,\s*0\.82,\s*0\.24,\s*1\) both;/s);
     expect(stylesheet).toMatch(/\.settlement-entry\s*\{[^}]*animation:\s*settlement-entry-reveal 680ms ease-out both;[^}]*animation-delay:\s*calc\(var\(--settlement-index,\s*0\)\s*\*\s*90ms\s*\+\s*120ms\);/s);
+  });
+
+  it("uses table action cue animations for blinds, dealing, and pot collection", () => {
+    expect(stylesheet).toMatch(/\.table-action-cue\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*2;[^}]*margin:\s*8px auto 0;[^}]*animation:\s*table-action-cue-in 680ms cubic-bezier\(0\.18,\s*0\.82,\s*0\.24,\s*1\) both;/s);
+    expect(stylesheet).toMatch(/\.table-action-cue-label\s*\{[^}]*letter-spacing:\s*0\.2em;[^}]*text-transform:\s*uppercase;/s);
+    expect(stylesheet).toMatch(/\.table-action-cue-value\s*\{[^}]*text-overflow:\s*ellipsis;[^}]*text-transform:\s*uppercase;/s);
+    expect(stylesheet).not.toMatch(/\.table-action-cue\s*\{[^}]*position:\s*absolute;/s);
+    expect(stylesheet).toMatch(/\.table-live-layout--blind-posted\s+\.board-centerpiece::after\s*\{[^}]*animation:\s*table-chip-pulse 860ms ease-out both;/s);
+    expect(stylesheet).toMatch(/\.table-live-layout--hole-cards-dealt\s+\.seat-card\s*\{[^}]*animation:\s*seat-card-deal 520ms cubic-bezier\(0\.2,\s*0\.78,\s*0\.24,\s*1\) both;/s);
+    expect(stylesheet).toMatch(/\.table-live-layout--pot-collected\s+\.board-cards-shell\s*\{[^}]*animation:\s*pot-collect-flash 780ms ease-out both;/s);
+  });
+
+  it("adds a compact chip flow cue for money moving into and out of the pot", () => {
+    expect(stylesheet).toMatch(/\.chip-flow-cue\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*margin:\s*6px auto 0;[^}]*animation:\s*chip-flow-cue-in 620ms cubic-bezier\(0\.18,\s*0\.82,\s*0\.24,\s*1\) both;/s);
+    expect(stylesheet).toMatch(/\.chip-flow-cue--commit\s+\.chip-flow-amount\s*\{[^}]*color:\s*var\(--accent\);/s);
+    expect(stylesheet).toMatch(/\.chip-flow-cue--payout\s+\.chip-flow-amount\s*\{[^}]*color:\s*#ffd666;/s);
+    expect(stylesheet).toMatch(/@keyframes chip-flow-cue-in\s*\{/s);
   });
 
   it("marks disabled controls with a non-interactive cursor", () => {
@@ -70,6 +93,9 @@ describe("room board styling tokens", () => {
     expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s*\{[^}]*padding-bottom:\s*min\(42svh,\s*320px\);/s);
     expect(stylesheet).toMatch(/\.room-shell\.has-pending-action\s+\.action-bar\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*12px;[^}]*max-height:\s*min\(58svh,\s*420px\);/s);
     expect(stylesheet).toMatch(/\.room-history-stack--scroll\s*\{[^}]*max-height:\s*48svh;[^}]*overflow-y:\s*auto;/s);
+    expect(stylesheet).toMatch(/\.table-action-cue\s*\{[^}]*max-width:\s*calc\(100%\s*-\s*24px\);[^}]*margin:\s*8px auto 0;/s);
+    expect(stylesheet).toMatch(/\.chip-flow-cue\s*\{[^}]*max-width:\s*calc\(100%\s*-\s*28px\);[^}]*margin:\s*6px auto 0;/s);
+    expect(stylesheet).toMatch(/\.board-cards-shell\s*\{[^}]*padding:\s*24px var\(--board-shell-inline-padding\);[^}]*border-radius:\s*22px;/s);
   });
 
   it("uses a portrait-first seat rail instead of stacking every player as full-width rows", () => {

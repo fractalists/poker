@@ -2,7 +2,10 @@ package table
 
 import (
 	"math/rand"
+	aiinteract "poker/interact/ai"
 	"poker/model"
+	"poker/process"
+	"strings"
 	"testing"
 	"time"
 
@@ -288,8 +291,8 @@ func TestRuntimeRefreshesBotStrategiesForEachHand(t *testing.T) {
 	})
 
 	var initializedSeats []int
-	newRealtimeBotInteract = func(*rand.Rand) model.Interact {
-		return recordingBotInteract{initializedSeats: &initializedSeats}
+	newRealtimeBotInteract = func(*rand.Rand) (model.Interact, string) {
+		return recordingBotInteract{initializedSeats: &initializedSeats}, AIStyleMixed
 	}
 
 	runtime := NewRuntime(RuntimeConfig{
@@ -331,6 +334,83 @@ func TestRuntimeBuildInteractsSupportsTenSeatTable(t *testing.T) {
 	assert.IsType(t, &HumanActor{}, interacts[9])
 }
 
+func TestRuntimeSnapshotIncludesConfiguredAIStyleForBotSeats(t *testing.T) {
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "Aggro Table",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        1,
+		PlayerCount:      3,
+		AIStyle:          AIStyleAggressive,
+	})
+
+	process.InitializePlayers(runtime.ctx, runtime.board, runtime.buildInteracts(), 20)
+	process.InitGame(runtime.ctx, runtime.board, runtime.cfg.SmallBlind, "test hand")
+
+	snap := runtime.SnapshotForViewer(nil)
+
+	assert.Equal(t, AIStyleAggressive, snap.AIStyle)
+	require.Len(t, snap.Seats, 3)
+	assert.Equal(t, AIStyleAggressive, snap.Seats[0].AIStyle)
+	assert.Empty(t, snap.Seats[1].AIStyle)
+	assert.Equal(t, AIStyleAggressive, snap.Seats[2].AIStyle)
+}
+
+func TestRuntimeBuildInteractsSupportsGTOStyle(t *testing.T) {
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "GTO Table",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        1,
+		PlayerCount:      3,
+		AIStyle:          AIStyleGTO,
+	})
+
+	interact, style := runtime.newBotInteract()
+
+	assert.Equal(t, AIStyleGTO, style)
+	assert.IsType(t, &aiinteract.GTOInspiredAI{}, interact)
+}
+
+func TestRuntimeRandomStyleRecordsEachSeatActualAIStyle(t *testing.T) {
+	originalNewRealtimeBotInteract := newRealtimeBotInteract
+	t.Cleanup(func() {
+		newRealtimeBotInteract = originalNewRealtimeBotInteract
+	})
+
+	styles := []string{AIStyleSmart, AIStyleGTO}
+	next := 0
+	var initializedSeats []int
+	newRealtimeBotInteract = func(*rand.Rand) (model.Interact, string) {
+		style := styles[next%len(styles)]
+		next++
+		return recordingBotInteract{initializedSeats: &initializedSeats}, style
+	}
+
+	runtime := NewRuntime(RuntimeConfig{
+		RoomID:           "room-1",
+		RoomName:         "Random Table",
+		SmallBlind:       1,
+		StartingBankroll: 20,
+		HumanSeat:        1,
+		PlayerCount:      3,
+		AIStyle:          AIStyleRandom,
+	})
+
+	process.InitializePlayers(runtime.ctx, runtime.board, runtime.buildInteracts(), 20)
+	process.InitGame(runtime.ctx, runtime.board, runtime.cfg.SmallBlind, "test hand")
+
+	snap := runtime.SnapshotForViewer(nil)
+
+	assert.Equal(t, AIStyleRandom, snap.AIStyle)
+	require.Len(t, snap.Seats, 3)
+	assert.Equal(t, AIStyleSmart, snap.Seats[0].AIStyle)
+	assert.Empty(t, snap.Seats[1].AIStyle)
+	assert.Equal(t, AIStyleGTO, snap.Seats[2].AIStyle)
+}
+
 func TestRuntimePublishesStructuredRoundAndActionEvents(t *testing.T) {
 	runtime := NewRuntime(RuntimeConfig{
 		RoomID:           "room-1",
@@ -350,16 +430,39 @@ func TestRuntimePublishesStructuredRoundAndActionEvents(t *testing.T) {
 	}, 2*time.Second, 20*time.Millisecond)
 
 	var preflopEvent *RoomEvent
+	var holeCardsEvent *RoomEvent
+	var smallBlindEvent *RoomEvent
+	var bigBlindEvent *RoomEvent
 	for index := range snap.Events {
 		event := snap.Events[index]
 		if event.Kind == "round_start" && event.Round == "PREFLOP" {
 			preflopEvent = &event
-			break
+		}
+		if event.Kind == "hole_cards_dealt" {
+			holeCardsEvent = &event
+		}
+		if event.Kind == "blind_posted" && event.ActionType == "SMALL_BLIND" {
+			smallBlindEvent = &event
+		}
+		if event.Kind == "blind_posted" && event.ActionType == "BIG_BLIND" {
+			bigBlindEvent = &event
 		}
 	}
 	require.NotNil(t, preflopEvent)
 	assert.Equal(t, 1, preflopEvent.HandNumber)
 	assert.Contains(t, preflopEvent.Message, "preflop")
+	require.NotNil(t, holeCardsEvent)
+	assert.Equal(t, 1, holeCardsEvent.HandNumber)
+	require.NotNil(t, smallBlindEvent)
+	assert.NotNil(t, smallBlindEvent.SeatIndex)
+	assert.NotNil(t, smallBlindEvent.Amount)
+	assert.Contains(t, smallBlindEvent.Message, "posts small blind")
+	assert.NotContains(t, smallBlindEvent.Message, "seat ")
+	require.NotNil(t, bigBlindEvent)
+	assert.NotNil(t, bigBlindEvent.SeatIndex)
+	assert.NotNil(t, bigBlindEvent.Amount)
+	assert.Contains(t, bigBlindEvent.Message, "posts big blind")
+	assert.NotContains(t, bigBlindEvent.Message, "seat ")
 
 	require.NoError(t, runtime.SubmitAction(snap.PendingAction.Token, model.Action{ActionType: model.ActionTypeFold}))
 
@@ -367,7 +470,18 @@ func TestRuntimePublishesStructuredRoundAndActionEvents(t *testing.T) {
 		snap = runtime.SnapshotForViewer(nil)
 		for _, event := range snap.Events {
 			if event.Kind == "player_action" && event.Round == "PREFLOP" && event.HandNumber == 1 && event.SeatIndex != nil && *event.SeatIndex == 5 && event.ActionType == string(model.ActionTypeFold) {
+				assert.Equal(t, "Player6 folds", event.Message)
 				return true
+			}
+		}
+		return false
+	}, 2*time.Second, 20*time.Millisecond)
+
+	require.Eventually(t, func() bool {
+		snap = runtime.SnapshotForViewer(nil)
+		for _, event := range snap.Events {
+			if event.Kind == "pot_collected" && event.HandNumber == 1 {
+				return strings.Contains(event.Message, "wins") && !strings.Contains(event.Message, "pot collected")
 			}
 		}
 		return false

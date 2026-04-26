@@ -22,6 +22,13 @@ func main() {
 	logrus.SetLevel(level)
 
 	manager := service.NewManager()
+	if opts.dataFile != "" {
+		persistentManager, err := service.NewPersistentManager(opts.dataFile)
+		if err != nil {
+			panic(err)
+		}
+		manager = persistentManager
+	}
 	handler := newRootHandler(api.NewServer(manager), opts.webDist)
 	if err := http.ListenAndServe(opts.addr, handler); err != nil {
 		panic(err)

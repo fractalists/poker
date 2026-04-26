@@ -1,10 +1,31 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { LobbyPage } from "./LobbyPage";
 
+class MockWebSocket {
+  static instances: MockWebSocket[] = [];
+
+  readonly close = vi.fn();
+  onclose: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  onopen: (() => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  readonly url: string;
+
+  constructor(url: string | URL) {
+    this.url = String(url);
+    MockWebSocket.instances.push(this);
+  }
+}
+
 describe("LobbyPage", () => {
+  beforeEach(() => {
+    vi.stubGlobal("WebSocket", MockWebSocket as unknown as typeof WebSocket);
+  });
+
   afterEach(() => {
+    MockWebSocket.instances = [];
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     window.localStorage.clear();
@@ -39,6 +60,9 @@ describe("LobbyPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/total players/i)).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /10 players/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /mixed ai/i })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /random seats/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /gto/i })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /spectate room/i }),
     ).toBeInTheDocument();
@@ -66,6 +90,7 @@ describe("LobbyPage", () => {
           handNumber: 0,
           smallBlind: 1,
           playerCount: 4,
+          aiStyle: "aggressive",
           seats: [],
         }),
       })
@@ -90,6 +115,9 @@ describe("LobbyPage", () => {
     fireEvent.change(screen.getByLabelText(/total players/i), {
       target: { value: "4" },
     });
+    fireEvent.change(screen.getByLabelText(/ai style/i), {
+      target: { value: "aggressive" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /create room/i }));
 
     await waitFor(() =>
@@ -110,6 +138,7 @@ describe("LobbyPage", () => {
           startingBankroll: 100,
           humanSeat: 1,
           playerCount: 4,
+          aiStyle: "aggressive",
         }),
       }),
     );
@@ -121,6 +150,109 @@ describe("LobbyPage", () => {
         body: JSON.stringify({ seatIndex: 1 }),
       }),
     );
+  });
+
+  it("can create a room with mixed per-seat AI selection", async () => {
+    const navigateToRoom = vi.fn();
+    vi.spyOn(Math, "random").mockReturnValue(0.25);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          roomId: "room-003",
+          roomName: "Table 1",
+          humanSeat: 1,
+          status: "waiting",
+          handNumber: 0,
+          smallBlind: 1,
+          playerCount: 4,
+          aiStyle: "random",
+          seats: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          roomId: "room-003",
+          viewerSeat: 1,
+          viewerToken: "viewer-token-1",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<LobbyPage navigateToRoom={navigateToRoom} />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /create room/i }),
+      ).toBeInTheDocument(),
+    );
+    fireEvent.change(screen.getByLabelText(/total players/i), {
+      target: { value: "4" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create room/i }));
+
+    await waitFor(() =>
+      expect(navigateToRoom).toHaveBeenCalledWith("room-003"),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/rooms",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          name: "Table 1",
+          smallBlind: 1,
+          startingBankroll: 100,
+          humanSeat: 1,
+          playerCount: 4,
+          aiStyle: "random",
+        }),
+      }),
+    );
+  });
+
+  it("keeps the lobby room list in sync from the rooms websocket", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      }),
+    );
+
+    render(<LobbyPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/no rooms yet/i)).toBeInTheDocument(),
+    );
+    expect(MockWebSocket.instances[0]?.url).toContain("/ws/rooms");
+
+    act(() => {
+      MockWebSocket.instances[0]?.onmessage?.({
+        data: JSON.stringify([
+          {
+            roomId: "room-099",
+            roomName: "Socket Table",
+            status: "waiting",
+            handNumber: 0,
+            smallBlind: 1,
+            playerCount: 6,
+            aiStyle: "mixed",
+            seats: [],
+          },
+        ]),
+      } as MessageEvent);
+    });
+
+    expect(screen.getByText("Socket Table")).toBeInTheDocument();
+    expect(screen.getByText("AI mixed")).toBeInTheDocument();
   });
 
   it("enters a room in pure spectator mode from the lobby and clears any saved viewer session", async () => {

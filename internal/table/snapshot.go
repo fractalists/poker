@@ -53,6 +53,7 @@ type SeatSnapshot struct {
 	Index       int      `json:"index"`
 	Name        string   `json:"name"`
 	Position    string   `json:"position,omitempty"`
+	AIStyle     string   `json:"aiStyle,omitempty"`
 	Status      string   `json:"status"`
 	Bankroll    int      `json:"bankroll"`
 	InPotAmount int      `json:"inPotAmount"`
@@ -68,6 +69,7 @@ type Snapshot struct {
 	RoomName      string         `json:"roomName"`
 	HumanSeat     int            `json:"humanSeat"`
 	PlayerCount   int            `json:"playerCount"`
+	AIStyle       string         `json:"aiStyle"`
 	Status        RoomStatus     `json:"status"`
 	ViewerRole    ViewerRole     `json:"viewerRole"`
 	HandNumber    int            `json:"handNumber"`
@@ -87,6 +89,9 @@ type BuildSnapshotInput struct {
 	RoomName           string
 	HumanSeat          int
 	PlayerCount        int
+	SmallBlind         int
+	AIStyle            string
+	SeatAIStyles       map[int]string
 	Status             RoomStatus
 	Board              *model.Board
 	ViewerSeat         *int
@@ -108,8 +113,10 @@ func BuildSnapshot(input BuildSnapshotInput) Snapshot {
 		RoomName:      input.RoomName,
 		HumanSeat:     input.HumanSeat,
 		PlayerCount:   input.PlayerCount,
+		AIStyle:       NormalizeAIStyle(input.AIStyle),
 		Status:        input.Status,
 		ViewerRole:    viewerRole,
+		SmallBlind:    input.SmallBlind,
 		BoardCards:    []string{},
 		Seats:         []SeatSnapshot{},
 		HandNumber:    input.HandNumber,
@@ -136,6 +143,7 @@ func BuildSnapshot(input BuildSnapshotInput) Snapshot {
 			Index:       player.Index,
 			Name:        player.Name,
 			Position:    positionLabels[player.Index],
+			AIStyle:     NormalizeSeatAIStyle(input.SeatAIStyles[player.Index]),
 			Status:      string(player.Status),
 			Bankroll:    player.Bankroll,
 			InPotAmount: player.InPotAmount,

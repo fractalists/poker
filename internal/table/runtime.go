@@ -23,7 +23,10 @@ type RuntimeConfig struct {
 	StartingBankroll int
 	HumanSeat        int
 	PlayerCount      int
+	AIStyle          string
 	TurnTimeout      time.Duration
+	InitialHand      int
+	InitialEvents    []RoomEvent
 }
 
 type Runtime struct {
@@ -37,6 +40,7 @@ type Runtime struct {
 	status             RoomStatus
 	handNumber         int
 	events             []RoomEvent
+	botStyles          map[int]string
 	version            int64
 	updates            chan struct{}
 	mu                 sync.RWMutex
@@ -55,18 +59,23 @@ func NewRuntime(cfg RuntimeConfig) *Runtime {
 	if cfg.PlayerCount <= 0 {
 		cfg.PlayerCount = defaultPlayerCount
 	}
+	cfg.AIStyle = NormalizeAIStyle(cfg.AIStyle)
 
 	runtime := &Runtime{
-		cfg:     cfg,
-		ctx:     process.NewContext(),
-		board:   &model.Board{},
-		human:   NewHumanActor(),
-		status:  StatusWaiting,
-		updates: make(chan struct{}, 16),
+		cfg:        cfg,
+		ctx:        process.NewContext(),
+		board:      &model.Board{},
+		human:      NewHumanActor(),
+		status:     StatusWaiting,
+		handNumber: cfg.InitialHand,
+		events:     append([]RoomEvent(nil), cfg.InitialEvents...),
+		botStyles:  map[int]string{},
+		updates:    make(chan struct{}, 16),
 	}
 	runtime.human.SetOccupied(false)
 
 	runtime.ctx.OnRoundChange = runtime.recordRoundStart
+	runtime.ctx.OnBlind = runtime.recordBlindPosted
 	runtime.ctx.OnAction = runtime.recordPlayerAction
 	config.TrainMode = true
 	go runtime.watchHumanTurns()
@@ -183,6 +192,9 @@ func (runtime *Runtime) SnapshotForViewer(viewerSeat *int) Snapshot {
 		RoomName:           runtime.cfg.RoomName,
 		HumanSeat:          runtime.cfg.HumanSeat,
 		PlayerCount:        runtime.cfg.PlayerCount,
+		SmallBlind:         runtime.cfg.SmallBlind,
+		AIStyle:            runtime.cfg.AIStyle,
+		SeatAIStyles:       runtime.copyBotStyles(),
 		Status:             runtime.status,
 		Board:              board,
 		ViewerSeat:         viewerSeat,
@@ -206,6 +218,14 @@ func (runtime *Runtime) finishCompletedHand(completedBoard *model.Board) {
 	runtime.completedBoard = completedBoard
 	runtime.status = StatusHandFinished
 	runtime.version++
+	collected := runtime.potCollectedAmount(completedBoard)
+	runtime.events = append(runtime.events, RoomEvent{
+		Kind:       "pot_collected",
+		Message:    formatPotCollectedMessage(completedBoard, runtime.handStartBankrolls, collected),
+		HandNumber: runtime.handNumber,
+		Round:      string(model.FINISH),
+		Amount:     intPtr(collected),
+	})
 	runtime.events = append(runtime.events, RoomEvent{
 		Kind:       "hand_finish",
 		Message:    fmt.Sprintf("hand %d finished", runtime.handNumber),
@@ -214,6 +234,23 @@ func (runtime *Runtime) finishCompletedHand(completedBoard *model.Board) {
 	endGameFn(runtime.ctx, runtime.board)
 	runtime.mu.Unlock()
 	runtime.notifyUpdate()
+}
+
+func (runtime *Runtime) potCollectedAmount(board *model.Board) int {
+	if board == nil {
+		return 0
+	}
+	collected := 0
+	for _, player := range board.Players {
+		if player == nil || player.Index < 0 || player.Index >= len(runtime.handStartBankrolls) {
+			continue
+		}
+		delta := player.Bankroll - runtime.handStartBankrolls[player.Index]
+		if delta > 0 {
+			collected += delta
+		}
+	}
+	return collected
 }
 
 func (runtime *Runtime) watchHumanTurns() {
@@ -285,11 +322,35 @@ func (runtime *Runtime) turnTimeout() time.Duration {
 
 func (runtime *Runtime) recordRoundStart(board *model.Board, round model.Round) {
 	runtime.mu.Lock()
+	if round == model.PREFLOP {
+		runtime.events = append(runtime.events, RoomEvent{
+			Kind:       "hole_cards_dealt",
+			Message:    "hole cards dealt",
+			HandNumber: runtime.handNumber,
+			Round:      string(round),
+		})
+	}
 	runtime.events = append(runtime.events, RoomEvent{
 		Kind:       "round_start",
 		Message:    fmt.Sprintf("%s opened", strings.ToLower(string(round))),
 		HandNumber: runtime.handNumber,
 		Round:      string(round),
+	})
+	runtime.version++
+	runtime.mu.Unlock()
+	runtime.notifyUpdate()
+}
+
+func (runtime *Runtime) recordBlindPosted(board *model.Board, playerIndex int, blindType string, amount int) {
+	runtime.mu.Lock()
+	runtime.events = append(runtime.events, RoomEvent{
+		Kind:       "blind_posted",
+		Message:    formatBlindMessage(board, playerIndex, blindType, amount),
+		HandNumber: runtime.handNumber,
+		Round:      string(board.Game.Round),
+		SeatIndex:  intPtr(playerIndex),
+		ActionType: blindType,
+		Amount:     intPtr(amount),
 	})
 	runtime.version++
 	runtime.mu.Unlock()
@@ -306,7 +367,7 @@ func (runtime *Runtime) recordPlayerAction(board *model.Board, playerIndex int, 
 	runtime.mu.Lock()
 	runtime.events = append(runtime.events, RoomEvent{
 		Kind:       "player_action",
-		Message:    formatActionMessage(playerIndex, action),
+		Message:    formatActionMessage(board, playerIndex, action),
 		HandNumber: runtime.handNumber,
 		Round:      string(board.Game.Round),
 		SeatIndex:  intPtr(playerIndex),
@@ -318,22 +379,72 @@ func (runtime *Runtime) recordPlayerAction(board *model.Board, playerIndex int, 
 	runtime.notifyUpdate()
 }
 
-func formatActionMessage(seatIndex int, action model.Action) string {
+func formatBlindMessage(board *model.Board, seatIndex int, blindType string, amount int) string {
+	name := formatPlayerName(board, seatIndex)
+	switch blindType {
+	case "SMALL_BLIND":
+		return fmt.Sprintf("%s posts small blind %d", name, amount)
+	case "BIG_BLIND":
+		return fmt.Sprintf("%s posts big blind %d", name, amount)
+	default:
+		return fmt.Sprintf("%s posts blind %d", name, amount)
+	}
+}
+
+func formatPotCollectedMessage(board *model.Board, handStartBankrolls []int, amount int) string {
+	winners := payoutWinners(board, handStartBankrolls)
+	if len(winners) == 1 {
+		return fmt.Sprintf("%s wins %d", winners[0], amount)
+	}
+	if len(winners) > 1 {
+		return fmt.Sprintf("pot split: %s", strings.Join(winners, " + "))
+	}
+	if amount > 0 {
+		return fmt.Sprintf("pot paid out %d", amount)
+	}
+	return "pot paid out"
+}
+
+func payoutWinners(board *model.Board, handStartBankrolls []int) []string {
+	if board == nil {
+		return nil
+	}
+	winners := make([]string, 0, len(board.Players))
+	for _, player := range board.Players {
+		if player == nil || player.Index < 0 || player.Index >= len(handStartBankrolls) {
+			continue
+		}
+		if player.Bankroll-handStartBankrolls[player.Index] > 0 {
+			winners = append(winners, player.Name)
+		}
+	}
+	return winners
+}
+
+func formatActionMessage(board *model.Board, seatIndex int, action model.Action) string {
+	name := formatPlayerName(board, seatIndex)
 	switch action.ActionType {
 	case model.ActionTypeCall:
 		if action.Amount == 0 {
-			return fmt.Sprintf("seat %d checked", seatIndex)
+			return fmt.Sprintf("%s checks", name)
 		}
-		return fmt.Sprintf("seat %d called %d", seatIndex, action.Amount)
+		return fmt.Sprintf("%s calls %d", name, action.Amount)
 	case model.ActionTypeBet:
-		return fmt.Sprintf("seat %d bet %d", seatIndex, action.Amount)
+		return fmt.Sprintf("%s bets %d", name, action.Amount)
 	case model.ActionTypeFold:
-		return fmt.Sprintf("seat %d folded", seatIndex)
+		return fmt.Sprintf("%s folds", name)
 	case model.ActionTypeAllIn:
-		return fmt.Sprintf("seat %d all-in %d", seatIndex, action.Amount)
+		return fmt.Sprintf("%s goes all-in %d", name, action.Amount)
 	default:
-		return fmt.Sprintf("seat %d %s", seatIndex, strings.ToLower(string(action.ActionType)))
+		return fmt.Sprintf("%s %s", name, strings.ToLower(string(action.ActionType)))
 	}
+}
+
+func formatPlayerName(board *model.Board, seatIndex int) string {
+	if board != nil && seatIndex >= 0 && seatIndex < len(board.Players) && board.Players[seatIndex] != nil && board.Players[seatIndex].Name != "" {
+		return board.Players[seatIndex].Name
+	}
+	return fmt.Sprintf("Seat %d", seatIndex+1)
 }
 
 func intPtr(value int) *int {
@@ -352,9 +463,12 @@ func (runtime *Runtime) buildInteracts() []model.Interact {
 	for index := range interacts {
 		if index == runtime.cfg.HumanSeat {
 			interacts[index] = runtime.human
+			delete(runtime.botStyles, index)
 			continue
 		}
-		interacts[index] = newRealtimeBotInteract(runtime.ctx.Rng)
+		interact, style := runtime.newBotInteract()
+		runtime.botStyles[index] = style
+		interacts[index] = interact
 	}
 	return interacts
 }
@@ -368,22 +482,70 @@ func (runtime *Runtime) refreshBotInteracts() {
 		if player == nil || index == runtime.cfg.HumanSeat {
 			continue
 		}
-		player.Interact = newRealtimeBotInteract(runtime.ctx.Rng).InitInteract(index, model.GenGetBoardInfoFunc(runtime.board, index))
+		interact, style := runtime.newBotInteract()
+		runtime.botStyles[index] = style
+		player.Interact = interact.InitInteract(index, model.GenGetBoardInfoFunc(runtime.board, index))
 	}
 }
 
-func randomRealtimeBotInteract(rng *rand.Rand) model.Interact {
+func (runtime *Runtime) newBotInteract() (model.Interact, string) {
+	switch NormalizeAIStyle(runtime.cfg.AIStyle) {
+	case AIStyleSmart:
+		return ai.NewOddsWarriorAIWithMonteCarloTimes(realtimeBotMonteCarloTimes), AIStyleSmart
+	case AIStyleConservative:
+		return ai.NewTightConservativeAI(), AIStyleConservative
+	case AIStyleAggressive:
+		return ai.NewLooseAggressiveAI(), AIStyleAggressive
+	case AIStyleGTO:
+		return ai.NewGTOInspiredAIWithMonteCarloTimes(realtimeBotMonteCarloTimes), AIStyleGTO
+	case AIStyleRandom:
+		return newRealtimeBotInteract(runtime.ctx.Rng)
+	default:
+		return newRealtimeBotInteract(runtime.ctx.Rng)
+	}
+}
+
+func (runtime *Runtime) copyBotStyles() map[int]string {
+	if len(runtime.botStyles) == 0 {
+		return nil
+	}
+	result := make(map[int]string, len(runtime.botStyles))
+	for index, style := range runtime.botStyles {
+		result[index] = style
+	}
+	return result
+}
+
+func randomRealtimeBotInteract(rng *rand.Rand) (model.Interact, string) {
 	if rng == nil {
 		rng = util.NewRng()
 	}
 
-	factories := []func() model.Interact{
-		func() model.Interact { return ai.NewOddsWarriorAIWithMonteCarloTimes(realtimeBotMonteCarloTimes) },
-		func() model.Interact { return ai.NewTightConservativeAI() },
-		func() model.Interact { return ai.NewLooseAggressiveAI() },
+	type botFactory struct {
+		style    string
+		interact func() model.Interact
+	}
+	factories := []botFactory{
+		{
+			style:    AIStyleSmart,
+			interact: func() model.Interact { return ai.NewOddsWarriorAIWithMonteCarloTimes(realtimeBotMonteCarloTimes) },
+		},
+		{
+			style:    AIStyleConservative,
+			interact: func() model.Interact { return ai.NewTightConservativeAI() },
+		},
+		{
+			style:    AIStyleAggressive,
+			interact: func() model.Interact { return ai.NewLooseAggressiveAI() },
+		},
+		{
+			style:    AIStyleGTO,
+			interact: func() model.Interact { return ai.NewGTOInspiredAIWithMonteCarloTimes(realtimeBotMonteCarloTimes) },
+		},
 	}
 
-	return factories[rng.Intn(len(factories))]()
+	factory := factories[rng.Intn(len(factories))]
+	return factory.interact(), factory.style
 }
 
 func ensureAIPool() {

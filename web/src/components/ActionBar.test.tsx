@@ -34,9 +34,9 @@ describe("ActionBar", () => {
     expect(screen.getByRole("button", { name: "Raise to 4~96" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "All-in 96" })).toBeInTheDocument();
     expect(screen.queryByText(/seat 6/i)).not.toBeInTheDocument();
-    expect(screen.getByText("To call 2")).toBeInTheDocument();
-    expect(screen.getByText("Min raise to 4")).toBeInTheDocument();
-    expect(screen.getByText("Stack 96")).toBeInTheDocument();
+    expect(screen.queryByText("To call 2")).not.toBeInTheDocument();
+    expect(screen.queryByText("Min raise to 4")).not.toBeInTheDocument();
+    expect(screen.queryByText("Stack 96")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/bet amount/i)).not.toBeInTheDocument();
   });
 

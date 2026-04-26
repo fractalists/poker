@@ -21,6 +21,14 @@ function formatNetChange(delta: number) {
   return `${delta}`;
 }
 
+function formatSeatAIStyle(style?: string) {
+  const normalized = style?.trim().toLowerCase();
+  if (!normalized || normalized === "mixed" || normalized === "random") {
+    return "";
+  }
+  return normalized;
+}
+
 export function TableSeat({
   seat,
   viewerSeat,
@@ -28,14 +36,24 @@ export function TableSeat({
   showSettlementEffects = false,
 }: TableSeatProps) {
   const cards = seat.cards ?? [];
+  const seatAIStyle = formatSeatAIStyle(seat.aiStyle);
   const hasOutcome = Boolean(seat.bestHand);
   const isViewerSeat = viewerSeat === seat.index;
   const isAllInSeat = seat.status === "ALLIN" || seat.status === "ALL_IN";
   const isEliminatedSeat = seat.status === "OUT" && seat.bankroll === 0;
   const isFoldedSeat = seat.status === "OUT" && !isEliminatedSeat;
+  const netChange = seat.netChange;
   const isSettlementWinner = showSettlementEffects && Boolean(seat.isWinner);
   const isSettlementLoser =
-    showSettlementEffects && !seat.isWinner && (seat.netChange ?? 0) < 0;
+    showSettlementEffects && !seat.isWinner && (netChange ?? 0) < 0;
+  const hasNetChange = netChange !== undefined;
+  const stackPillClassName = [
+    "seat-stack-pill",
+    "seat-stack-pill--bankroll",
+    hasNetChange ? "seat-stack-pill--has-result" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const headerBadge = recentAction
     ? recentAction
     : seat.isTurn
@@ -70,6 +88,9 @@ export function TableSeat({
             {seat.position ? (
               <span className="seat-position-badge">{seat.position}</span>
             ) : null}
+            {seatAIStyle ? (
+              <span className="seat-ai-badge">AI {seatAIStyle}</span>
+            ) : null}
             {isViewerSeat ? <span className="seat-player-badge">You</span> : null}
           </div>
         </div>
@@ -94,31 +115,31 @@ export function TableSeat({
           ))}
         </div>
 
-        <div className="seat-meta-row">
-          <div className="seat-outcome">
-            {hasOutcome ? (
+        {hasOutcome ? (
+          <div className="seat-meta-row">
+            <div className="seat-outcome">
               <span className="seat-result-label">{seat.bestHand}</span>
-            ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <footer className="seat-footer">
         <div className="seat-bankroll-group">
-          <span className="seat-stack-pill seat-stack-pill--bankroll">
-            <span className="seat-stack-label">Bankroll</span>
+          <span className={stackPillClassName}>
+            <span className="seat-stack-label">Stack</span>
             <span className="seat-stack-value">{seat.bankroll}</span>
-            {seat.netChange !== undefined ? (
+            {hasNetChange ? (
               <span
                 className={[
                   "seat-result-pill",
-                  seat.netChange > 0 ? "is-up" : "",
-                  seat.netChange < 0 ? "is-down" : "",
+                  netChange > 0 ? "is-up" : "",
+                  netChange < 0 ? "is-down" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
-                {formatNetChange(seat.netChange)}
+                {formatNetChange(netChange)}
               </span>
             ) : null}
           </span>

@@ -116,14 +116,6 @@ export function ActionBar({ roomId, pot = 0, pendingAction, busy = false, onSubm
         ) : null}
       </div>
 
-      <div className="action-context">
-        <span>{pendingAction.canCheck ? "Can check" : `To call ${pendingAction.minAmount}`}</span>
-        {pendingAction.canBet ? (
-          <span>{isRaise ? `Min raise to ${minimumBet}` : `Min bet ${minimumBet}`}</span>
-        ) : null}
-        <span>{`Stack ${pendingAction.maxAmount}`}</span>
-      </div>
-
       <div className="action-buttons">
         {pendingAction.canFold ? (
           <button disabled={busy} onClick={() => onSubmit({ token: pendingAction.token, actionType: "FOLD", amount: 0 })} type="button">

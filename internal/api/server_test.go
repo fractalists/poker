@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func TestCreateRoomEndpoint(t *testing.T) {
 	server := httptest.NewServer(NewServer(manager))
 	defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/rooms", "application/json", strings.NewReader(`{"name":"Table 1","smallBlind":1,"startingBankroll":100,"humanSeat":3,"playerCount":4}`))
+	resp, err := http.Post(server.URL+"/api/rooms", "application/json", strings.NewReader(`{"name":"Table 1","smallBlind":1,"startingBankroll":100,"humanSeat":3,"playerCount":4,"aiStyle":"aggressive"}`))
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -29,6 +30,7 @@ func TestCreateRoomEndpoint(t *testing.T) {
 	assert.Equal(t, "Table 1", got["roomName"])
 	assert.Equal(t, float64(4), got["playerCount"])
 	assert.Equal(t, float64(3), got["humanSeat"])
+	assert.Equal(t, "aggressive", got["aiStyle"])
 }
 
 func TestActionEndpointRejectsWrongToken(t *testing.T) {
@@ -66,6 +68,36 @@ func TestRoomSocketStreamsSnapshot(t *testing.T) {
 	var payload map[string]any
 	require.NoError(t, conn.ReadJSON(&payload))
 	assert.Equal(t, room.ID, payload["roomId"])
+}
+
+func TestRoomsSocketStreamsRoomList(t *testing.T) {
+	manager := service.NewManager()
+	server := httptest.NewServer(NewServer(manager))
+	defer server.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws/rooms"
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+	defer conn.Close()
+	require.NoError(t, conn.SetReadDeadline(time.Now().Add(2*time.Second)))
+
+	var initial []map[string]any
+	require.NoError(t, conn.ReadJSON(&initial))
+	assert.Empty(t, initial)
+
+	_, err = manager.CreateRoom(service.CreateRoomRequest{
+		Name:             "Table 1",
+		SmallBlind:       1,
+		StartingBankroll: 100,
+		HumanSeat:        3,
+		PlayerCount:      4,
+	})
+	require.NoError(t, err)
+
+	var update []map[string]any
+	require.NoError(t, conn.ReadJSON(&update))
+	require.Len(t, update, 1)
+	assert.Equal(t, "Table 1", update[0]["roomName"])
 }
 
 func TestRoomGetSupportsViewerSeatQuery(t *testing.T) {

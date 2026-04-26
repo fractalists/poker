@@ -3,6 +3,7 @@ param(
     [int]$BackendPort = 8080,
     [string]$FrontendHost = "127.0.0.1",
     [int]$FrontendPort = 4173,
+    [int]$BackendReadyTimeoutSeconds = 60,
     [switch]$SkipInstall
 )
 
@@ -55,6 +56,40 @@ function Assert-Command {
     }
 }
 
+function New-EncodedPowerShellCommand {
+    param([string]$Command)
+
+    [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Command))
+}
+
+function Wait-BackendReady {
+    param(
+        [string]$HostName,
+        [int]$Port,
+        [int]$TimeoutSeconds
+    )
+
+    $url = "http://$HostName`:$Port/api/rooms"
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+
+    Write-Host "Waiting for backend API at $url ..."
+
+    do {
+        try {
+            $response = Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 2
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+                Write-Host "Backend API is ready."
+                return
+            }
+        }
+        catch {
+            Start-Sleep -Milliseconds 500
+        }
+    } while ((Get-Date) -lt $deadline)
+
+    throw "backend API was not ready at $url within $TimeoutSeconds seconds"
+}
+
 Assert-Command go
 Assert-Command npm
 
@@ -78,16 +113,20 @@ $frontendCommand = '$Host.UI.RawUI.WindowTitle = "poker frontend"; npm run dev -
 
 $backendProcess = Start-Process powershell -WorkingDirectory $repoRoot -ArgumentList @(
     "-NoLogo",
+    "-NoProfile",
     "-NoExit",
-    "-Command",
-    $backendCommand
+    "-EncodedCommand",
+    (New-EncodedPowerShellCommand $backendCommand)
 ) -PassThru
+
+Wait-BackendReady -HostName $BackendHost -Port $BackendPort -TimeoutSeconds $BackendReadyTimeoutSeconds
 
 $frontendProcess = Start-Process powershell -WorkingDirectory $webRoot -ArgumentList @(
     "-NoLogo",
+    "-NoProfile",
     "-NoExit",
-    "-Command",
-    $frontendCommand
+    "-EncodedCommand",
+    (New-EncodedPowerShellCommand $frontendCommand)
 ) -PassThru
 
 Write-Host ""

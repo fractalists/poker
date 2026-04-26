@@ -116,6 +116,89 @@ func TestPerformActionAllInTracksRaiseDeltaWhenItBecomesNewHighBet(t *testing.T)
 	assert.Equal(t, 0, board.Players[0].Bankroll)
 }
 
+func TestPerformActionAllInShortCallDoesNotReopenRaiseTracking(t *testing.T) {
+	originalTrainMode := config.TrainMode
+	config.TrainMode = true
+	t.Cleanup(func() {
+		config.TrainMode = originalTrainMode
+	})
+
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Index:       0,
+				Status:      model.PlayerStatusPlaying,
+				Bankroll:    5,
+				InPotAmount: 3,
+			},
+		},
+		Game: &model.Game{
+			CurrentAmount:        10,
+			LastRaiseAmount:      0,
+			LastRaisePlayerIndex: -1,
+			SmallBlinds:          1,
+			Pot:                  20,
+		},
+	}
+
+	performAction(board, 0, model.Action{ActionType: model.ActionTypeAllIn, Amount: 5})
+
+	assert.Equal(t, 10, board.Game.CurrentAmount)
+	assert.Equal(t, 0, board.Game.LastRaiseAmount)
+	assert.Equal(t, -1, board.Game.LastRaisePlayerIndex)
+	assert.Equal(t, model.PlayerStatusAllIn, board.Players[0].Status)
+	assert.Equal(t, 0, board.Players[0].Bankroll)
+	assert.Equal(t, 8, board.Players[0].InPotAmount)
+}
+
+func TestInteractWithPlayersTreatsShortBlindsAsAllInAtPostedAmount(t *testing.T) {
+	originalTrainMode := config.TrainMode
+	config.TrainMode = true
+	t.Cleanup(func() {
+		config.TrainMode = originalTrainMode
+	})
+
+	board := &model.Board{
+		Players: []*model.Player{
+			{
+				Index:    0,
+				Status:   model.PlayerStatusPlaying,
+				Bankroll: 1,
+				Interact: func(*model.Board, model.InteractType) model.Action {
+					return model.Action{ActionType: model.ActionTypeKeepWatching, Amount: 0}
+				},
+			},
+			{
+				Index:    1,
+				Status:   model.PlayerStatusPlaying,
+				Bankroll: 1,
+				Interact: func(*model.Board, model.InteractType) model.Action {
+					return model.Action{ActionType: model.ActionTypeKeepWatching, Amount: 0}
+				},
+			},
+		},
+		PositionIndexMap: map[model.Position]int{
+			model.PositionSmallBlind:  0,
+			model.PositionBigBlind:    1,
+			model.PositionButton:      0,
+			model.PositionUnderTheGun: 0,
+		},
+		Game: &model.Game{
+			Round:       model.PREFLOP,
+			SmallBlinds: 1,
+		},
+	}
+
+	interactWithPlayers(nil, board)
+
+	assert.Equal(t, 2, board.Game.Pot)
+	assert.Equal(t, 1, board.Game.CurrentAmount)
+	assert.Equal(t, model.PlayerStatusAllIn, board.Players[0].Status)
+	assert.Equal(t, model.PlayerStatusAllIn, board.Players[1].Status)
+	assert.Equal(t, 1, board.Players[0].InPotAmount)
+	assert.Equal(t, 1, board.Players[1].InPotAmount)
+}
+
 func TestCallInteractFallsBackToFoldAfterThreeInvalidActions(t *testing.T) {
 	originalTrainMode := config.TrainMode
 	config.TrainMode = true
